@@ -90,7 +90,7 @@ All 7 skills verified:
 ### Test Suite Created
 - **Framework**: Vitest with jsdom environment
 - **Location**: `tests/` directory
-- **Total tests**: 73
+- **Total tests**: 93
 
 | Test File | Tests | Status |
 |-----------|-------|--------|
@@ -98,6 +98,7 @@ All 7 skills verified:
 | `gateway.test.ts` | 6 | PASS |
 | `dataProvider.test.ts` | 4 | PASS |
 | `skills.test.ts` | 51 (7 skills × ~7 tests + structural) | PASS |
+| `edgeCases.test.ts` | 20 | PASS |
 
 ### Test Coverage
 
@@ -187,8 +188,8 @@ All 7 skills verified:
 | Skill files scanned | 38 |
 | Issues found | 7 |
 | Issues fixed | 7 |
-| Tests written | 73 |
-| Tests passing | 73 |
+| Tests written | 93 |
+| Tests passing | 93 |
 | Build status | PASS |
 | Personal data found | None |
 | Hardcoded paths found | None |
