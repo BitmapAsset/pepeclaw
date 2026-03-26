@@ -45,6 +45,9 @@ const roomPositions: Record<RoomId, [number, number, number]> = {
   genome: [-14, 0, 0],
   dream: [0, 0, 0],
   war: [14, 0, 0],
+  redteam: [28, 0, 0],
+  metalearning: [42, 0, 0],
+  temporal: [56, 0, 0],
 }
 
 function SceneContent({ activeRoom }: { activeRoom: RoomId }) {
