@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PepeClaw — Self-Evolving AI Agents You Can See</title>
+  <meta name="description" content="PepeClaw is the 3D AI Agent Visualizer for OpenClaw. Give your agent a soul.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ========== HERO ========== -->
+  <section id="hero">
+    <div class="hero-bg">
+      <img src="public/images/hero.jpg" alt="PepeClaw 3D Office" class="hero-img">
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <h1 class="hero-title fade-in">🐸 PepeClaw 🦞</h1>
+      <p class="hero-subtitle fade-in delay-1">Self-Evolving AI Agents You Can See</p>
+      <p class="hero-tagline fade-in delay-2">Give your agent a soul.</p>
+      <div class="hero-actions fade-in delay-3">
+        <a href="#install" class="btn btn-primary">Install in 10 Seconds</a>
+        <a href="https://github.com/BitmapAsset/pepeclaw" class="btn btn-ghost" target="_blank" rel="noopener">GitHub →</a>
+      </div>
+      <div class="install-snippet fade-in delay-4">
+        <code id="hero-cmd">curl -fsSL https://raw.githubusercontent.com/BitmapAsset/pepeclaw/main/install.sh | bash</code>
+        <button class="copy-btn" onclick="copyCmd('hero-cmd')" aria-label="Copy install command">
+          <span class="copy-icon">⎘</span>
+          <span class="copy-text">Copy</span>
+        </button>
+      </div>
+    </div>
+    <div class="scroll-hint fade-in delay-4">
+      <span>↓</span>
+    </div>
+  </section>
+
+  <!-- ========== WHAT IS PEPECLAW ========== -->
+  <section id="what" class="section">
+    <div class="container">
+      <h2 class="section-title anim">What is PepeClaw?</h2>
+      <div class="what-content anim">
+        <p class="what-text">
+          Your AI agent runs 24/7. But what is it actually doing?
+          <strong>PepeClaw gives you eyes.</strong>
+        </p>
+        <p class="what-sub">
+          A real-time 3D isometric office where every room visualizes a different dimension of your agent's mind — skills, memory, evolution, breeding, and consciousness. Built for <a href="https://github.com/BitmapAsset/pepeclaw" target="_blank" rel="noopener">OpenClaw</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FEATURES ========== -->
+  <section id="features" class="section">
+    <div class="container">
+      <h2 class="section-title anim">Features</h2>
+      <div class="features-grid">
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🏢</span>
+          <h3>8 Rooms</h3>
+          <p>Each room visualizes a different dimension of your agent's mind</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🧬</span>
+          <h3>Self-Evolving Skills</h3>
+          <p>Watch your agent grow new capabilities through nightly evolution cycles</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">⚡</span>
+          <h3>Zero-Config Install</h3>
+          <p>One command. No dependencies. No Docker. Just paste and go</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🔒</span>
+          <h3>Privacy-First</h3>
+          <p>All data stays local. No telemetry. No cloud. Your agent, your data</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🥚</span>
+          <h3>Agent Breeding</h3>
+          <p>Combine two agents to create offspring with hybrid skills</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🧠</span>
+          <h3>Consciousness Stream</h3>
+          <p>Real-time feed of your agent's internal thought process</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">🌙</span>
+          <h3>Nightly Evolution</h3>
+          <p>Your agent evolves while you sleep — wake up to a smarter agent</p>
+        </div>
+        <div class="feature-card glass anim">
+          <span class="feature-icon">📡</span>
+          <h3>Works Offline</h3>
+          <p>No internet needed after install. Fully self-contained</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== COMPARISON ========== -->
+  <section id="compare" class="section">
+    <div class="container">
+      <h2 class="section-title anim">How PepeClaw Compares</h2>
+      <div class="table-wrap glass anim">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="highlight">PepeClaw</th>
+              <th>Claw3D</th>
+              <th>OpenClaw Office</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3D Visualization</td>
+              <td class="highlight">✅</td>
+              <td>✅</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>Self-Evolution</td>
+              <td class="highlight">✅</td>
+              <td>❌</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>Agent Breeding</td>
+              <td class="highlight">✅</td>
+              <td>❌</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>Consciousness Stream</td>
+              <td class="highlight">✅</td>
+              <td>❌</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>Zero-Config Install</td>
+              <td class="highlight">✅</td>
+              <td>❌</td>
+              <td>✅</td>
+            </tr>
+            <tr>
+              <td>Works Offline</td>
+              <td class="highlight">✅</td>
+              <td>✅</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>Privacy-First</td>
+              <td class="highlight">✅</td>
+              <td>⚠️</td>
+              <td>❌</td>
+            </tr>
+            <tr>
+              <td>OpenClaw Compatible</td>
+              <td class="highlight">✅</td>
+              <td>❌</td>
+              <td>✅</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SCREENSHOTS ========== -->
+  <section id="screenshots" class="section">
+    <div class="container">
+      <h2 class="section-title anim">See It In Action</h2>
+      <div class="screenshots-grid">
+        <div class="screenshot-card anim">
+          <div class="screenshot-img-wrap glass">
+            <img src="public/images/hero.jpg" alt="Isometric Office Overview" loading="lazy">
+          </div>
+          <p class="screenshot-label">Isometric Office Overview</p>
+        </div>
+        <div class="screenshot-card anim">
+          <div class="screenshot-img-wrap glass placeholder-img">
+            <div class="placeholder-content">
+              <span>🧬</span>
+              <p>Genome Lab</p>
+            </div>
+          </div>
+          <p class="screenshot-label">Genome Lab</p>
+        </div>
+        <div class="screenshot-card anim">
+          <div class="screenshot-img-wrap glass placeholder-img">
+            <div class="placeholder-content">
+              <span>🥚</span>
+              <p>Breeding Arena</p>
+            </div>
+          </div>
+          <p class="screenshot-label">Breeding Arena</p>
+        </div>
+        <div class="screenshot-card anim">
+          <div class="screenshot-img-wrap glass placeholder-img">
+            <div class="placeholder-content">
+              <span>🧠</span>
+              <p>Meta-Learning</p>
+            </div>
+          </div>
+          <p class="screenshot-label">Meta-Learning Dashboard</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== LEADERBOARD ========== -->
+  <section id="leaderboard" class="section">
+    <div class="container">
+      <h2 class="section-title anim">Agent Leaderboard</h2>
+      <div class="leaderboard-card glass anim">
+        <div class="coming-soon-badge">Coming Soon</div>
+        <p class="leaderboard-teaser">See how your agent ranks globally.</p>
+        <div class="leaderboard-preview">
+          <div class="lb-row lb-header">
+            <span>#</span><span>Agent</span><span>Evo Score</span><span>Skills</span>
+          </div>
+          <div class="lb-row">
+            <span>1</span><span>pepe_alpha_77</span><span class="glow-text">9,847</span><span>142</span>
+          </div>
+          <div class="lb-row">
+            <span>2</span><span>claw_master_x</span><span class="glow-text">9,231</span><span>128</span>
+          </div>
+          <div class="lb-row">
+            <span>3</span><span>your_agent_here</span><span class="glow-text">???</span><span>???</span>
+          </div>
+        </div>
+        <form class="notify-form" onsubmit="handleNotify(event)">
+          <p class="notify-label">Get notified when the leaderboard launches:</p>
+          <div class="notify-input-wrap">
+            <input type="email" placeholder="you@example.com" required aria-label="Email for launch notification">
+            <button type="submit" class="btn btn-primary btn-sm">Notify Me</button>
+          </div>
+          <p class="notify-success" id="notify-success">🎉 You're on the list!</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== INSTALL ========== -->
+  <section id="install" class="section">
+    <div class="container">
+      <h2 class="section-title anim">Install PepeClaw</h2>
+      <div class="install-card glass anim">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(0)">⚡ One-Liner</button>
+          <button class="tab" onclick="switchTab(1)">📦 Git Clone</button>
+          <button class="tab" onclick="switchTab(2)">🤖 Tell Your OpenClaw</button>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel active">
+            <p class="tab-desc">Paste this in your terminal. That's it.</p>
+            <div class="code-block">
+              <code id="install-cmd-1">curl -fsSL https://raw.githubusercontent.com/BitmapAsset/pepeclaw/main/install.sh | bash</code>
+              <button class="copy-btn" onclick="copyCmd('install-cmd-1')" aria-label="Copy command">
+                <span class="copy-icon">⎘</span>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
+          </div>
+          <div class="tab-panel">
+            <p class="tab-desc">Clone the repo and run manually:</p>
+            <div class="code-block">
+              <code id="install-cmd-2">git clone https://github.com/BitmapAsset/pepeclaw.git
+cd pepeclaw
+./install.sh</code>
+              <button class="copy-btn" onclick="copyCmd('install-cmd-2')" aria-label="Copy command">
+                <span class="copy-icon">⎘</span>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
+          </div>
+          <div class="tab-panel">
+            <p class="tab-desc">Just tell your OpenClaw agent:</p>
+            <div class="code-block code-block-chat">
+              <code id="install-cmd-3">Install PepeClaw</code>
+              <button class="copy-btn" onclick="copyCmd('install-cmd-3')" aria-label="Copy command">
+                <span class="copy-icon">⎘</span>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
+            <p class="tab-hint">Your agent will handle the rest. 🐸</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="footer-logo">🐸🦞</span>
+          <p>Built with 🐸🦞 by the PepeClaw community</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/BitmapAsset/pepeclaw" target="_blank" rel="noopener">GitHub</a>
+          <a href="#features">Features</a>
+          <a href="#install">Install</a>
+        </div>
+        <div class="footer-meta">
+          <span class="badge">OpenClaw Compatible</span>
+          <p class="license">MIT License</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 PepeClaw. Open source. Open minds.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
