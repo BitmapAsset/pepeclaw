@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { metaLearningData } from '../data/mockData';
+import { metaLearningData, userModelDimensions } from '../data/mockData';
 import type { MetricPoint, ModificationProposal } from '../data/mockData';
 
 // ─── Theme Constants ────────────────────────────────────────────────
@@ -559,6 +559,145 @@ function BeforeAfterCard({
   );
 }
 
+// ─── User Model Radar ───────────────────────────────────────────────
+function UserModelRadar() {
+  const n = userModelDimensions.length;
+  const cx = 150;
+  const cy = 150;
+  const R = 110;
+
+  function polarToXY(index: number, value: number) {
+    const angle = (Math.PI * 2 * index) / n - Math.PI / 2;
+    const r = (value / 100) * R;
+    return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+  }
+
+  const gridLevels = [25, 50, 75, 100];
+
+  const points = userModelDimensions
+    .map((d, i) => {
+      const p = polarToXY(i, d.value);
+      return `${p.x},${p.y}`;
+    })
+    .join(' ');
+
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  return (
+    <HoloCard className="p-4 flex flex-col">
+      <span
+        className="text-xs font-semibold uppercase tracking-wider mb-2"
+        style={{ color: colors.textDim }}
+      >
+        User Model
+      </span>
+      <div className="flex-1 flex items-center justify-center">
+        <svg viewBox="0 0 300 300" className="w-full max-w-[280px]">
+          {/* grid */}
+          {gridLevels.map((level) => (
+            <polygon
+              key={level}
+              points={Array.from({ length: n })
+                .map((_, i) => {
+                  const p = polarToXY(i, level);
+                  return `${p.x},${p.y}`;
+                })
+                .join(' ')}
+              fill="none"
+              stroke={colors.border}
+              strokeWidth={0.5}
+            />
+          ))}
+          {/* axes */}
+          {userModelDimensions.map((d, i) => {
+            const p = polarToXY(i, 100);
+            return (
+              <line
+                key={d.axis}
+                x1={cx}
+                y1={cy}
+                x2={p.x}
+                y2={p.y}
+                stroke={colors.border}
+                strokeWidth={0.5}
+              />
+            );
+          })}
+          {/* filled polygon */}
+          <motion.polygon
+            points={points}
+            fill={`${colors.cyan}25`}
+            stroke={colors.cyan}
+            strokeWidth={2}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            style={{ transformOrigin: `${cx}px ${cy}px` }}
+          />
+          {/* dots + labels */}
+          {userModelDimensions.map((d, i) => {
+            const p = polarToXY(i, d.value);
+            const lp = polarToXY(i, 118);
+            return (
+              <g
+                key={d.axis}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{ cursor: 'pointer' }}
+              >
+                <circle cx={p.x} cy={p.y} r={4} fill={colors.cyan} />
+                <text
+                  x={lp.x}
+                  y={lp.y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={hoveredIdx === i ? colors.cyan : colors.textDim}
+                  fontSize={9}
+                  fontWeight={600}
+                >
+                  {d.axis}
+                </text>
+                <text
+                  x={lp.x}
+                  y={lp.y + 11}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={colors.cyan}
+                  fontSize={8}
+                  fontFamily="monospace"
+                >
+                  {d.value}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      {/* Hover description */}
+      <AnimatePresence mode="wait">
+        {hoveredIdx !== null && (
+          <motion.div
+            key={hoveredIdx}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-center text-xs mt-1 px-2 py-1 rounded"
+            style={{ color: colors.cyan, background: `${colors.cyan}10` }}
+          >
+            {userModelDimensions[hoveredIdx].description}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="flex items-center gap-1.5 mt-2 justify-center">
+        <span className="w-2 h-2 rounded-full" style={{ background: colors.cyan }} />
+        <span className="text-xs" style={{ color: colors.textDim }}>
+          Evolves as you interact
+        </span>
+      </div>
+    </HoloCard>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────────────
 export default function MetaLearningCenter() {
   const { performanceMetrics, beforeAfter } = metaLearningData;
@@ -621,10 +760,13 @@ export default function MetaLearningCenter() {
         />
       </div>
 
-      {/* ── Middle Row: Radar + Kanban ─────────────────────── */}
+      {/* ── Middle Row: Radar + User Model + Kanban ────────── */}
       <div className="flex gap-3 flex-1 min-h-0">
-        <div className="w-[320px] shrink-0">
+        <div className="w-[280px] shrink-0">
           <RadarChart />
+        </div>
+        <div className="w-[280px] shrink-0">
+          <UserModelRadar />
         </div>
         <div className="flex-1 min-w-0">
           <KanbanBoard />

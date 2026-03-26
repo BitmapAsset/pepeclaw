@@ -25,7 +25,7 @@ export interface Project {
   alerts: string[];
 }
 
-export type RoomId = 'overview' | 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity' | 'breeding' | 'replay' | 'settings' | 'activitylog';
+export type RoomId = 'overview' | 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity' | 'breeding' | 'optimizer' | 'replay' | 'settings' | 'activitylog';
 
 // Room IDs that have 3D scenes
 export const sceneRoomIds: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding'];
@@ -161,6 +161,7 @@ export const rooms: { id: RoomId; name: string; position: [number, number, numbe
   { id: 'temporal', name: 'Temporal Engine', position: [32, 0, 0], color: '#f59e0b' },
   { id: 'identity', name: 'Identity Vault', position: [40, 0, 0], color: '#f97316' },
   { id: 'breeding', name: 'Breeding Arena', position: [48, 0, 0], color: '#ec4899' },
+  { id: 'optimizer', name: 'Optimizer', position: [0, 0, 0], color: '#f97316' },
   { id: 'replay', name: 'Replay', position: [0, 0, 0], color: '#a855f7' },
   { id: 'activitylog', name: 'Activity Log', position: [0, 0, 0], color: '#f59e0b' },
   { id: 'settings', name: 'Settings', position: [0, 0, 0], color: '#64748b' },
@@ -336,3 +337,126 @@ export const temporalData = {
   ],
   currentHour: 8,
 };
+
+// ─── Evolution Visualization Data ──────────────────────────────────
+export interface MicroLearning {
+  id: string;
+  text: string;
+  timestamp: number;
+  skill: string;
+  score: 1 | 2 | 3 | 4;
+}
+
+export const mockMicroLearnings: MicroLearning[] = [
+  { id: 'ml1', text: 'Learned to chain tool calls for file operations', timestamp: Date.now() - 2000, skill: 'Code Generation', score: 4 },
+  { id: 'ml2', text: 'Improved error message parsing accuracy', timestamp: Date.now() - 15000, skill: 'Bug Detection', score: 3 },
+  { id: 'ml3', text: 'Discovered pattern: test before refactor', timestamp: Date.now() - 30000, skill: 'Testing', score: 4 },
+  { id: 'ml4', text: 'Adapted to user preference for concise responses', timestamp: Date.now() - 60000, skill: 'Communication', score: 3 },
+  { id: 'ml5', text: 'Security scan false positive rate reduced', timestamp: Date.now() - 90000, skill: 'Security Audit', score: 2 },
+  { id: 'ml6', text: 'Learned new TypeScript strict mode patterns', timestamp: Date.now() - 120000, skill: 'Code Generation', score: 4 },
+  { id: 'ml7', text: 'Architecture decision: prefer composition over inheritance', timestamp: Date.now() - 180000, skill: 'Architecture', score: 3 },
+  { id: 'ml8', text: 'Retry logic for flaky network calls', timestamp: Date.now() - 240000, skill: 'Bug Detection', score: 2 },
+  { id: 'ml9', text: 'Documentation: auto-generate from type signatures', timestamp: Date.now() - 300000, skill: 'Documentation', score: 3 },
+  { id: 'ml10', text: 'Refactoring: extract shared validation logic', timestamp: Date.now() - 360000, skill: 'Refactoring', score: 4 },
+  { id: 'ml11', text: 'Improved test coverage detection heuristic', timestamp: Date.now() - 420000, skill: 'Testing', score: 1 },
+  { id: 'ml12', text: 'Learned to detect SQL injection in ORM queries', timestamp: Date.now() - 500000, skill: 'Security Audit', score: 4 },
+];
+
+export interface SkillMutation {
+  id: string;
+  skill: string;
+  oldFitness: number;
+  newFitness: number;
+  generation: number;
+  timestamp: number;
+  change: string;
+  color: string;
+}
+
+export const mockMutations: SkillMutation[] = [
+  { id: 'sm1', skill: 'Code Generation', oldFitness: 85, newFitness: 88, generation: 44, timestamp: Date.now() - 600000, change: 'Added async/await pattern library', color: '#00ff88' },
+  { id: 'sm2', skill: 'Bug Detection', oldFitness: 72, newFitness: 70, generation: 28, timestamp: Date.now() - 500000, change: 'Regression in null-check detection', color: '#ff6b35' },
+  { id: 'sm3', skill: 'Architecture', oldFitness: 83, newFitness: 85, generation: 21, timestamp: Date.now() - 400000, change: 'Learned microservice boundary patterns', color: '#3b82f6' },
+  { id: 'sm4', skill: 'Testing', oldFitness: 58, newFitness: 58, generation: 13, timestamp: Date.now() - 350000, change: 'Neutral: integration test restructure', color: '#f59e0b' },
+  { id: 'sm5', skill: 'Code Generation', oldFitness: 88, newFitness: 92, generation: 47, timestamp: Date.now() - 200000, change: 'Template literal optimization', color: '#00ff88' },
+  { id: 'sm6', skill: 'Bug Detection', oldFitness: 70, newFitness: 78, generation: 31, timestamp: Date.now() - 150000, change: 'Stack trace parsing improved', color: '#ff6b35' },
+  { id: 'sm7', skill: 'Security Audit', oldFitness: 48, newFitness: 54, generation: 12, timestamp: Date.now() - 100000, change: 'XSS detection in JSX templates', color: '#ef4444' },
+  { id: 'sm8', skill: 'Refactoring', oldFitness: 86, newFitness: 88, generation: 39, timestamp: Date.now() - 50000, change: 'Dead code elimination improved', color: '#06b6d4' },
+];
+
+export interface TraceEntry {
+  id: string;
+  tool: string;
+  duration: number;
+  success: boolean;
+  startTime: number;
+  input: string;
+  output: string;
+  category: 'file' | 'search' | 'execute' | 'network' | 'ai';
+}
+
+export const mockTraces: TraceEntry[] = [
+  { id: 'tr1', tool: 'Read', duration: 12, success: true, startTime: 0, input: 'src/App.tsx', output: '527 lines read', category: 'file' },
+  { id: 'tr2', tool: 'Grep', duration: 45, success: true, startTime: 5, input: 'pattern: "useEffect"', output: '14 matches in 8 files', category: 'search' },
+  { id: 'tr3', tool: 'Edit', duration: 8, success: true, startTime: 55, input: 'src/App.tsx line 42', output: 'Applied 1 edit', category: 'file' },
+  { id: 'tr4', tool: 'Bash', duration: 3200, success: true, startTime: 65, input: 'npm run build', output: 'Build successful', category: 'execute' },
+  { id: 'tr5', tool: 'WebFetch', duration: 890, success: false, startTime: 3300, input: 'https://api.example.com/status', output: 'Error: 503 Service Unavailable', category: 'network' },
+  { id: 'tr6', tool: 'Read', duration: 15, success: true, startTime: 4200, input: 'src/rooms/GenomeLab.tsx', output: '377 lines read', category: 'file' },
+  { id: 'tr7', tool: 'Glob', duration: 22, success: true, startTime: 4220, input: '**/*.tsx', output: '24 files matched', category: 'search' },
+  { id: 'tr8', tool: 'Write', duration: 6, success: true, startTime: 4250, input: 'src/components/New.tsx', output: 'File created', category: 'file' },
+  { id: 'tr9', tool: 'Bash', duration: 1500, success: false, startTime: 4260, input: 'npm test', output: '2 tests failed', category: 'execute' },
+  { id: 'tr10', tool: 'Agent', duration: 5200, success: true, startTime: 5800, input: 'Explore codebase structure', output: 'Analysis complete', category: 'ai' },
+  { id: 'tr11', tool: 'Edit', duration: 5, success: true, startTime: 11050, input: 'src/components/New.tsx line 12', output: 'Applied 1 edit', category: 'file' },
+  { id: 'tr12', tool: 'Bash', duration: 2800, success: true, startTime: 11060, input: 'npm run build', output: 'Build successful', category: 'execute' },
+];
+
+export interface OptimizerSection {
+  name: string;
+  score: number;
+  icon: string;
+  recommendations: { text: string; priority: 'high' | 'medium' | 'low'; fixed: boolean }[];
+}
+
+export const optimizerData: OptimizerSection[] = [
+  {
+    name: 'Memory', score: 72, icon: '🧠',
+    recommendations: [
+      { text: 'Add project-level CLAUDE.md with architecture overview', priority: 'high', fixed: false },
+      { text: 'Store user preferences in memory system', priority: 'medium', fixed: true },
+      { text: 'Index frequently accessed files for faster recall', priority: 'low', fixed: false },
+    ],
+  },
+  {
+    name: 'Search', score: 58, icon: '🔍',
+    recommendations: [
+      { text: 'Configure custom search paths for domain-specific code', priority: 'high', fixed: false },
+      { text: 'Add .clawignore for build artifacts and node_modules', priority: 'high', fixed: false },
+      { text: 'Enable semantic code search indexing', priority: 'medium', fixed: false },
+    ],
+  },
+  {
+    name: 'Skills', score: 81, icon: '⚡',
+    recommendations: [
+      { text: 'Register project-specific build commands', priority: 'medium', fixed: true },
+      { text: 'Add test runner skill for Vitest integration', priority: 'medium', fixed: false },
+      { text: 'Configure linting auto-fix skill', priority: 'low', fixed: true },
+    ],
+  },
+  {
+    name: 'Automation', score: 55, icon: '🤖',
+    recommendations: [
+      { text: 'Set up pre-commit hook for type checking', priority: 'high', fixed: false },
+      { text: 'Configure auto-format on save', priority: 'medium', fixed: true },
+      { text: 'Add CI integration for PR reviews', priority: 'medium', fixed: false },
+      { text: 'Enable background test runner on file changes', priority: 'low', fixed: false },
+    ],
+  },
+];
+
+export const userModelDimensions = [
+  { axis: 'Communication', value: 78, description: 'Prefers concise, technical responses' },
+  { axis: 'Technical Level', value: 92, description: 'Senior engineer, deep systems knowledge' },
+  { axis: 'Patience', value: 65, description: 'Wants fast results, minimal back-and-forth' },
+  { axis: 'Preferred Tools', value: 85, description: 'CLI-first, Vim keybindings, TypeScript' },
+  { axis: 'Activity Hours', value: 70, description: 'Most active 9am-6pm PST, occasional late sessions' },
+];

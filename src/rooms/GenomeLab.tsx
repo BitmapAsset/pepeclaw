@@ -2,7 +2,7 @@ import { useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text, Float, Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { skills } from '../data/mockData'
+import { skills, mockMutations } from '../data/mockData'
 
 /* ── DNA Helix ──────────────────────────────────────────────── */
 function DNAHelix() {
@@ -345,6 +345,111 @@ function SkillCard({ skill, index }: { skill: typeof skills[0]; index: number })
   )
 }
 
+/* ── Evolution Timeline ──────────────────────────────────────── */
+function EvolutionTimeline() {
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const time = useRef(0)
+
+  useFrame((_, delta) => {
+    time.current += delta
+    if (groupRef.current) {
+      // Gentle scroll animation
+      groupRef.current.position.x = Math.sin(time.current * 0.1) * 0.3
+    }
+  })
+
+  const sortedMutations = useMemo(() =>
+    [...mockMutations].sort((a, b) => a.timestamp - b.timestamp),
+  [])
+
+  return (
+    <group position={[0, -4.5, 0]} ref={groupRef}>
+      <Text position={[0, 1.2, 0]} fontSize={0.15} color="#00ff88" anchorX="center" font={undefined}>
+        EVOLUTION TIMELINE
+      </Text>
+
+      {/* Timeline base line */}
+      <mesh position={[0, 0.5, 0]}>
+        <boxGeometry args={[14, 0.02, 0.02]} />
+        <meshBasicMaterial color="#2a2b3d" transparent opacity={0.6} />
+      </mesh>
+
+      {sortedMutations.map((mut, i) => {
+        const x = (i / (sortedMutations.length - 1)) * 12 - 6
+        const isImproved = mut.newFitness > mut.oldFitness
+        const isRegression = mut.newFitness < mut.oldFitness
+        const nodeColor = isImproved ? '#22c55e' : isRegression ? '#ef4444' : '#f59e0b'
+        const isHovered = hoveredId === mut.id
+
+        return (
+          <group key={mut.id} position={[x, 0.5, 0]}>
+            {/* Connection line to next */}
+            {i < sortedMutations.length - 1 && (
+              <mesh position={[(12 / (sortedMutations.length - 1)) / 2, 0, 0]}>
+                <boxGeometry args={[12 / (sortedMutations.length - 1), 0.015, 0.015]} />
+                <meshBasicMaterial
+                  color={isImproved ? '#22c55e' : isRegression ? '#ef4444' : '#f59e0b'}
+                  transparent
+                  opacity={0.4}
+                />
+              </mesh>
+            )}
+
+            {/* Mutation node */}
+            <mesh
+              onPointerOver={() => setHoveredId(mut.id)}
+              onPointerOut={() => setHoveredId(null)}
+            >
+              <sphereGeometry args={[isHovered ? 0.15 : 0.1, 16, 16]} />
+              <meshStandardMaterial
+                color={nodeColor}
+                emissive={nodeColor}
+                emissiveIntensity={isHovered ? 1.2 : 0.5}
+                transparent
+                opacity={isHovered ? 1 : 0.8}
+              />
+            </mesh>
+
+            {/* Fitness change indicator */}
+            <Text
+              position={[0, -0.25, 0]}
+              fontSize={0.07}
+              color={nodeColor}
+              anchorX="center"
+              font={undefined}
+            >
+              {mut.oldFitness}→{mut.newFitness}
+            </Text>
+
+            {/* Hover tooltip */}
+            {isHovered && (
+              <Html center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+                <div style={{
+                  background: 'rgba(10,11,20,0.95)',
+                  border: `1px solid ${mut.color}`,
+                  borderRadius: 6,
+                  padding: '6px 10px',
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                  color: '#e2e8f0',
+                  whiteSpace: 'nowrap',
+                  boxShadow: `0 0 12px ${mut.color}44`,
+                  minWidth: 140,
+                }}>
+                  <div style={{ color: mut.color, fontWeight: 'bold', marginBottom: 2 }}>{mut.skill}</div>
+                  <div>Gen {mut.generation}: {mut.oldFitness}% → {mut.newFitness}%</div>
+                  <div style={{ color: '#94a3b8', marginTop: 2, fontSize: 8 }}>{mut.change}</div>
+                </div>
+              </Html>
+            )}
+          </group>
+        )
+      })}
+    </group>
+  )
+}
+
 /* ── Main Export ─────────────────────────────────────────────── */
 export function GenomeLab() {
   return (
@@ -367,6 +472,9 @@ export function GenomeLab() {
 
       {/* Ego Death / Rebirth Sequence */}
       <EgoDeathEffect />
+
+      {/* Evolution Timeline */}
+      <EvolutionTimeline />
 
       {/* Room ambient glow */}
       <pointLight position={[0, 3, 0]} color="#00ff88" intensity={2} distance={12} />

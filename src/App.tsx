@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/mockData'
 import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider'
@@ -7,6 +7,8 @@ import { MiniMap } from './components/MiniMap'
 import { ActivityFeed } from './components/ActivityFeed'
 import { AgentVoice } from './components/AgentVoice'
 import { PWAInstall } from './components/PWAInstall'
+import { SkillScore } from './components/SkillScore'
+import { LearningLoop } from './components/LearningLoop'
 
 const Scene = lazy(() => import('./components/Scene').then(m => ({ default: m.Scene })))
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
@@ -17,6 +19,7 @@ const BreedingArenaPanel = lazy(() => import('./rooms/BreedingArena'))
 const SettingsPanel = lazy(() => import('./rooms/Settings'))
 const ReplayPanel = lazy(() => import('./rooms/Replay'))
 const ActivityLogPanel = lazy(() => import('./rooms/ActivityLog'))
+const OptimizerPanel = lazy(() => import('./rooms/Optimizer'))
 
 const panelRooms: Partial<Record<RoomId, React.LazyExoticComponent<React.ComponentType>>> = {
   redteam: RedTeamArena,
@@ -24,13 +27,14 @@ const panelRooms: Partial<Record<RoomId, React.LazyExoticComponent<React.Compone
   temporal: TemporalEngine,
   identity: IdentityVault,
   breeding: BreedingArenaPanel,
+  optimizer: OptimizerPanel,
   settings: SettingsPanel,
   replay: ReplayPanel,
   activitylog: ActivityLogPanel,
 }
 
 // Rooms that are panel-only (no 3D scene behind them)
-const panelOnlyRooms = new Set<RoomId>(['settings', 'replay', 'activitylog'])
+const panelOnlyRooms = new Set<RoomId>(['settings', 'replay', 'activitylog', 'optimizer'])
 
 function LoadingFallback() {
   return (
@@ -177,6 +181,8 @@ export default function App() {
           <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
         )}
         <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+        <SkillScore />
+        <LearningLoop />
         <PWAInstall />
       </div>
     </DataProvider>
@@ -262,6 +268,7 @@ const roomEmojis: Record<RoomId, string> = {
   temporal: '⏳',
   identity: '🔐',
   breeding: '🧪',
+  optimizer: '🚀',
   replay: '🎬',
   activitylog: '📜',
   settings: '⚙️',
@@ -278,6 +285,7 @@ const roomColors: Record<RoomId, string> = {
   temporal: '#f59e0b',
   identity: '#6366f1',
   breeding: '#ec4899',
+  optimizer: '#f97316',
   replay: '#a855f7',
   activitylog: '#f59e0b',
   settings: '#64748b',
@@ -291,7 +299,7 @@ const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: s
 }
 
 /* ─── Inline HUD ─────────────────────────────────────────────────── */
-import { rooms } from './data/mockData'
+import { rooms, mockMicroLearnings } from './data/mockData'
 
 function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
   activeRoom: RoomId;
@@ -421,6 +429,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
 
             <StatusDot color={connConfig.color} label={connConfig.label} pulse={connConfig.pulse} />
             <StatusDot color="#f59e0b" label="EVOLVING" pulse />
+            <LearningPulse />
 
             <div className="hidden lg:flex flex-col items-end">
               <span className="text-[10px] font-mono tabular-nums" style={{ color: '#e2e8f0' }}>
@@ -508,6 +517,114 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         </svg>
       </div>
     </>
+  )
+}
+
+function LearningPulse() {
+  const [count, setCount] = useState(mockMicroLearnings.length)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [pulsing, setPulsing] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval>>(null)
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setCount(c => c + 1)
+      setPulsing(true)
+      setTimeout(() => setPulsing(false), 1500)
+    }, 8000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  return (
+    <div className="relative hidden md:block">
+      <motion.button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="flex items-center gap-1.5 cursor-pointer border-0 bg-transparent px-1"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <div className="relative">
+          <motion.span
+            className="text-sm"
+            animate={pulsing ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            🧠
+          </motion.span>
+          {pulsing && (
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{ background: '#8b5cf6', filter: 'blur(6px)' }}
+              initial={{ opacity: 0.6, scale: 1 }}
+              animate={{ opacity: 0, scale: 2 }}
+              transition={{ duration: 1 }}
+            />
+          )}
+        </div>
+        <span className="text-[10px] font-mono tracking-wider" style={{ color: '#64748b' }}>
+          LEARNED:
+        </span>
+        <motion.span
+          key={count}
+          className="text-[10px] font-mono font-bold"
+          style={{ color: '#8b5cf6' }}
+          initial={{ scale: 1.4, color: '#22c55e' }}
+          animate={{ scale: 1, color: '#8b5cf6' }}
+        >
+          {count}
+        </motion.span>
+      </motion.button>
+
+      <AnimatePresence>
+        {showDropdown && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            className="absolute top-full right-0 mt-2 w-72 rounded-xl overflow-hidden z-50"
+            style={{
+              background: 'rgba(10,11,20,0.95)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(139,92,246,0.2)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid #1a1b2e' }}>
+              <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: '#8b5cf6' }}>
+                Recent Micro-Learnings
+              </span>
+              <span className="text-[9px] font-mono" style={{ color: '#64748b' }}>{count} today</span>
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {mockMicroLearnings.slice(0, 8).map((ml, i) => {
+                const scoreColor = ml.score >= 4 ? '#22c55e' : ml.score >= 3 ? '#f59e0b' : ml.score >= 2 ? '#f97316' : '#ef4444';
+                return (
+                  <motion.div
+                    key={ml.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="px-3 py-2 flex items-start gap-2 hover:brightness-125 transition-all"
+                    style={{ borderBottom: '1px solid #12131f' }}
+                  >
+                    <span
+                      className="text-[10px] font-bold font-mono mt-0.5 w-4 text-center shrink-0"
+                      style={{ color: scoreColor }}
+                    >
+                      {ml.score}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px]" style={{ color: '#e2e8f0' }}>{ml.text}</div>
+                      <div className="text-[8px] font-mono mt-0.5" style={{ color: '#475569' }}>{ml.skill}</div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
