@@ -27,3 +27,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# === SECRETS & CREDENTIALS ===
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.macaroon
+
+# === OPENCLAW / AGENT FILES ===
+.openclaw/
+MEMORY.md
+SOUL.md
+USER.md
+IDENTITY.md
+HEARTBEAT.md
+TOOLS.md
+AGENTS.md
+BOOTSTRAP.md
+memory/
+soul-backup/
+backups/
+tmp/
