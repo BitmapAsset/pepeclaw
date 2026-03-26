@@ -1,94 +1,189 @@
-# PepeClaw
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="PepeClaw — Self-Evolving AI Agents You Can See" width="800">
+</p>
 
-A 3D visualization dashboard for autonomous AI agent evolution in [OpenClaw](https://github.com/openclaw). Watch self-evolving agents work, learn, and compete across eight thematic rooms — all rendered in real-time WebGL.
+<h1 align="center">🐸 PepeClaw</h1>
+
+<h3 align="center"><em>Self-Evolving AI Agents You Can See.</em></h3>
+
+<p align="center">
+  The first 3D visualization layer for autonomous AI agents.<br>
+  Watch your agents evolve, breed, dream, and learn — in real-time, in your browser.<br>
+  <strong>Give your agent a soul.</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.2.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/openclaw-compatible-orange" alt="OpenClaw">
+  <img src="https://img.shields.io/badge/rooms-8%20interactive-purple" alt="8 Rooms">
+  <img src="https://img.shields.io/badge/skills-7%20self--evolving-green" alt="7 Skills">
+  <img src="https://img.shields.io/badge/3D-WebGL%20%2B%20Three.js-cyan" alt="WebGL">
+</p>
+
+<p align="center">
+  <a href="#install-in-10-seconds">Install</a> •
+  <a href="#the-8-rooms">Rooms</a> •
+  <a href="#self-evolving-skills">Skills</a> •
+  <a href="#screenshots">Screenshots</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+---
+
+**Your AI agent runs 24/7. But what is it actually doing?**
+
+PepeClaw gives you eyes. Eight immersive 3D rooms where you watch your agents work, learn, debate, dream, and evolve — with real-time data from your [OpenClaw](https://github.com/openclaw) instance. No more staring at logs. No more guessing if your agent is improving.
+
+**See it. Understand it. Trust it.**
+
+---
+
+## ✨ What Makes This Different
+
+| Feature | Traditional Agent Tools | PepeClaw |
+|---------|----------------------|----------|
+| Agent visibility | Text logs, maybe a dashboard | **3D animated agents** walking between rooms, working, debating |
+| Self-improvement | Manual prompt tuning | **7 autonomous skills** that evolve nightly via autoresearch |
+| Agent breeding | Doesn't exist | **Combine agent genomes** to create hybrid offspring |
+| Emotional awareness | None | **Emotion engine** with visible auras (focused, creative, stressed) |
+| Thought transparency | Hidden | **Consciousness stream** with floating thought bubbles |
+| Agent identity | A name in a config file | **On-chain DNA** via Block Genomics — verifiable agent lineage |
+
+---
+
+## Install in 10 Seconds
+
+```bash
+# One-liner (detects your OpenClaw automatically)
+curl -fsSL https://raw.githubusercontent.com/BitmapAsset/pepeclaw/main/install.sh | bash
+```
+
+Or manually:
+
+```bash
+git clone https://github.com/BitmapAsset/pepeclaw.git
+cd pepeclaw
+npm install
+npm run dev
+# Open http://localhost:5173 — works immediately with mock data
+```
+
+Or just tell your OpenClaw: **"Install PepeClaw"** — it handles everything.
+
+---
+
+## The 8 Rooms
+
+### 🧬 Genome Lab
+<img src="docs/screenshots/genome-lab.png" alt="Genome Lab" width="700">
+
+Watch skills mutate, evolve, and compete. A rotating 3D DNA helix with orbiting skill cards shows your agent's capability genome in real-time. See fitness scores rise as skills improve across generations.
+
+### 💭 Dream Chamber
+Your agent's creative subconscious, visualized. A starfield with aurora shaders and connected dream nodes floating in 3D space. The Memory Palace lets you walk through your agent's memories as explorable rooms.
+
+### ⚔️ War Room
+Project health at a glance. 3D radar with health gauges, velocity charts, and dependency maps. Your agent triages projects, flags risks, and tracks momentum — all visible as living data.
+
+### 🔴 Red Team Arena
+Watch your agent debate itself. Two AI agents face off on opposing podiums with argument energy beams, bias detection panels, and an assumption challenge board. Your agent's ideas get stress-tested in real-time.
+
+### 🧠 Meta-Learning Center
+<img src="docs/screenshots/meta-learning.png" alt="Meta-Learning Center" width="700">
+
+A 3D brain with neural pathways lighting up as your agent learns. Capability rings orbit around it. See accuracy, response time, and task completion improve over time. Self-modification proposals appear in a kanban board.
+
+### ⏳ Temporal Engine
+A 3D hourglass with animated sand and a flowing timeline river. Your agent optimizes task scheduling, detects batch opportunities, and flags procrastination patterns. Time becomes visible.
+
+### 🔐 Identity Vault
+Agent identity, verified on Bitcoin. A vault door with rotating gear mechanism and floating identity cards. Integrates with Block Genomics for sovereign, on-chain agent DNA. Your agent's lineage is provable.
+
+### 🧪 Breeding Arena
+<img src="docs/screenshots/breeding-arena.png" alt="Breeding Arena" width="700">
+
+**The showstopper.** Combine two agents' skill genomes to create hybrid offspring. DNA helixes intertwine with particle cascades, neural pathways form between parents, and a child agent materializes with inherited capabilities. Breed → mint → verify on Bitcoin.
+
+---
+
+## Self-Evolving Skills
+
+PepeClaw includes 7 autonomous skills that make your agent self-improving:
+
+| Skill | What It Does | When It Runs |
+|-------|-------------|--------------|
+| 🧬 **Skill Genome** | Evolutionary fitness tracking, mutation, and crossover | Continuous |
+| 🔮 **Predictive Intent** | Pattern mining — anticipates what you'll need next | Every task |
+| 💭 **Dream Mode** | Creative exploration during off-hours | Nightly |
+| 🧠 **Meta-Learning** | Self-analysis of capabilities and gap detection | Weekly |
+| ⚔️ **Red Team** | Bias detection and assumption challenging | Per decision |
+| 📊 **War Room** | Project health scoring and velocity tracking | Daily |
+| ⏰ **Temporal Arbitrage** | Task scheduling optimization | Continuous |
+| 🌙 **Nightly Evolution** | 15-min autoresearch loops reviewing the day's work | Midnight daily |
+
+**Every night, your agent gets smarter.** The Nightly Evolution skill runs Karpathy-style autoresearch loops at midnight — reviewing conversations, finding mistakes, optimizing workflows, and applying improvements. Compound intelligence, on autopilot.
+
+---
+
+## Key Features
+
+- **🎭 Emotion Engine** — Agents display emotional states as colored auras. Focused (blue), creative (purple), stressed (red), curious (green), satisfied (gold). Emotions affect animation speed and behavior.
+
+- **🧠 Consciousness Stream** — Floating thought bubbles show your agent's real-time reasoning. Neural pathway visualizations light up as skills activate. Watch your agent think.
+
+- **📊 Activity Feed** — Real-time scrolling log of what every agent is doing. Click to jump to the relevant room.
+
+- **🗺️ Mini-Map** — Overview of all 8 rooms with agent position indicators. Always know where your agents are.
+
+- **🎨 Glass-Morphism UI** — Frosted glass panels, micro-animations on every interaction, room-specific color palettes, smooth transitions. Premium feel.
+
+- **📱 Responsive** — Works on desktop and tablet. Touch-friendly targets. Keyboard navigation. Reduced motion support.
+
+- **🔌 Live Data** — Connects to your OpenClaw Gateway API. Falls back gracefully to mock data when offline. Zero configuration needed.
+
+---
 
 ## Screenshots
 
-The app runs entirely with built-in mock data — no OpenClaw gateway required. Open `npm run dev` and you'll see animated 3D agents working across all rooms immediately.
+<details>
+<summary>Click to see all rooms</summary>
 
-## Features
+| Room | Preview |
+|------|---------|
+| Genome Lab | <img src="docs/screenshots/genome-lab.png" width="400"> |
+| Breeding Arena | <img src="docs/screenshots/breeding-arena.png" width="400"> |
+| Meta-Learning | <img src="docs/screenshots/meta-learning.png" width="400"> |
 
-- **8 Interactive 3D Rooms** — each with unique WebGL visualizations and procedural geometry
-- **Animated 3D Agent Characters** — low-poly humanoids that work in each room with contextual animations
-- **Emotion Engine** — agents display emotional states (focused, creative, stressed, curious, satisfied) based on their activity
-- **Consciousness Stream** — floating thought bubbles and neural pathways between agents
-- **Real-time Data** — connects to the OpenClaw Gateway API, falls back gracefully to mock data
-- **Smooth Room Transitions** — camera lerp animations between rooms
-- **Mini-Map** — overview of all rooms with agent positions
-- **Activity Feed** — real-time log of agent actions across rooms
-- **Breeding Arena** — combine agent genomes to create new agents
-- **Particle Systems** — floating data particles, energy flows, and room-specific effects
-- **Dynamic Lighting** — ambient colors shift per room mood
-- **7 Self-Evolving Skills** — installable skill modules that run on cron schedules
+</details>
 
-### Rooms
-
-| Room | Visualization |
-|------|--------------|
-| Genome Lab | 3D DNA helix with orbiting skill cards |
-| Dream Chamber | Starfield with aurora shader, connected dream nodes, and Memory Palace |
-| War Room | Project health cards with gauge rings and velocity charts |
-| Red Team Arena | Opposing podiums with argument beams and bias detection |
-| Meta-Learning Center | 3D brain with neural pathways and capability rings |
-| Temporal Engine | 3D hourglass with flowing timeline river |
-| Identity Vault | Vault door with rotating gear and floating identity cards |
-| Breeding Arena | Agent genome crossover with child agent visualization |
-
-### Skills
-
-PepeClaw includes 7 self-evolving skills in the `skills/` directory. Each skill runs independently and can be installed into any OpenClaw workspace.
-
-| Skill | Purpose |
-|-------|---------|
-| `skill-genome` | Evolutionary fitness tracking, mutation, and crossover of skill capabilities |
-| `predictive-intent` | Pattern mining, anomaly detection, and pre-computation of likely tasks |
-| `dream-mode` | Creative exploration during off-hours with cross-pollination of ideas |
-| `meta-learning` | Self-analysis of conversation patterns and capability gap detection |
-| `adversarial-red-team` | Bias detection, assumption surfacing, and contrarian viewpoint generation |
-| `project-war-room` | Project health scoring, velocity tracking, and dependency mapping |
-| `temporal-arbitrage` | Task scheduling optimization, batch detection, and procrastination tracking |
-
-Install all skills to your OpenClaw workspace:
-
-```bash
-./install.sh
-```
+---
 
 ## Tech Stack
 
 - **React 19** + **TypeScript** (strict mode)
-- **Three.js** via **React Three Fiber** + **drei**
-- **Framer Motion** for UI animations
-- **Tailwind CSS** for styling
-- **Vite** for dev/build
-- **Vitest** for testing
+- **Three.js** via **React Three Fiber** + **drei** — procedural 3D, no model files
+- **Framer Motion** — micro-animations and transitions
+- **Tailwind CSS** — glass-morphism design system
+- **Vite** — instant dev server + optimized production builds
+- **Vitest** — 73 tests covering components, API, data, and skills
 
-## Getting Started
+## Performance
 
-```bash
-# Clone the repository
-git clone https://github.com/BitmapAsset/pepeclaw.git
-cd pepeclaw
+| Metric | Value |
+|--------|-------|
+| Bundle size | **1.5 MB** (gzip: ~420 KB) |
+| Room chunks | **5-11 KB** each (code-split) |
+| Target FPS | **60fps** on mid-range hardware |
+| DPR cap | **1.5x** for consistent performance |
+| API timeout | **10s** with graceful fallback |
+| Geometry | 100% procedural — zero external 3D models |
 
-# Install dependencies
-npm install
-
-# Start dev server (works immediately with mock data)
-npm run dev
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-
-# Preview production build
-npm run preview
-```
+---
 
 ## Configuration
-
-Copy `.env.example` to `.env` and configure:
 
 ```bash
 cp .env.example .env
@@ -96,81 +191,46 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_GATEWAY_URL` | `http://localhost:3033` | OpenClaw Gateway API URL |
+| `VITE_GATEWAY_URL` | `http://localhost:3033` | Your OpenClaw Gateway API URL |
 
-The app works fully offline with built-in mock data. No gateway connection is required.
+The app works fully offline with built-in mock data. No gateway required.
 
-### Connecting to OpenClaw Gateway
-
-When the gateway is available, PepeClaw automatically fetches live data every 15 seconds. If the gateway goes offline, it falls back to mock data seamlessly.
-
-**CORS**: If you're running the gateway on a different origin, ensure it sends the appropriate CORS headers:
-
-```
-Access-Control-Allow-Origin: http://localhost:5173
-Access-Control-Allow-Headers: Accept, Content-Type
-```
+---
 
 ## Architecture
 
 ```
 src/
 ├── api/
-│   ├── gateway.ts            # REST client with 10s timeout for OpenClaw Gateway
-│   └── DataProvider.tsx       # React context — real data with mock fallback
+│   ├── gateway.ts              # REST client with timeout + fallback
+│   └── DataProvider.tsx         # React context — live data or mock
 ├── components/
-│   ├── Scene.tsx              # Three.js canvas with all 8 rooms
-│   ├── Agent3D.tsx            # Animated 3D agent with emotion engine
-│   ├── ConsciousnessStream.tsx # Thought bubbles & neural pathways
-│   ├── ActivityFeed.tsx       # Real-time agent activity log
-│   └── MiniMap.tsx            # Room overview with agent positions
-├── rooms/
-│   ├── GenomeLab.tsx          # DNA helix + skill evolution (3D)
-│   ├── DreamChamber.tsx       # Starfield + dream nodes + Memory Palace (3D)
-│   ├── WarRoom.tsx            # Project health cards (3D)
-│   ├── RedTeamArena.tsx       # Debate UI panel (2D overlay)
-│   ├── RedTeamArena3D.tsx     # Arena with podiums (3D scene)
-│   ├── MetaLearningCenter.tsx # Dashboard panel (2D overlay)
-│   ├── MetaLearning3D.tsx     # Brain visualization (3D scene)
-│   ├── TemporalEngine.tsx     # Timeline panel (2D overlay)
-│   ├── TemporalEngine3D.tsx   # Hourglass + river (3D scene)
-│   ├── IdentityVault.tsx      # Vault panel (2D overlay)
-│   ├── IdentityVault3D.tsx    # Vault door + cards (3D scene)
-│   ├── BreedingArena.tsx      # Breeding UI panel (2D overlay)
-│   └── BreedingArena3D.tsx    # Breeding visualization (3D scene)
-├── data/
-│   └── mockData.ts            # Type definitions + mock data
-├── App.tsx                    # Root component with HUD + navigation
-└── main.tsx                   # Entry point
+│   ├── Scene.tsx                # Three.js canvas — all 8 rooms + 7 agents
+│   ├── Agent3D.tsx              # Animated humanoid with emotion engine
+│   ├── ConsciousnessStream.tsx  # Thought bubbles + neural pathways
+│   ├── ActivityFeed.tsx         # Real-time action log
+│   └── MiniMap.tsx              # Room overview + agent positions
+├── rooms/                       # 8 rooms (3D scene + 2D overlay each)
+├── data/mockData.ts             # Types + mock data for offline use
+└── App.tsx                      # HUD + navigation + glass-morphism shell
 
-skills/                        # 7 self-evolving OpenClaw skills
-├── skill-genome/
-├── predictive-intent/
-├── dream-mode/
-├── meta-learning/
-├── adversarial-red-team/
-├── project-war-room/
-└── temporal-arbitrage/
-
-tests/                         # Vitest test suite
-├── mockData.test.ts           # Mock data integrity tests
-├── gateway.test.ts            # API client tests
-├── dataProvider.test.ts       # Data provider fallback tests
-└── skills.test.ts             # Skill directory validation tests
+skills/                          # 8 self-evolving OpenClaw skills
+tests/                           # 73 tests (Vitest)
 ```
 
-## Performance
-
-- Procedural geometry only — no external 3D model files
-- Code-split rooms via `React.lazy()`
-- DPR capped at 1.5x for consistent frame rates
-- Gateway requests have 10s timeout to prevent hangs
-- Target: 60fps on mid-range hardware
+---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — use it, fork it, evolve it.
+
+---
+
+<p align="center">
+  <strong>Your agent deserves to be seen.</strong><br>
+  <em>Built with 🐸 by the PepeClaw community</em>
+</p>
