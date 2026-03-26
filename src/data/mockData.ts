@@ -25,7 +25,10 @@ export interface Project {
   alerts: string[];
 }
 
-export type RoomId = 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity' | 'breeding';
+export type RoomId = 'overview' | 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity' | 'breeding' | 'replay' | 'settings' | 'activitylog';
+
+// Room IDs that have 3D scenes
+export const sceneRoomIds: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding'];
 
 // ─── Emotion Engine ─────────────────────────────────────────────────
 export type EmotionState = 'focused' | 'creative' | 'stressed' | 'curious' | 'satisfied';
@@ -149,6 +152,7 @@ export const projects: Project[] = [
 
 // ─── Navigation ─────────────────────────────────────────────────────
 export const rooms: { id: RoomId; name: string; position: [number, number, number]; color: string }[] = [
+  { id: 'overview', name: 'Overview', position: [7.5, 0, 0], color: '#8b5cf6' },
   { id: 'genome', name: 'Genome Lab', position: [-8, 0, 0], color: '#00ff88' },
   { id: 'dream', name: 'Dream Chamber', position: [0, 0, 0], color: '#8b5cf6' },
   { id: 'war', name: 'War Room', position: [8, 0, 0], color: '#ef4444' },
@@ -157,6 +161,9 @@ export const rooms: { id: RoomId; name: string; position: [number, number, numbe
   { id: 'temporal', name: 'Temporal Engine', position: [32, 0, 0], color: '#f59e0b' },
   { id: 'identity', name: 'Identity Vault', position: [40, 0, 0], color: '#f97316' },
   { id: 'breeding', name: 'Breeding Arena', position: [48, 0, 0], color: '#ec4899' },
+  { id: 'replay', name: 'Replay', position: [0, 0, 0], color: '#a855f7' },
+  { id: 'activitylog', name: 'Activity Log', position: [0, 0, 0], color: '#f59e0b' },
+  { id: 'settings', name: 'Settings', position: [0, 0, 0], color: '#64748b' },
 ];
 
 // ─── Red Team Arena Data ─────────────────────────────────────────────

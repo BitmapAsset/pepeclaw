@@ -121,4 +121,34 @@ export const gateway = {
 
   getAgents: (signal?: AbortSignal) =>
     fetchEndpoint<AgentSession[]>('/api/v1/agents', signal),
+
+  /** Send TTS request — returns audio ArrayBuffer */
+  postTTS: async (text: string, signal?: AbortSignal): Promise<ArrayBuffer> => {
+    const baseUrl = _discoveredUrl;
+    if (!baseUrl) throw new Error('No gateway discovered');
+    const res = await fetch(`${baseUrl}/api/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'audio/*' },
+      body: JSON.stringify({ text }),
+      signal: signal ?? AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) throw new Error(`TTS ${res.status}: ${res.statusText}`);
+    return res.arrayBuffer();
+  },
+
+  /** Send a message to a specific agent session */
+  sendAgentMessage: async (agentId: string, message: string, signal?: AbortSignal): Promise<{ reply: string }> => {
+    const baseUrl = _discoveredUrl;
+    if (!baseUrl) throw new Error('No gateway discovered');
+    const res = await fetch(`${baseUrl}/api/v1/agents/${agentId}/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+      signal: signal ?? AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`Agent message ${res.status}: ${res.statusText}`);
+    return res.json();
+  },
+
+  getDiscoveredUrl: () => _discoveredUrl,
 };

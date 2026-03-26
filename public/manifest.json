@@ -1,0 +1,24 @@
+{
+  "name": "PepeClaw — Self-Evolving AI Agents",
+  "short_name": "PepeClaw",
+  "description": "Self-Evolving AI Agents You Can See. A 3D visualization dashboard for autonomous agent evolution.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0b14",
+  "theme_color": "#0a0b14",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

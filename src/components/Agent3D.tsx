@@ -1,5 +1,5 @@
-import { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef, useMemo, useCallback } from 'react';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { activityToEmotion, emotionColors, type EmotionState } from '../data/mockData';
@@ -9,7 +9,6 @@ export type AgentActivity =
   | 'studying' | 'managing' | 'verifying' | 'breeding'
   | 'typing' | 'walking' | 'meeting' | 'browsing' | 'frustrated';
 
-// Extended emotion mapping for new activities
 const extendedActivityToEmotion: Record<string, EmotionState> = {
   ...activityToEmotion,
   typing: 'focused',
@@ -20,6 +19,7 @@ const extendedActivityToEmotion: Record<string, EmotionState> = {
 };
 
 export interface Agent3DProps {
+  id?: string;
   name: string;
   color: string;
   status: 'working' | 'idle' | 'break';
@@ -27,6 +27,9 @@ export interface Agent3DProps {
   activity?: AgentActivity;
   taskDescription?: string;
   hasError?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string | null) => void;
+  onFollow?: (id: string) => void;
 }
 
 const statusRingColors: Record<string, string> = {
@@ -39,7 +42,6 @@ function EmotionAura({ emotion, radius = 0.55, hasError }: { emotion: EmotionSta
   const ref = useRef<THREE.Mesh>(null);
   const time = useRef(Math.random() * 100);
   const auraColor = hasError ? '#ef4444' : emotionColors[emotion];
-
   const speed = hasError ? 5.0 : emotion === 'stressed' ? 3.5 : emotion === 'curious' ? 2.0 : 1.2;
 
   useFrame((_, delta) => {
@@ -47,7 +49,6 @@ function EmotionAura({ emotion, radius = 0.55, hasError }: { emotion: EmotionSta
     if (ref.current) {
       const mat = ref.current.material as THREE.MeshBasicMaterial;
       if (hasError) {
-        // Flash red for errors
         mat.opacity = 0.05 + Math.abs(Math.sin(time.current * speed)) * 0.15;
         ref.current.scale.setScalar(1 + Math.sin(time.current * speed) * 0.15);
       } else {
@@ -65,17 +66,62 @@ function EmotionAura({ emotion, radius = 0.55, hasError }: { emotion: EmotionSta
   );
 }
 
-export function Agent3D({ name, color, status, position, activity, taskDescription, hasError }: Agent3DProps) {
+/* Selection highlight ring */
+function SelectionRing({ color }: { color: string }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const time = useRef(0);
+
+  useFrame((_, delta) => {
+    time.current += delta;
+    if (ref.current) {
+      ref.current.rotation.z = time.current * 0.5;
+      const mat = ref.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = 0.8 + Math.sin(time.current * 3) * 0.3;
+    }
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.63, 0]}>
+      <torusGeometry args={[0.5, 0.03, 8, 32]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={1}
+        transparent
+        opacity={0.9}
+      />
+    </mesh>
+  );
+}
+
+export function Agent3D({ id, name, color, status, position, activity, taskDescription, hasError, selected, onSelect, onFollow }: Agent3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const time = useRef(Math.random() * 100);
   const armLRef = useRef<THREE.Group>(null);
   const armRRef = useRef<THREE.Group>(null);
   const legLRef = useRef<THREE.Mesh>(null);
   const legRRef = useRef<THREE.Mesh>(null);
+  const lastClickTime = useRef(0);
 
   const emotion: EmotionState = activity ? (extendedActivityToEmotion[activity] ?? 'focused') : 'focused';
   const animSpeed = emotion === 'stressed' ? 1.6 : emotion === 'curious' ? 1.2 : 1.0;
   const baseY = position[1];
+
+  // Click = select, double-click = follow
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (!id) return;
+
+    const now = Date.now();
+    if (now - lastClickTime.current < 400) {
+      // Double click → follow
+      onFollow?.(id);
+    } else {
+      // Single click → select/deselect
+      onSelect?.(selected ? null : id);
+    }
+    lastClickTime.current = now;
+  }, [id, selected, onSelect, onFollow]);
 
   useFrame((_, delta) => {
     time.current += delta * animSpeed;
@@ -83,7 +129,6 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
 
     if (!groupRef.current) return;
 
-    // Walking animation — move around in a circle
     if (activity === 'walking') {
       const walkRadius = 0.8;
       const walkSpeed = 0.6;
@@ -92,21 +137,17 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
       groupRef.current.position.y = baseY + Math.abs(Math.sin(t * walkSpeed * 4)) * 0.05;
       groupRef.current.rotation.y = t * walkSpeed + Math.PI;
 
-      // Leg movement for walking
       if (legLRef.current && legRRef.current) {
         legLRef.current.rotation.x = Math.sin(t * walkSpeed * 4) * 0.3;
         legRRef.current.rotation.x = Math.sin(t * walkSpeed * 4 + Math.PI) * 0.3;
       }
     } else {
-      // Idle bob
       groupRef.current.position.y = baseY + Math.sin(t * 1.5) * 0.05;
       groupRef.current.position.x = position[0];
       groupRef.current.position.z = position[2];
-      // Subtle body sway
       groupRef.current.rotation.y = Math.sin(t * 0.5) * 0.1;
     }
 
-    // Frustrated gesture — shake
     if (activity === 'frustrated' || hasError) {
       groupRef.current.rotation.z = Math.sin(t * 12) * 0.05;
       groupRef.current.position.x = position[0] + Math.sin(t * 15) * 0.02;
@@ -114,22 +155,18 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
       groupRef.current.rotation.z = 0;
     }
 
-    // Arm animations based on activity
     if (armLRef.current && armRRef.current) {
       if (activity === 'typing') {
-        // Fast typing — arms in front, rapid alternating
         armLRef.current.rotation.x = -0.6 + Math.sin(t * 8) * 0.12;
         armRRef.current.rotation.x = -0.6 + Math.sin(t * 8 + 1.5) * 0.12;
         armLRef.current.rotation.z = 0.2;
         armRRef.current.rotation.z = -0.2;
       } else if (activity === 'browsing') {
-        // One arm raised, pointing at holographic screen
         armLRef.current.rotation.x = -0.8 + Math.sin(t * 1.5) * 0.1;
         armRRef.current.rotation.x = -0.2 + Math.sin(t * 0.8) * 0.05;
         armLRef.current.rotation.z = 0;
         armRRef.current.rotation.z = 0;
       } else if (activity === 'meeting') {
-        // Gesticulating — wider arm movements
         armLRef.current.rotation.x = -0.3 + Math.sin(t * 2) * 0.25;
         armRRef.current.rotation.x = -0.3 + Math.sin(t * 1.8 + 1) * 0.25;
         armLRef.current.rotation.z = 0.3 + Math.sin(t * 1.5) * 0.15;
@@ -150,7 +187,6 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
         armLRef.current.rotation.z = 0;
         armRRef.current.rotation.z = 0;
       } else if (activity === 'frustrated') {
-        // Arms up in frustration
         armLRef.current.rotation.x = -0.8 + Math.sin(t * 6) * 0.2;
         armRRef.current.rotation.x = -0.8 + Math.sin(t * 6 + Math.PI) * 0.2;
         armLRef.current.rotation.z = 0.4;
@@ -173,19 +209,18 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
   const materialProps = useMemo(() => ({
     color,
     emissive: color,
-    emissiveIntensity: 0.3,
+    emissiveIntensity: selected ? 0.6 : 0.3,
     roughness: 0.6,
     metalness: 0.2,
-  }), [color]);
+  }), [color, selected]);
 
-  // Truncate task description for the label
   const labelText = useMemo(() => {
     if (!taskDescription) return null;
     return taskDescription.length > 40 ? taskDescription.slice(0, 37) + '...' : taskDescription;
   }, [taskDescription]);
 
   return (
-    <group ref={groupRef} position={position}>
+    <group ref={groupRef} position={position} onClick={handleClick}>
       {/* Status ring under feet */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.65, 0]}>
         <torusGeometry args={[0.35, 0.04, 8, 24]} />
@@ -198,7 +233,10 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
         />
       </mesh>
 
-      {/* Body - capsule (cylinder + 2 spheres) */}
+      {/* Selection ring (interactive mode) */}
+      {selected && <SelectionRing color={color} />}
+
+      {/* Body */}
       <mesh position={[0, 0, 0]}>
         <cylinderGeometry args={[0.15, 0.18, 0.5, 8]} />
         <meshStandardMaterial {...materialProps} />
@@ -210,7 +248,6 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
           <sphereGeometry args={[0.15, 12, 12]} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
-        {/* Eyes */}
         <mesh position={[-0.05, 0.47, 0.13]}>
           <sphereGeometry args={[0.025, 6, 6]} />
           <meshBasicMaterial color="#ffffff" />
@@ -249,24 +286,21 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
         <meshStandardMaterial {...materialProps} />
       </mesh>
 
-      {/* Name tag + activity label */}
-      <Html
-        position={[0, 0.8, 0]}
-        center
-        distanceFactor={8}
-        style={{ pointerEvents: 'none' }}
-      >
+      {/* Name tag + activity */}
+      <Html position={[0, 0.8, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
         <div
           style={{
             background: 'rgba(10,11,20,0.85)',
-            border: `1px solid ${hasError ? '#ef4444' : color}`,
+            border: `1px solid ${hasError ? '#ef4444' : selected ? '#fff' : color}`,
             borderRadius: 4,
             padding: '2px 8px',
             fontSize: 10,
             fontFamily: 'monospace',
             color: '#e2e8f0',
             whiteSpace: 'nowrap',
-            boxShadow: `0 0 8px ${hasError ? '#ef444444' : color + '44'}`,
+            boxShadow: selected
+              ? `0 0 12px ${color}88, 0 0 4px #ffffff44`
+              : `0 0 8px ${hasError ? '#ef444444' : color + '44'}`,
             textAlign: 'center',
           }}
         >
@@ -282,7 +316,7 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
         </div>
       </Html>
 
-      {/* Holographic screen for browsing agents */}
+      {/* Holographic screen for browsing */}
       {activity === 'browsing' && (
         <group position={[0, 0.6, -0.6]} rotation={[0.2, 0, 0]}>
           <mesh>
@@ -296,11 +330,8 @@ export function Agent3D({ name, color, status, position, activity, taskDescripti
         </group>
       )}
 
-      {/* Emotion aura */}
       <EmotionAura emotion={emotion} hasError={hasError} />
-
-      {/* Subtle point light per agent */}
-      <pointLight color={hasError ? '#ef4444' : color} intensity={0.3} distance={3} />
+      <pointLight color={hasError ? '#ef4444' : color} intensity={selected ? 0.6 : 0.3} distance={selected ? 5 : 3} />
     </group>
   );
 }

@@ -5,6 +5,8 @@ import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider
 import type { ConnectionStatus } from './api/gateway'
 import { MiniMap } from './components/MiniMap'
 import { ActivityFeed } from './components/ActivityFeed'
+import { AgentVoice } from './components/AgentVoice'
+import { PWAInstall } from './components/PWAInstall'
 
 const Scene = lazy(() => import('./components/Scene').then(m => ({ default: m.Scene })))
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
@@ -12,6 +14,9 @@ const MetaLearningCenter = lazy(() => import('./rooms/MetaLearningCenter'))
 const TemporalEngine = lazy(() => import('./rooms/TemporalEngine'))
 const IdentityVault = lazy(() => import('./rooms/IdentityVault'))
 const BreedingArenaPanel = lazy(() => import('./rooms/BreedingArena'))
+const SettingsPanel = lazy(() => import('./rooms/Settings'))
+const ReplayPanel = lazy(() => import('./rooms/Replay'))
+const ActivityLogPanel = lazy(() => import('./rooms/ActivityLog'))
 
 const panelRooms: Partial<Record<RoomId, React.LazyExoticComponent<React.ComponentType>>> = {
   redteam: RedTeamArena,
@@ -19,7 +24,13 @@ const panelRooms: Partial<Record<RoomId, React.LazyExoticComponent<React.Compone
   temporal: TemporalEngine,
   identity: IdentityVault,
   breeding: BreedingArenaPanel,
+  settings: SettingsPanel,
+  replay: ReplayPanel,
+  activitylog: ActivityLogPanel,
 }
+
+// Rooms that are panel-only (no 3D scene behind them)
+const panelOnlyRooms = new Set<RoomId>(['settings', 'replay', 'activitylog'])
 
 function LoadingFallback() {
   return (
@@ -49,35 +60,87 @@ function LoadingFallback() {
   )
 }
 
-export default function App() {
-  const [activeRoom, setActiveRoom] = useState<RoomId>('dream')
-  const [overviewMode, setOverviewMode] = useState(true) // Default to overview
+export interface InteractiveState {
+  selectedAgentId: string | null;
+  followingAgentId: string | null;
+  chatInput: string;
+}
 
-  // Handle room click from overview mode — zoom into room
+export default function App() {
+  const [activeRoom, setActiveRoom] = useState<RoomId>('overview')
+  const [overviewMode, setOverviewMode] = useState(true)
+  const [interactive, setInteractive] = useState<InteractiveState>({
+    selectedAgentId: null,
+    followingAgentId: null,
+    chatInput: '',
+  })
+
   const handleRoomClick = useCallback((roomId: RoomId) => {
     setActiveRoom(roomId)
     setOverviewMode(false)
   }, [])
 
-  // Escape key returns to overview
+  const handleRoomChange = useCallback((roomId: RoomId) => {
+    if (roomId === 'overview') {
+      setOverviewMode(true)
+      setActiveRoom('overview')
+    } else {
+      setActiveRoom(roomId)
+      setOverviewMode(false)
+    }
+  }, [])
+
+  const handleAgentSelect = useCallback((agentId: string | null) => {
+    setInteractive(prev => ({ ...prev, selectedAgentId: agentId, chatInput: '' }))
+  }, [])
+
+  const handleAgentFollow = useCallback((agentId: string) => {
+    setInteractive(prev => ({
+      ...prev,
+      followingAgentId: prev.followingAgentId === agentId ? null : agentId,
+    }))
+  }, [])
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setOverviewMode(true)
+        if (interactive.selectedAgentId) {
+          setInteractive({ selectedAgentId: null, followingAgentId: null, chatInput: '' })
+        } else {
+          setOverviewMode(true)
+          setActiveRoom('overview')
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [interactive.selectedAgentId])
 
+  const isPanelOnly = panelOnlyRooms.has(activeRoom)
   const PanelRoom = !overviewMode ? panelRooms[activeRoom] : undefined
 
   return (
     <DataProvider>
       <div className="w-full h-full relative">
-        <Suspense fallback={<LoadingFallback />}>
-          <Scene activeRoom={activeRoom} overviewMode={overviewMode} onRoomClick={handleRoomClick} />
-        </Suspense>
+        {/* 3D Scene — always rendered unless in panel-only room */}
+        {!isPanelOnly && (
+          <Suspense fallback={<LoadingFallback />}>
+            <Scene
+              activeRoom={activeRoom}
+              overviewMode={overviewMode}
+              onRoomClick={handleRoomClick}
+              selectedAgentId={interactive.selectedAgentId}
+              followingAgentId={interactive.followingAgentId}
+              onAgentSelect={handleAgentSelect}
+              onAgentFollow={handleAgentFollow}
+            />
+          </Suspense>
+        )}
+
+        {/* Panel-only rooms get a dark background */}
+        {isPanelOnly && !overviewMode && (
+          <div className="absolute inset-0" style={{ background: '#0a0b14' }} />
+        )}
 
         <AnimatePresence mode="wait">
           {PanelRoom && (
@@ -89,7 +152,7 @@ export default function App() {
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="absolute inset-0 z-30 pt-14 pb-16 overflow-hidden"
             >
-              <div className="w-full h-full bg-[#0a0b14]/90 backdrop-blur-md">
+              <div className={`w-full h-full ${isPanelOnly ? 'bg-[#0a0b14]' : 'bg-[#0a0b14]/90 backdrop-blur-md'}`}>
                 <Suspense fallback={<LoadingFallback />}>
                   <PanelRoom />
                 </Suspense>
@@ -98,21 +161,99 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        <InteractiveChat interactive={interactive} setInteractive={setInteractive} />
+
         <HUD
           activeRoom={activeRoom}
-          onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }}
+          onRoomChange={handleRoomChange}
           overviewMode={overviewMode}
-          onOverviewToggle={() => setOverviewMode(!overviewMode)}
+          onOverviewToggle={() => {
+            const next = !overviewMode
+            setOverviewMode(next)
+            if (next) setActiveRoom('overview')
+          }}
         />
-        {!overviewMode && <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />}
+        {!overviewMode && !isPanelOnly && (
+          <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+        )}
         <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+        <PWAInstall />
       </div>
     </DataProvider>
   )
 }
 
+/* ─── Interactive Chat Panel ─────────────────────────────────────── */
+function InteractiveChat({ interactive, setInteractive }: {
+  interactive: InteractiveState;
+  setInteractive: React.Dispatch<React.SetStateAction<InteractiveState>>;
+}) {
+  const agents = useAgents()
+  const selectedAgent = interactive.selectedAgentId
+    ? agents.find(a => a.id === interactive.selectedAgentId)
+    : null
+
+  if (!selectedAgent) return null
+
+  const handleSend = () => {
+    if (!interactive.chatInput.trim()) return
+    setInteractive(prev => ({ ...prev, chatInput: '' }))
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 glass-strong rounded-xl px-4 py-3 w-80"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-3 h-3 rounded-full" style={{ background: selectedAgent.color }} />
+        <span className="text-[12px] font-mono font-bold" style={{ color: selectedAgent.color }}>
+          {selectedAgent.name}
+        </span>
+        <span className="text-[10px] font-mono" style={{ color: '#64748b' }}>
+          {selectedAgent.status}
+        </span>
+        {interactive.followingAgentId === selectedAgent.id && (
+          <span className="text-[9px] font-mono px-1 py-0.5 rounded"
+            style={{ background: '#8b5cf620', color: '#8b5cf6' }}>FOLLOWING</span>
+        )}
+        <button
+          onClick={() => setInteractive({ selectedAgentId: null, followingAgentId: null, chatInput: '' })}
+          className="ml-auto text-[10px] cursor-pointer border-0 bg-transparent"
+          style={{ color: '#64748b' }}
+        >✕</button>
+      </div>
+      {selectedAgent.taskDescription && (
+        <div className="text-[11px] mb-2 px-2 py-1 rounded" style={{ background: '#1a1b2e', color: '#94a3b8' }}>
+          {selectedAgent.taskDescription}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={interactive.chatInput}
+          onChange={e => setInteractive(prev => ({ ...prev, chatInput: e.target.value }))}
+          onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
+          placeholder="Message this agent..."
+          className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-mono border-0"
+          style={{ background: '#12131f', color: '#e2e8f0', outline: 'none' }}
+          autoFocus
+        />
+        <button
+          onClick={handleSend}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-mono cursor-pointer border-0"
+          style={{ background: '#8b5cf620', color: '#8b5cf6' }}
+        >Send</button>
+      </div>
+    </motion.div>
+  )
+}
+
 /* ─── Room Emojis ───────────────────────────────────────────────────── */
 const roomEmojis: Record<RoomId, string> = {
+  overview: '🏠',
   genome: '🧬',
   dream: '💭',
   war: '⚔️',
@@ -121,10 +262,14 @@ const roomEmojis: Record<RoomId, string> = {
   temporal: '⏳',
   identity: '🔐',
   breeding: '🧪',
+  replay: '🎬',
+  activitylog: '📜',
+  settings: '⚙️',
 }
 
-/* ─── Room Signature Colors (updated to spec) ──────────────────────── */
+/* ─── Room Signature Colors ──────────────────────────────────────── */
 const roomColors: Record<RoomId, string> = {
+  overview: '#8b5cf6',
   genome: '#10b981',
   dream: '#8b5cf6',
   war: '#ef4444',
@@ -133,6 +278,9 @@ const roomColors: Record<RoomId, string> = {
   temporal: '#f59e0b',
   identity: '#6366f1',
   breeding: '#ec4899',
+  replay: '#a855f7',
+  activitylog: '#f59e0b',
+  settings: '#64748b',
 }
 
 /* ─── Connection Status Colors ──────────────────────────────────────── */
@@ -157,7 +305,6 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
   const roomColor = roomColors[activeRoom] || '#8b5cf6'
   const connConfig = connectionStatusConfig[connectionStatus]
 
-  // Live clock
   const [time, setTime] = useState(new Date())
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000)
@@ -178,7 +325,6 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         }}
       >
         <div className="flex items-center justify-between px-6 py-2.5">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <motion.div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white"
@@ -201,7 +347,6 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
             </div>
           </div>
 
-          {/* Room indicator (center) — shows "OFFICE OVERVIEW" when in overview */}
           <AnimatePresence mode="wait">
             <motion.div
               key={overviewMode ? 'overview' : activeRoom}
@@ -221,10 +366,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               ) : (
                 <>
                   <span className="text-base">{roomEmojis[activeRoom]}</span>
-                  <span
-                    className="text-xs tracking-widest uppercase font-mono font-medium text-glow"
-                    style={{ color: roomColor }}
-                  >
+                  <span className="text-xs tracking-widest uppercase font-mono font-medium text-glow" style={{ color: roomColor }}>
                     {currentRoomData?.name || 'Unknown'}
                   </span>
                 </>
@@ -232,9 +374,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
             </motion.div>
           </AnimatePresence>
 
-          {/* Right: status + controls */}
           <div className="flex items-center gap-4">
-            {/* Agent count */}
             <div className="hidden md:flex items-center gap-1.5">
               <span className="text-[10px] font-mono" style={{ color: '#64748b' }}>AGENTS</span>
               <motion.span
@@ -247,22 +387,21 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               </motion.span>
             </div>
 
-            {/* Overview toggle button */}
+            <AgentVoice />
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onOverviewToggle}
               className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
               style={{
-                background: overviewMode
-                  ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)'
-                  : 'rgba(139,92,246,0.12)',
+                background: overviewMode ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)' : 'rgba(139,92,246,0.12)',
                 color: overviewMode ? '#fff' : '#8b5cf6',
                 boxShadow: overviewMode ? '0 0 20px rgba(139,92,246,0.4)' : 'none',
                 transition: 'all 0.2s ease',
               }}
             >
-              {overviewMode ? 'Overview' : 'Overview'}
+              Overview
             </motion.button>
 
             <motion.button
@@ -271,9 +410,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               onClick={() => onRoomChange('identity')}
               className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
               style={{
-                background: activeRoom === 'identity' && !overviewMode
-                  ? 'linear-gradient(135deg, #f97316, #ea580c)'
-                  : 'rgba(249,115,22,0.12)',
+                background: activeRoom === 'identity' && !overviewMode ? 'linear-gradient(135deg, #f97316, #ea580c)' : 'rgba(249,115,22,0.12)',
                 color: activeRoom === 'identity' && !overviewMode ? '#fff' : '#f97316',
                 boxShadow: activeRoom === 'identity' && !overviewMode ? '0 0 20px rgba(249,115,22,0.4)' : 'none',
                 transition: 'all 0.2s ease',
@@ -282,11 +419,9 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               Mint Agent Identity
             </motion.button>
 
-            {/* Connection status dot */}
             <StatusDot color={connConfig.color} label={connConfig.label} pulse={connConfig.pulse} />
             <StatusDot color="#f59e0b" label="EVOLVING" pulse />
 
-            {/* Clock */}
             <div className="hidden lg:flex flex-col items-end">
               <span className="text-[10px] font-mono tabular-nums" style={{ color: '#e2e8f0' }}>
                 {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -296,12 +431,9 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               </span>
             </div>
 
-            <div className="text-[10px] font-mono hidden sm:block" style={{ color: '#475569' }}>
-              v0.2.0
-            </div>
+            <div className="text-[10px] font-mono hidden sm:block" style={{ color: '#475569' }}>v0.3.0</div>
           </div>
         </div>
-        {/* Gradient accent border at bottom */}
         <div
           className="h-px w-full"
           style={{
@@ -312,7 +444,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         />
       </motion.div>
 
-      {/* ── Bottom nav (pill-shaped glass container) ── */}
+      {/* ── Bottom nav ── */}
       <motion.div
         initial={{ y: 60 }}
         animate={{ y: 0 }}
@@ -322,13 +454,11 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
       >
         <motion.div
           className="glass-strong flex items-center gap-1 px-3 py-2 overflow-x-auto"
-          style={{
-            borderRadius: 20,
-            maxWidth: '100%',
-          }}
+          style={{ borderRadius: 20, maxWidth: '100%' }}
         >
           {rooms.map((room) => {
-            const isActive = activeRoom === room.id && !overviewMode
+            const isOverviewTab = room.id === 'overview'
+            const isActive = isOverviewTab ? overviewMode : activeRoom === room.id && !overviewMode
             const color = roomColors[room.id] || room.color
             return (
               <motion.button
@@ -349,7 +479,6 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               >
                 <span className="text-sm">{roomEmojis[room.id]}</span>
                 <span className="hidden sm:inline">{room.name}</span>
-
                 {isActive && (
                   <motion.div
                     layoutId="room-indicator"
@@ -386,20 +515,12 @@ function StatusDot({ color, label, pulse }: { color: string; label: string; puls
   return (
     <div className="items-center gap-1.5 hidden md:flex">
       <div className="relative">
-        <div
-          className="w-2 h-2 rounded-full"
-          style={{ background: color, boxShadow: `0 0 6px ${color}80` }}
-        />
+        <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}80` }} />
         {pulse && (
-          <div
-            className="absolute inset-0 w-2 h-2 rounded-full animate-ping"
-            style={{ background: color, opacity: 0.4 }}
-          />
+          <div className="absolute inset-0 w-2 h-2 rounded-full animate-ping" style={{ background: color, opacity: 0.4 }} />
         )}
       </div>
-      <span className="text-[10px] font-mono tracking-wider" style={{ color: '#64748b' }}>
-        {label}
-      </span>
+      <span className="text-[10px] font-mono tracking-wider" style={{ color: '#64748b' }}>{label}</span>
     </div>
   )
 }
