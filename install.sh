@@ -228,6 +228,17 @@ install_skills() {
         "adversarial-red-team"
         "project-war-room"
         "temporal-arbitrage"
+        "deep-search"
+        "execution-trace"
+        "openclaw-optimizer"
+        "self-scoring"
+        "skill-autocreator"
+        "realtime-learning"
+        "user-modeling"
+        "realtime-skill-creator"
+        "skill-mutator"
+        "genetic-evolution"
+        "dialectic-user-model"
     )
 
     for skill in "${SKILLS[@]}"; do
@@ -447,6 +458,16 @@ create_data_dirs() {
         "temporal-arbitrage/scores"
         "temporal-arbitrage/batches"
         "temporal-arbitrage/deferrals"
+        "realtime-skill-creator/patterns"
+        "realtime-skill-creator/installs"
+        "skill-mutations"
+        "evolution-runs"
+        "execution-traces"
+        "self-scores"
+        "genetic-evolution/benchmarks"
+        "user-model"
+        "user-model/updates"
+        "user-model/insights"
     )
 
     for dir in "${DIRS[@]}"; do
@@ -559,11 +580,13 @@ $CRON_MARKER
 30 5 * * * $SKILL_DIR/predictive-intent/scripts/pre-compute.sh >> $HOME/.openclaw/data/pepe/predictive-intent/cron.log 2>&1
 # Adversarial Red Team: Monthly hindsight audit on the 1st at 2 AM
 0 2 1 * * $SKILL_DIR/adversarial-red-team/scripts/contrarian-spawner.sh --audit >> $HOME/.openclaw/data/pepe/adversarial-red-team/cron.log 2>&1
+# Genetic Evolution: Run evolution cycle every 6 hours
+0 */6 * * * $SKILL_DIR/genetic-evolution/scripts/evolve.sh >> $HOME/.openclaw/data/pepe/genetic-evolution/cron.log 2>&1
 $CRON_MARKER — END"
 
     echo "$NEW_CRON" | crontab -
 
-    ok "Cron jobs installed (6 scheduled tasks)"
+    ok "Cron jobs installed (7 scheduled tasks)"
     printf "\n"
 }
 
@@ -577,7 +600,7 @@ validate() {
     DATA_DIR="$HOME/.openclaw/data/pepe"
     ERRORS=0
 
-    for skill in skill-genome predictive-intent dream-mode meta-learning adversarial-red-team project-war-room temporal-arbitrage; do
+    for skill in skill-genome predictive-intent dream-mode meta-learning adversarial-red-team project-war-room temporal-arbitrage deep-search execution-trace openclaw-optimizer self-scoring skill-autocreator realtime-learning user-modeling realtime-skill-creator skill-mutator genetic-evolution dialectic-user-model; do
         if [ -d "$SKILL_DIR/$skill" ] && [ -f "$SKILL_DIR/$skill/SKILL.md" ]; then
             ok "Skill: $skill"
         else
@@ -733,7 +756,7 @@ uninstall() {
     fi
 
     # Remove skills
-    for skill in skill-genome predictive-intent dream-mode meta-learning adversarial-red-team project-war-room temporal-arbitrage; do
+    for skill in skill-genome predictive-intent dream-mode meta-learning adversarial-red-team project-war-room temporal-arbitrage deep-search execution-trace openclaw-optimizer self-scoring skill-autocreator realtime-learning user-modeling realtime-skill-creator skill-mutator genetic-evolution dialectic-user-model; do
         if [ -d "$WORKSPACE/skills/$skill" ]; then
             rm -rf "$WORKSPACE/skills/$skill"
             ok "Removed skill: $skill"

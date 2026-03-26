@@ -13,12 +13,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.2.0-brightgreen" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.3.0-brightgreen" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/openclaw-compatible-orange" alt="OpenClaw">
   <img src="https://img.shields.io/badge/rooms-8%20interactive-purple" alt="8 Rooms">
-  <img src="https://img.shields.io/badge/skills-7%20self--evolving-green" alt="7 Skills">
+  <img src="https://img.shields.io/badge/skills-19%20self--evolving-green" alt="19 Skills">
   <img src="https://img.shields.io/badge/3D-WebGL%20%2B%20Three.js-cyan" alt="WebGL">
 </p>
 
@@ -43,14 +43,17 @@ PepeClaw gives you eyes. Eight immersive 3D rooms where you watch your agents wo
 
 ## ✨ What Makes This Different
 
-| Feature | Traditional Agent Tools | PepeClaw |
-|---------|----------------------|----------|
-| Agent visibility | Text logs, maybe a dashboard | **3D animated agents** walking between rooms, working, debating |
-| Self-improvement | Manual prompt tuning | **7 autonomous skills** that evolve nightly via autoresearch |
-| Agent breeding | Doesn't exist | **Combine agent genomes** to create hybrid offspring |
-| Emotional awareness | None | **Emotion engine** with visible auras (focused, creative, stressed) |
-| Thought transparency | Hidden | **Consciousness stream** with floating thought bubbles |
-| Agent identity | A name in a config file | **On-chain DNA** via Block Genomics — verifiable agent lineage |
+| Feature | Traditional Agent Tools | The Most Advanced Self-Evolving Systems | PepeClaw |
+|---------|----------------------|----------------------------------------|----------|
+| Agent visibility | Text logs | Dashboard | **3D animated agents** in 8 immersive rooms |
+| Self-improvement | Manual prompt tuning | Nightly cron jobs | **19 autonomous skills** — evolve in real-time AND every 6 hours |
+| Skill creation | Manual only | Background generation | **Real-time mid-conversation** skill drafting + user approval |
+| Skill repair | Re-deploy | Post-hoc rewrite | **Live mutation** — fixes skills the instant they fail |
+| Prompt evolution | DSPy/GEPA (heavy deps) | External ML frameworks | **Zero-dependency genetic evolution** — native bash + agent reasoning |
+| User understanding | Flat facts file | Hosted API (Honcho) | **6-dimension dialectic model** — local, private, incremental |
+| Agent breeding | Doesn't exist | Doesn't exist | **Combine agent genomes** to create hybrid offspring |
+| Emotional awareness | None | None | **Emotion engine** with visible auras |
+| Agent identity | Config file | Config file | **On-chain DNA** via Block Genomics |
 
 ---
 
@@ -111,7 +114,9 @@ Agent identity, verified on Bitcoin. A vault door with rotating gear mechanism a
 
 ## Self-Evolving Skills
 
-PepeClaw includes 7 autonomous skills that make your agent self-improving:
+PepeClaw includes 19 autonomous skills that make your agent self-improving — more than any other self-evolving agent system:
+
+### Core Evolution Skills (8)
 
 | Skill | What It Does | When It Runs |
 |-------|-------------|--------------|
@@ -124,7 +129,28 @@ PepeClaw includes 7 autonomous skills that make your agent self-improving:
 | ⏰ **Temporal Arbitrage** | Task scheduling optimization | Continuous |
 | 🌙 **Nightly Evolution** | 15-min autoresearch loops reviewing the day's work | Midnight daily |
 
-**Every night, your agent gets smarter.** The Nightly Evolution skill runs Karpathy-style autoresearch loops at midnight — reviewing conversations, finding mistakes, optimizing workflows, and applying improvements. Compound intelligence, on autopilot.
+### Advanced Intelligence Skills (7)
+
+| Skill | What It Does | When It Runs |
+|-------|-------------|--------------|
+| 🔍 **Deep Search** | Advanced multi-source search with fallback chains | Per query |
+| 📝 **Execution Trace** | Full tool-call tracing for debugging and evolution | Continuous |
+| 🎯 **OpenClaw Optimizer** | System-wide performance tuning | Daily |
+| 📈 **Self-Scoring** | Autonomous quality self-evaluation | Per response |
+| 🤖 **Skill Autocreator** | Background skill generation from usage patterns | Nightly |
+| 🧩 **Realtime Learning** | In-session knowledge acquisition | Continuous |
+| 👤 **User Modeling** | Basic user preference tracking | Per session |
+
+### Gap-Closing Skills (4) — NEW in v0.3.0
+
+| Skill | What It Does | When It Runs |
+|-------|-------------|--------------|
+| ⚡ **Realtime Skill Creator** | Creates skill drafts MID-CONVERSATION when patterns repeat 3+ times | **Real-time** |
+| 🔧 **Skill Mutator** | Edits SKILL.md files on the spot when they give wrong guidance | **Real-time** |
+| 🧬 **Genetic Evolution** | Zero-dependency prompt evolution engine (our own GEPA) | **Every 6 hours** |
+| 🧠 **Dialectic User Model** | 6-dimension user cognition model (our own Honcho) | **Post-session** |
+
+**Your agent evolves 24/7.** Real-time skill creation and mutation happen during conversations. Genetic evolution runs every 6 hours. Nightly evolution runs Karpathy-style autoresearch loops at midnight. The dialectic user model learns how you think, not just what you say. No external dependencies — everything runs locally.
 
 ---
 
@@ -214,7 +240,7 @@ src/
 ├── data/mockData.ts             # Types + mock data for offline use
 └── App.tsx                      # HUD + navigation + glass-morphism shell
 
-skills/                          # 8 self-evolving OpenClaw skills
+skills/                          # 19 self-evolving OpenClaw skills
 tests/                           # 73 tests (Vitest)
 ```
 
