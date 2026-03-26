@@ -26,12 +26,14 @@ const priorityColor: Record<TimelineTask['priority'], string> = {
 };
 
 // ─── Hourglass ───────────────────────────────────────────────────────
+// Pre-computed random offsets for hourglass particles
+const hourglassOffsets = Array.from({ length: 12 }, () => (Math.random() - 0.5) * 8);
+
 function Hourglass() {
-  // Generate sand particles falling from top to bottom
   const particles = Array.from({ length: 12 }, (_, i) => ({
     id: i,
     delay: i * 0.35,
-    x: (Math.random() - 0.5) * 8,
+    x: hourglassOffsets[i],
   }));
 
   return (
@@ -189,7 +191,7 @@ export default function TemporalEngine() {
         ...b,
         tasks: tasks.filter((t) => t.batchId === b.id),
       })),
-    [],
+    [batches, tasks],
   );
 
   // Batch summaries
@@ -200,18 +202,18 @@ export default function TemporalEngine() {
         const total = bg.tasks.length;
         return { ...bg, total, done, pct: total > 0 ? (done / total) * 100 : 0 };
       }),
-    [],
+    [batchGroups],
   );
 
   // Procrastination list sorted by deferrals desc
   const procrastinators = useMemo(
     () => [...tasks].filter((t) => t.deferrals > 0).sort((a, b) => b.deferrals - a.deferrals),
-    [],
+    [tasks],
   );
 
   const maxDeferrals = useMemo(
     () => Math.max(...procrastinators.map((t) => t.deferrals), 1),
-    [],
+    [procrastinators],
   );
 
   const timeUnits = Array.from({ length: 13 }, (_, i) => i); // 0-12

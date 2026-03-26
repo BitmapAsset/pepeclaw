@@ -125,9 +125,9 @@ function ConnectionLine({ from, to }: { from: [number, number, number]; to: [num
   )
 }
 
-function DreamNodeSphere({ node }: { node: typeof dreamNodes[0] }) {
+function DreamNodeSphere({ node, floatSpeed }: { node: typeof dreamNodes[0]; floatSpeed: number }) {
   return (
-    <Float speed={0.8 + Math.random()} rotationIntensity={0.05} floatIntensity={0.5}>
+    <Float speed={floatSpeed} rotationIntensity={0.05} floatIntensity={0.5}>
       <group position={[node.x, node.y, node.z]}>
         {/* Node sphere */}
         <mesh>
@@ -212,6 +212,11 @@ export function DreamChamber() {
     return conns
   }, [nodeMap])
 
+  const floatSpeeds = useMemo(
+    () => dreamNodes.map(() => 0.8 + Math.random()),
+    [],
+  )
+
   return (
     <group>
       <Starfield />
@@ -241,8 +246,8 @@ export function DreamChamber() {
         <ConnectionLine key={i} from={conn.from} to={conn.to} />
       ))}
 
-      {dreamNodes.map(node => (
-        <DreamNodeSphere key={node.id} node={node} />
+      {dreamNodes.map((node, i) => (
+        <DreamNodeSphere key={node.id} node={node} floatSpeed={floatSpeeds[i]} />
       ))}
 
       {/* Ethereal lighting */}

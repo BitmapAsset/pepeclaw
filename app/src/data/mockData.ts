@@ -25,7 +25,7 @@ export interface Project {
   alerts: string[];
 }
 
-export type RoomId = 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal';
+export type RoomId = 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity';
 
 // ─── Genome Lab Data ────────────────────────────────────────────────
 export const skills: Skill[] = [
@@ -50,7 +50,7 @@ export const dreamNodes: DreamNode[] = [
 
 // ─── War Room Data ──────────────────────────────────────────────────
 export const projects: Project[] = [
-  { name: 'Anima Core', health: 94, velocity: [65, 72, 80, 78, 85, 91, 94], status: 'green', alerts: [] },
+  { name: 'PepeClaw Core', health: 94, velocity: [65, 72, 80, 78, 85, 91, 94], status: 'green', alerts: [] },
   { name: 'Skill Evolution', health: 67, velocity: [45, 52, 48, 55, 60, 58, 67], status: 'yellow', alerts: ['Mutation rate above threshold'] },
   { name: 'Dream Engine', health: 82, velocity: [70, 68, 75, 79, 82, 80, 82], status: 'green', alerts: [] },
   { name: 'Red Team', health: 38, velocity: [30, 35, 28, 32, 40, 36, 38], status: 'red', alerts: ['3 critical debates unresolved', 'Bias detector offline'] },
@@ -65,6 +65,7 @@ export const rooms: { id: RoomId; name: string; position: [number, number, numbe
   { id: 'redteam', name: 'Red Team Arena', position: [16, 0, 0], color: '#f87171' },
   { id: 'metalearning', name: 'Meta-Learning', position: [24, 0, 0], color: '#06b6d4' },
   { id: 'temporal', name: 'Temporal Engine', position: [32, 0, 0], color: '#f59e0b' },
+  { id: 'identity', name: 'Identity Vault', position: [40, 0, 0], color: '#f97316' },
 ];
 
 // ─── Red Team Arena Data ─────────────────────────────────────────────

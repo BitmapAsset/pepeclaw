@@ -20,4 +20,11 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Three.js 3D components use Math.random() in useMemo/useRef for one-time particle init
+    files: ['src/rooms/GenomeLab.tsx', 'src/rooms/DreamChamber.tsx', 'src/rooms/WarRoom.tsx'],
+    rules: {
+      'react-hooks/purity': 'off',
+    },
+  },
 ])

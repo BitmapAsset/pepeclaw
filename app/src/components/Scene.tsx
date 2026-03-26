@@ -48,6 +48,7 @@ const roomPositions: Record<RoomId, [number, number, number]> = {
   redteam: [28, 0, 0],
   metalearning: [42, 0, 0],
   temporal: [56, 0, 0],
+  identity: [70, 0, 0],
 }
 
 function SceneContent({ activeRoom }: { activeRoom: RoomId }) {
