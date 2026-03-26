@@ -25,7 +25,7 @@ export interface Project {
   alerts: string[];
 }
 
-export type RoomId = 'genome' | 'dream' | 'war';
+export type RoomId = 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal';
 
 // ─── Genome Lab Data ────────────────────────────────────────────────
 export const skills: Skill[] = [
@@ -62,6 +62,9 @@ export const rooms: { id: RoomId; name: string; position: [number, number, numbe
   { id: 'genome', name: 'Genome Lab', position: [-8, 0, 0], color: '#00ff88' },
   { id: 'dream', name: 'Dream Chamber', position: [0, 0, 0], color: '#8b5cf6' },
   { id: 'war', name: 'War Room', position: [8, 0, 0], color: '#ef4444' },
+  { id: 'redteam', name: 'Red Team Arena', position: [16, 0, 0], color: '#f87171' },
+  { id: 'metalearning', name: 'Meta-Learning', position: [24, 0, 0], color: '#06b6d4' },
+  { id: 'temporal', name: 'Temporal Engine', position: [32, 0, 0], color: '#f59e0b' },
 ];
 
 // ─── Red Team Arena Data ─────────────────────────────────────────────
