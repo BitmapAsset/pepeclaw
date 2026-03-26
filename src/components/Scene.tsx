@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
@@ -15,16 +15,18 @@ import { ConsciousnessStream } from './ConsciousnessStream'
 import { useAgents } from '../api/DataProvider'
 import type { RoomId } from '../data/mockData'
 import type { AgentActivity } from './Agent3D'
+import type { AgentState } from '../api/gateway'
 
+// Grid layout: 4 columns x 2 rows for isometric overview
 const roomPositions: Record<RoomId, [number, number, number]> = {
-  genome: [-14, 0, 0],
-  dream: [0, 0, 0],
-  war: [14, 0, 0],
-  redteam: [28, 0, 0],
-  metalearning: [42, 0, 0],
-  temporal: [56, 0, 0],
-  identity: [70, 0, 0],
-  breeding: [84, 0, 0],
+  genome:       [-15, 0, -10],
+  dream:        [0,   0, -10],
+  war:          [15,  0, -10],
+  redteam:      [30,  0, -10],
+  metalearning: [-15, 0,  10],
+  temporal:     [0,   0,  10],
+  identity:     [15,  0,  10],
+  breeding:     [30,  0,  10],
 }
 
 const roomAmbience: Record<RoomId, { color: string; intensity: number }> = {
@@ -41,7 +43,7 @@ const roomAmbience: Record<RoomId, { color: string; intensity: number }> = {
 const agentRoomOffsets: Record<string, [number, number, number][]> = {
   genome: [[2, -0.2, 2], [-2, -0.2, 2]],
   dream: [[0, 1, 3], [2, 0.5, -2]],
-  war: [[-5, -0.2, 2], [5, -0.2, 2]],
+  war: [[-3, -0.2, 2], [3, -0.2, 2]],
   redteam: [[-3, 0.8, 2], [3, 0.8, 2]],
   metalearning: [[2, -0.2, 3]],
   temporal: [[-3, -0.2, 3]],
@@ -49,7 +51,7 @@ const agentRoomOffsets: Record<string, [number, number, number][]> = {
   breeding: [[-3, -0.2, 3], [3, -0.2, 3]],
 }
 
-const agentActivities: Record<string, AgentActivity> = {
+const defaultAgentActivities: Record<string, AgentActivity> = {
   genome: 'examining',
   dream: 'meditating',
   war: 'strategizing',
@@ -60,23 +62,46 @@ const agentActivities: Record<string, AgentActivity> = {
   breeding: 'breeding',
 }
 
-function CameraRig({ target }: { target: [number, number, number] }) {
+/** Map real agent session data to 3D activity */
+function mapAgentToActivity(agent: AgentState): AgentActivity {
+  if (agent.hasError) return 'frustrated';
+  if (agent.hasSubAgents) return 'meeting';
+  if (agent.isSearching) return 'browsing';
+  if (agent.status === 'working' && agent.activity === 'processing') return 'typing';
+  if (agent.status === 'idle') return 'walking';
+  // Fall back to room-based activity
+  return defaultAgentActivities[agent.currentRoom] ?? 'examining';
+}
+
+// Overview camera position (isometric, high up, looking at center)
+const OVERVIEW_CENTER = new THREE.Vector3(7.5, 0, 0);
+const OVERVIEW_CAM_POS = new THREE.Vector3(7.5 + 25, 35, 40);
+
+// Pre-create vectors for CameraRig (avoids allocations in useFrame)
+const _lerpTarget = new THREE.Vector3();
+const _lerpCamPos = new THREE.Vector3();
+
+function CameraRig({ target, overviewMode }: { target: [number, number, number]; overviewMode: boolean }) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const targetVec = useRef(new THREE.Vector3(...target))
 
   useFrame(() => {
-    targetVec.current.lerp(new THREE.Vector3(...target), 0.04)
-    if (cameraRef.current) {
-      cameraRef.current.position.lerp(
-        new THREE.Vector3(
-          targetVec.current.x + 6,
-          targetVec.current.y + 8,
-          targetVec.current.z + 10,
-        ),
-        0.04,
-      )
-      cameraRef.current.lookAt(targetVec.current)
+    if (!cameraRef.current) return;
+
+    if (overviewMode) {
+      targetVec.current.lerp(OVERVIEW_CENTER, 0.04);
+      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, 0.04);
+    } else {
+      _lerpTarget.set(target[0], target[1], target[2]);
+      targetVec.current.lerp(_lerpTarget, 0.04);
+      _lerpCamPos.set(
+        targetVec.current.x + 6,
+        targetVec.current.y + 8,
+        targetVec.current.z + 10,
+      );
+      cameraRef.current.position.lerp(_lerpCamPos, 0.04);
     }
+    cameraRef.current.lookAt(targetVec.current);
   })
 
   return <PerspectiveCamera ref={cameraRef} makeDefault position={[6, 8, 10]} fov={50} />
@@ -84,12 +109,32 @@ function CameraRig({ target }: { target: [number, number, number] }) {
 
 function FloorGrid() {
   return (
-    <group position={[35, -4, 0]}>
-      <gridHelper args={[120, 120, '#1a1b2e', '#12131f']} />
+    <group position={[7.5, -4, 0]}>
+      <gridHelper args={[80, 80, '#1a1b2e', '#12131f']} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <planeGeometry args={[120, 40]} />
+        <planeGeometry args={[80, 50]} />
         <meshStandardMaterial color="#08090e" transparent opacity={0.8} />
       </mesh>
+    </group>
+  )
+}
+
+// Shared geometry for room floor borders (avoids re-creation)
+const _roomFloorPlane = new THREE.PlaneGeometry(12, 12);
+const _roomFloorEdges = new THREE.EdgesGeometry(_roomFloorPlane);
+
+/** Room floor marker — subtle glowing border around each room area */
+function RoomFloorMarker({ position, color }: { position: [number, number, number]; color: string }) {
+  return (
+    <group position={[position[0], -3.98, position[2]]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[12, 12]} />
+        <meshBasicMaterial color={color} transparent opacity={0.03} />
+      </mesh>
+      {/* Border lines */}
+      <lineSegments rotation={[-Math.PI / 2, 0, 0]} geometry={_roomFloorEdges}>
+        <lineBasicMaterial color={color} transparent opacity={0.15} />
+      </lineSegments>
     </group>
   )
 }
@@ -97,7 +142,6 @@ function FloorGrid() {
 function RoomAgents() {
   const agents = useAgents()
 
-  // Build agent position map for consciousness stream
   const agentPositionMap = useMemo(() => {
     const map = new Map<string, [number, number, number]>()
     agents.forEach(agent => {
@@ -120,7 +164,7 @@ function RoomAgents() {
       {agents.map((agent) => {
         const pos = agentPositionMap.get(agent.id)
         if (!pos) return null
-        const activity = agentActivities[agent.currentRoom]
+        const activity = mapAgentToActivity(agent)
 
         return (
           <Agent3D
@@ -130,11 +174,12 @@ function RoomAgents() {
             status={agent.status}
             position={pos}
             activity={activity}
+            taskDescription={agent.taskDescription}
+            hasError={agent.hasError}
           />
         )
       })}
 
-      {/* Consciousness Stream — thought bubbles & neural pathways */}
       <ConsciousnessStream agentPositions={agentPositionMap} />
     </>
   )
@@ -152,7 +197,7 @@ function RoomAmbientLight({ activeRoom }: { activeRoom: RoomId }) {
     }
   })
 
-  return <pointLight ref={ref} position={[0, 10, 0]} intensity={roomAmbience[activeRoom].intensity} distance={50} />
+  return <pointLight ref={ref} position={[7.5, 10, 0]} intensity={roomAmbience[activeRoom].intensity} distance={60} />
 }
 
 function GlobalParticles() {
@@ -162,9 +207,9 @@ function GlobalParticles() {
     const count = 200
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 120 + 35
+      pos[i * 3] = (Math.random() - 0.5) * 80 + 7.5
       pos[i * 3 + 1] = Math.random() * 15 - 2
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 30
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 40
     }
     return pos
   }, [])
@@ -190,15 +235,42 @@ function GlobalParticles() {
   )
 }
 
-function SceneContent({ activeRoom }: { activeRoom: RoomId }) {
+/** Clickable room hitbox for overview mode */
+function RoomClickTarget({ roomId, position, onRoomClick }: {
+  roomId: RoomId;
+  position: [number, number, number];
+  onRoomClick: (roomId: RoomId) => void;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const handleClick = useCallback(() => onRoomClick(roomId), [roomId, onRoomClick]);
+
+  return (
+    <mesh
+      ref={meshRef}
+      position={[position[0], -3.5, position[2]]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      onClick={handleClick}
+      visible={false}
+    >
+      <planeGeometry args={[12, 12]} />
+      <meshBasicMaterial transparent opacity={0} />
+    </mesh>
+  )
+}
+
+function SceneContent({ activeRoom, overviewMode, onRoomClick }: {
+  activeRoom: RoomId;
+  overviewMode: boolean;
+  onRoomClick: (roomId: RoomId) => void;
+}) {
   return (
     <>
-      <CameraRig target={roomPositions[activeRoom]} />
+      <CameraRig target={roomPositions[activeRoom]} overviewMode={overviewMode} />
       <OrbitControls
-        enablePan={false}
+        enablePan={overviewMode}
         enableZoom
-        minDistance={6}
-        maxDistance={25}
+        minDistance={overviewMode ? 20 : 6}
+        maxDistance={overviewMode ? 80 : 25}
         maxPolarAngle={Math.PI / 2.2}
       />
 
@@ -209,6 +281,25 @@ function SceneContent({ activeRoom }: { activeRoom: RoomId }) {
 
       <FloorGrid />
       <GlobalParticles />
+
+      {/* Room floor markers (visible in overview) */}
+      {(Object.keys(roomPositions) as RoomId[]).map(roomId => (
+        <RoomFloorMarker
+          key={roomId}
+          position={roomPositions[roomId]}
+          color={roomAmbience[roomId].color}
+        />
+      ))}
+
+      {/* Clickable targets for overview mode */}
+      {overviewMode && (Object.keys(roomPositions) as RoomId[]).map(roomId => (
+        <RoomClickTarget
+          key={`click-${roomId}`}
+          roomId={roomId}
+          position={roomPositions[roomId]}
+          onRoomClick={onRoomClick}
+        />
+      ))}
 
       {/* All 8 rooms */}
       <group position={roomPositions.genome}>
@@ -249,7 +340,11 @@ function SceneContent({ activeRoom }: { activeRoom: RoomId }) {
   )
 }
 
-export function Scene({ activeRoom }: { activeRoom: RoomId }) {
+export function Scene({ activeRoom, overviewMode, onRoomClick }: {
+  activeRoom: RoomId;
+  overviewMode: boolean;
+  onRoomClick: (roomId: RoomId) => void;
+}) {
   return (
     <Canvas
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
@@ -257,8 +352,8 @@ export function Scene({ activeRoom }: { activeRoom: RoomId }) {
       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
     >
       <color attach="background" args={['#0a0b14']} />
-      <fog attach="fog" args={['#0a0b14', 25, 55]} />
-      <SceneContent activeRoom={activeRoom} />
+      <fog attach="fog" args={['#0a0b14', 30, 70]} />
+      <SceneContent activeRoom={activeRoom} overviewMode={overviewMode} onRoomClick={onRoomClick} />
     </Canvas>
   )
 }

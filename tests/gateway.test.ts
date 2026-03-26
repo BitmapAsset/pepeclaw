@@ -4,12 +4,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const MOCK_GATEWAY_URL = 'http://localhost:3033';
 
 describe('Gateway API Client', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.stubGlobal('fetch', vi.fn());
+
+    // Mock the discovery probe so gateway resolves localhost:3033
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [], timestamp: Date.now() }),
+    });
+
+    const { discoverGateway } = await import('../src/api/gateway');
+    await discoverGateway();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.resetModules();
   });
 
   it('returns data on successful response', async () => {
@@ -55,13 +65,13 @@ describe('Gateway API Client', () => {
     const ac = new AbortController();
     await gateway.getSkills(ac.signal);
 
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(callArgs[0]).toContain('/api/v1/skills');
+    // fetch is called for discovery probe + getSkills
+    const lastCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1)!;
+    expect(lastCall[0]).toContain('/api/v1/skills');
   });
 
   it('includes correct headers', async () => {
-    const mockData = [];
+    const mockData: unknown[] = [];
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: mockData, timestamp: Date.now() }),
@@ -70,8 +80,8 @@ describe('Gateway API Client', () => {
     const { gateway } = await import('../src/api/gateway');
     await gateway.getSkills();
 
-    const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(callArgs[1].headers).toEqual({ Accept: 'application/json' });
+    const lastCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.at(-1)!;
+    expect(lastCall[1].headers).toEqual({ Accept: 'application/json' });
   });
 
   it('all endpoints use correct paths', async () => {

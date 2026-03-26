@@ -7,6 +7,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     chunkSizeWarningLimit: 1100,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/three/')) return 'three';
+          if (id.includes('node_modules/@react-three/')) return 'react-three';
+          if (id.includes('node_modules/framer-motion/')) return 'framer';
+        },
+      },
+    },
   },
   test: {
     globals: true,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pepe 2.0 Installer — Self-Evolving Agent System for OpenClaw
+# PepeClaw + Pepe 2.0 Installer — Self-Evolving Agent System for OpenClaw
 # Usage: curl -fsSL https://raw.githubusercontent.com/openclaw/pepe-2.0/main/install.sh | bash
 # Or:    ./install.sh
 set -euo pipefail
@@ -8,8 +8,10 @@ set -euo pipefail
 # Configuration
 # ─────────────────────────────────────────────────────────────
 PEPE_VERSION="2.0.0"
+PEPECLAW_PORT="${PEPECLAW_PORT:-5173}"
 REQUIRED_BASH_VERSION=4
 REPO_URL="https://github.com/openclaw/pepe-2.0.git"
+PEPECLAW_SERVICE_NAME="com.openclaw.pepeclaw"
 
 # Colors (only if terminal supports them)
 if [ -t 1 ] && command -v tput >/dev/null 2>&1; then
@@ -36,10 +38,10 @@ banner() {
     cat <<'ART'
     ╔═══════════════════════════════════════════╗
     ║                                           ║
-    ║    🐸  P E P E   2 . 0                    ║
+    ║    🐸  P E P E C L A W                    ║
     ║                                           ║
-    ║    Self-Evolving Agent System              ║
-    ║    for OpenClaw                            ║
+    ║    3D AI Agent Visualizer + Self-Evolving  ║
+    ║    Agent System for OpenClaw               ║
     ║                                           ║
     ╚═══════════════════════════════════════════╝
 ART
@@ -57,6 +59,30 @@ preflight() {
         fail "Bash $REQUIRED_BASH_VERSION+ required (found ${BASH_VERSION}). On macOS: brew install bash"
     fi
     ok "Bash ${BASH_VERSION}"
+
+    # Check for Node.js
+    if ! command -v node >/dev/null 2>&1; then
+        warn "Node.js not found. Attempting to install via nvm..."
+        install_nodejs
+    else
+        NODE_VER=$(node --version 2>/dev/null || echo "unknown")
+        NODE_MAJOR=$(echo "$NODE_VER" | sed 's/v//' | cut -d. -f1)
+        if [ "$NODE_MAJOR" -lt 18 ] 2>/dev/null; then
+            warn "Node.js $NODE_VER is too old (need 18+). Attempting upgrade via nvm..."
+            install_nodejs
+        else
+            ok "Node.js $NODE_VER"
+        fi
+    fi
+
+    # Check for npm (or fallback info)
+    if command -v npm >/dev/null 2>&1; then
+        ok "npm $(npm --version 2>/dev/null)"
+    elif command -v npx >/dev/null 2>&1; then
+        warn "npm not found but npx is available. Will use npx where possible."
+    else
+        fail "Neither npm nor npx found. Install Node.js first: https://nodejs.org"
+    fi
 
     # Check for jq
     if ! command -v jq >/dev/null 2>&1; then
@@ -84,7 +110,6 @@ preflight() {
     # Check for crontab
     if ! command -v crontab >/dev/null 2>&1; then
         warn "crontab not found. Scheduled tasks (Dream Mode, War Room) will not run automatically."
-        warn "You can run them manually or set up an alternative scheduler."
         HAS_CRON=false
     else
         ok "cron available"
@@ -99,7 +124,12 @@ preflight() {
     elif [ -d "$HOME/.openclaw" ]; then
         WORKSPACE="$HOME/.openclaw"
     else
-        fail "OpenClaw workspace not found. Set OPENCLAW_WORKSPACE or install OpenClaw first."
+        warn "OpenClaw workspace not found."
+        warn "Install OpenClaw first: https://openclaw.ai"
+        warn "Or set OPENCLAW_WORKSPACE to your workspace directory."
+        warn "Continuing with default location: $HOME/.openclaw"
+        WORKSPACE="$HOME/.openclaw"
+        mkdir -p "$WORKSPACE"
     fi
     ok "OpenClaw workspace: $WORKSPACE"
 
@@ -115,16 +145,52 @@ preflight() {
 }
 
 # ─────────────────────────────────────────────────────────────
+# Install Node.js via nvm
+# ─────────────────────────────────────────────────────────────
+install_nodejs() {
+    if command -v nvm >/dev/null 2>&1; then
+        info "nvm found. Installing Node.js 20 LTS..."
+        nvm install 20
+        nvm use 20
+    elif [ -s "$HOME/.nvm/nvm.sh" ]; then
+        info "Loading nvm from ~/.nvm..."
+        # shellcheck source=/dev/null
+        . "$HOME/.nvm/nvm.sh"
+        nvm install 20
+        nvm use 20
+    else
+        info "Installing nvm..."
+        if command -v curl >/dev/null 2>&1; then
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        elif command -v wget >/dev/null 2>&1; then
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        else
+            fail "Cannot install nvm. Install Node.js manually: https://nodejs.org"
+        fi
+
+        export NVM_DIR="$HOME/.nvm"
+        # shellcheck source=/dev/null
+        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+        nvm install 20
+        nvm use 20
+    fi
+
+    if command -v node >/dev/null 2>&1; then
+        ok "Node.js $(node --version) installed via nvm"
+    else
+        fail "Failed to install Node.js. Install it manually: https://nodejs.org"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────
 # Determine Source Directory
 # ─────────────────────────────────────────────────────────────
 find_source() {
-    # If running from a cloned repo, use local files
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [ -d "$SCRIPT_DIR/skills" ]; then
+    if [ -d "$SCRIPT_DIR/skills" ] || [ -f "$SCRIPT_DIR/package.json" ]; then
         SOURCE_DIR="$SCRIPT_DIR"
         info "Installing from local directory: $SOURCE_DIR"
     else
-        # Download from GitHub
         info "Downloading Pepe 2.0 from GitHub..."
         TMPDIR=$(mktemp -d)
         trap 'rm -rf "$TMPDIR"' EXIT
@@ -144,6 +210,11 @@ find_source() {
 # Install Skills
 # ─────────────────────────────────────────────────────────────
 install_skills() {
+    if [ ! -d "$SOURCE_DIR/skills" ]; then
+        warn "No skills directory found in source. Skipping skill installation."
+        return
+    fi
+
     info "Installing skills..."
 
     SKILL_DIR="$WORKSPACE/skills"
@@ -161,7 +232,6 @@ install_skills() {
 
     for skill in "${SKILLS[@]}"; do
         if [ -d "$SOURCE_DIR/skills/$skill" ]; then
-            # Back up existing skill if present
             if [ -d "$SKILL_DIR/$skill" ]; then
                 backup="$SKILL_DIR/${skill}.backup.$(date +%Y%m%d%H%M%S)"
                 warn "Existing skill '$skill' found. Backing up to $backup"
@@ -170,7 +240,6 @@ install_skills() {
 
             cp -r "$SOURCE_DIR/skills/$skill" "$SKILL_DIR/$skill"
 
-            # Make scripts executable
             if [ -d "$SKILL_DIR/$skill/scripts" ]; then
                 chmod +x "$SKILL_DIR/$skill/scripts/"*.sh 2>/dev/null || true
             fi
@@ -182,6 +251,168 @@ install_skills() {
     done
 
     printf "\n"
+}
+
+# ─────────────────────────────────────────────────────────────
+# Build PepeClaw 3D Viewer
+# ─────────────────────────────────────────────────────────────
+build_pepeclaw() {
+    if [ ! -f "$SOURCE_DIR/package.json" ]; then
+        warn "No package.json found. Skipping PepeClaw build."
+        return
+    fi
+
+    info "Building PepeClaw 3D Viewer..."
+
+    PEPECLAW_DIR="$HOME/.openclaw/pepeclaw"
+    mkdir -p "$PEPECLAW_DIR"
+
+    # Install dependencies
+    cd "$SOURCE_DIR"
+    if command -v npm >/dev/null 2>&1; then
+        npm install --production=false 2>/dev/null || npm install
+        npm run build
+    elif command -v npx >/dev/null 2>&1; then
+        npx --yes npm install
+        npx --yes npm run build
+    else
+        fail "npm or npx required to build PepeClaw"
+    fi
+
+    # Copy built files
+    if [ -d "$SOURCE_DIR/dist" ]; then
+        cp -r "$SOURCE_DIR/dist/"* "$PEPECLAW_DIR/"
+        ok "PepeClaw built and installed to $PEPECLAW_DIR"
+    else
+        warn "Build output not found. PepeClaw may not have built correctly."
+    fi
+
+    printf "\n"
+}
+
+# ─────────────────────────────────────────────────────────────
+# Auto-Start PepeClaw Server
+# ─────────────────────────────────────────────────────────────
+setup_autostart() {
+    PEPECLAW_DIR="$HOME/.openclaw/pepeclaw"
+
+    if [ ! -d "$PEPECLAW_DIR" ]; then
+        warn "PepeClaw not built. Skipping auto-start setup."
+        return
+    fi
+
+    info "Setting up PepeClaw auto-start..."
+
+    OS="$(uname -s)"
+    case "$OS" in
+        Darwin)
+            setup_launchd
+            ;;
+        Linux)
+            setup_systemd
+            ;;
+        *)
+            warn "Auto-start not supported on $OS. Run manually: npx serve $PEPECLAW_DIR -l $PEPECLAW_PORT"
+            ;;
+    esac
+
+    printf "\n"
+}
+
+setup_launchd() {
+    PLIST_DIR="$HOME/Library/LaunchAgents"
+    PLIST_FILE="$PLIST_DIR/$PEPECLAW_SERVICE_NAME.plist"
+    PEPECLAW_DIR="$HOME/.openclaw/pepeclaw"
+
+    mkdir -p "$PLIST_DIR"
+
+    # Find npx or node path
+    NPX_PATH=$(command -v npx 2>/dev/null || echo "/usr/local/bin/npx")
+
+    # Unload existing service if present (upgrade path)
+    if [ -f "$PLIST_FILE" ]; then
+        launchctl unload "$PLIST_FILE" 2>/dev/null || true
+        warn "Existing PepeClaw service found. Upgrading..."
+    fi
+
+    cat > "$PLIST_FILE" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${PEPECLAW_SERVICE_NAME}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${NPX_PATH}</string>
+        <string>serve</string>
+        <string>${PEPECLAW_DIR}</string>
+        <string>-l</string>
+        <string>${PEPECLAW_PORT}</string>
+        <string>-s</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>${HOME}/.openclaw/pepeclaw/server.log</string>
+    <key>StandardErrorPath</key>
+    <string>${HOME}/.openclaw/pepeclaw/server.err</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:${HOME}/.nvm/versions/node/v20/bin</string>
+    </dict>
+</dict>
+</plist>
+PLIST
+
+    launchctl load "$PLIST_FILE" 2>/dev/null || {
+        warn "Could not load launchd service. You may need to run:"
+        warn "  launchctl load $PLIST_FILE"
+    }
+
+    ok "macOS LaunchAgent installed (starts on login)"
+}
+
+setup_systemd() {
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    SERVICE_FILE="$SYSTEMD_DIR/pepeclaw.service"
+    PEPECLAW_DIR="$HOME/.openclaw/pepeclaw"
+
+    mkdir -p "$SYSTEMD_DIR"
+
+    NPX_PATH=$(command -v npx 2>/dev/null || echo "/usr/local/bin/npx")
+
+    cat > "$SERVICE_FILE" <<SERVICE
+[Unit]
+Description=PepeClaw 3D AI Agent Visualizer
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=${NPX_PATH} serve ${PEPECLAW_DIR} -l ${PEPECLAW_PORT} -s
+Restart=on-failure
+RestartSec=5
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
+SERVICE
+
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable pepeclaw.service 2>/dev/null || true
+        systemctl --user start pepeclaw.service 2>/dev/null || {
+            warn "Could not start systemd service. You may need to run:"
+            warn "  systemctl --user start pepeclaw.service"
+        }
+        ok "systemd user service installed and started"
+    else
+        warn "systemctl not found. Service file written to $SERVICE_FILE"
+        warn "Start manually: npx serve $PEPECLAW_DIR -l $PEPECLAW_PORT -s"
+    fi
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -307,10 +538,8 @@ setup_cron() {
     SKILL_DIR="$WORKSPACE/skills"
     CRON_MARKER="# Pepe 2.0 — Managed by install.sh"
 
-    # Read existing crontab (suppress error if empty)
     EXISTING_CRON=$(crontab -l 2>/dev/null || true)
 
-    # Check if already installed
     if echo "$EXISTING_CRON" | grep -q "$CRON_MARKER"; then
         warn "Cron jobs already installed. Skipping. (Run 'crontab -e' to modify.)"
         return
@@ -348,7 +577,6 @@ validate() {
     DATA_DIR="$HOME/.openclaw/data/pepe"
     ERRORS=0
 
-    # Check skills installed
     for skill in skill-genome predictive-intent dream-mode meta-learning adversarial-red-team project-war-room temporal-arbitrage; do
         if [ -d "$SKILL_DIR/$skill" ] && [ -f "$SKILL_DIR/$skill/SKILL.md" ]; then
             ok "Skill: $skill"
@@ -358,7 +586,6 @@ validate() {
         fi
     done
 
-    # Check data directories
     if [ -d "$DATA_DIR" ]; then
         dir_count=$(find "$DATA_DIR" -type d | wc -l | tr -d ' ')
         ok "Data directories: $dir_count created"
@@ -367,7 +594,6 @@ validate() {
         ERRORS=$((ERRORS + 1))
     fi
 
-    # Check config
     if [ -f "$DATA_DIR/config.json" ]; then
         if jq . "$DATA_DIR/config.json" >/dev/null 2>&1; then
             ok "Configuration: valid JSON"
@@ -377,6 +603,15 @@ validate() {
         fi
     else
         warn "Configuration file missing"
+        ERRORS=$((ERRORS + 1))
+    fi
+
+    # Check PepeClaw viewer
+    PEPECLAW_DIR="$HOME/.openclaw/pepeclaw"
+    if [ -f "$PEPECLAW_DIR/index.html" ]; then
+        ok "PepeClaw 3D Viewer: installed"
+    else
+        warn "PepeClaw 3D Viewer: not built"
         ERRORS=$((ERRORS + 1))
     fi
 
@@ -390,14 +625,45 @@ validate() {
 }
 
 # ─────────────────────────────────────────────────────────────
+# Open Browser
+# ─────────────────────────────────────────────────────────────
+open_browser() {
+    PEPECLAW_URL="http://localhost:$PEPECLAW_PORT"
+
+    info "PepeClaw 3D Viewer available at: $PEPECLAW_URL"
+
+    # Wait briefly for server to start
+    sleep 2
+
+    OS="$(uname -s)"
+    case "$OS" in
+        Darwin)
+            open "$PEPECLAW_URL" 2>/dev/null || true
+            ;;
+        Linux)
+            if command -v xdg-open >/dev/null 2>&1; then
+                xdg-open "$PEPECLAW_URL" 2>/dev/null || true
+            elif command -v sensible-browser >/dev/null 2>&1; then
+                sensible-browser "$PEPECLAW_URL" 2>/dev/null || true
+            fi
+            ;;
+    esac
+}
+
+# ─────────────────────────────────────────────────────────────
 # Success Message
 # ─────────────────────────────────────────────────────────────
 success_message() {
+    PEPECLAW_URL="http://localhost:$PEPECLAW_PORT"
+
     printf "\n%s%s" "$GREEN$BOLD" ""
-    cat <<'MSG'
+    cat <<MSG
     ┌──────────────────────────────────────────────────────┐
     │                                                      │
-    │   🐸 Pepe 2.0 installed successfully!                │
+    │   🐸 PepeClaw + Pepe 2.0 installed successfully!     │
+    │                                                      │
+    │   ✨ 3D Agent Viewer:                                │
+    │      ${PEPECLAW_URL}                       │
     │                                                      │
     │   Your agent starts evolving tonight.                 │
     │                                                      │
@@ -407,7 +673,7 @@ success_message() {
     │   • 5:30 AM — Predictive Intent pre-computes          │
     │   • Every 6h — War Room checks project health         │
     │   • Weekly  — Skill Genome evolves capabilities       │
-    │   • Monthly — Red Team runs hindsight audit            │
+    │   • Monthly — Red Team runs hindsight audit           │
     │                                                      │
     │   Quick commands:                                     │
     │   • openclaw skill genome report                      │
@@ -426,7 +692,28 @@ MSG
 # Uninstall
 # ─────────────────────────────────────────────────────────────
 uninstall() {
-    info "Uninstalling Pepe 2.0..."
+    info "Uninstalling PepeClaw + Pepe 2.0..."
+
+    # Stop and remove auto-start
+    OS="$(uname -s)"
+    case "$OS" in
+        Darwin)
+            PLIST_FILE="$HOME/Library/LaunchAgents/$PEPECLAW_SERVICE_NAME.plist"
+            if [ -f "$PLIST_FILE" ]; then
+                launchctl unload "$PLIST_FILE" 2>/dev/null || true
+                rm -f "$PLIST_FILE"
+                ok "LaunchAgent removed"
+            fi
+            ;;
+        Linux)
+            if command -v systemctl >/dev/null 2>&1; then
+                systemctl --user stop pepeclaw.service 2>/dev/null || true
+                systemctl --user disable pepeclaw.service 2>/dev/null || true
+            fi
+            rm -f "$HOME/.config/systemd/user/pepeclaw.service" 2>/dev/null || true
+            ok "Systemd service removed"
+            ;;
+    esac
 
     # Remove cron jobs
     if command -v crontab >/dev/null 2>&1; then
@@ -453,6 +740,12 @@ uninstall() {
         fi
     done
 
+    # Remove PepeClaw viewer
+    if [ -d "$HOME/.openclaw/pepeclaw" ]; then
+        rm -rf "$HOME/.openclaw/pepeclaw"
+        ok "PepeClaw viewer removed"
+    fi
+
     # Ask about data
     printf "\n"
     read -r -p "Remove data directory (~/.openclaw/data/pepe)? This deletes all fitness logs, dreams, and history. [y/N] " confirm
@@ -463,7 +756,7 @@ uninstall() {
         info "Data directory preserved: ~/.openclaw/data/pepe"
     fi
 
-    ok "Pepe 2.0 uninstalled."
+    ok "PepeClaw + Pepe 2.0 uninstalled."
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -480,11 +773,11 @@ main() {
 
     # Handle --version flag
     if [ "${1:-}" = "--version" ] || [ "${1:-}" = "-v" ]; then
-        echo "Pepe 2.0 v$PEPE_VERSION"
+        echo "PepeClaw + Pepe 2.0 v$PEPE_VERSION"
         exit 0
     fi
 
-    info "Installing Pepe 2.0 v$PEPE_VERSION"
+    info "Installing PepeClaw + Pepe 2.0 v$PEPE_VERSION"
     printf "\n"
 
     preflight
@@ -493,8 +786,11 @@ main() {
     create_data_dirs
     write_config
     setup_cron
+    build_pepeclaw
+    setup_autostart
     validate
     success_message
+    open_browser
 }
 
 main "$@"

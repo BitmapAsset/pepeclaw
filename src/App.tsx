@@ -1,7 +1,8 @@
-import { useState, lazy, Suspense, useEffect } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/mockData'
-import { DataProvider, useAgents } from './api/DataProvider'
+import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider'
+import type { ConnectionStatus } from './api/gateway'
 import { MiniMap } from './components/MiniMap'
 import { ActivityFeed } from './components/ActivityFeed'
 
@@ -35,7 +36,6 @@ function LoadingFallback() {
         >
           PC
         </motion.div>
-        {/* Skeleton preview */}
         <div className="flex flex-col items-center gap-2 w-48">
           <div className="skeleton w-full h-3" />
           <div className="skeleton w-3/4 h-3" />
@@ -51,14 +51,32 @@ function LoadingFallback() {
 
 export default function App() {
   const [activeRoom, setActiveRoom] = useState<RoomId>('dream')
+  const [overviewMode, setOverviewMode] = useState(true) // Default to overview
 
-  const PanelRoom = panelRooms[activeRoom]
+  // Handle room click from overview mode — zoom into room
+  const handleRoomClick = useCallback((roomId: RoomId) => {
+    setActiveRoom(roomId)
+    setOverviewMode(false)
+  }, [])
+
+  // Escape key returns to overview
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setOverviewMode(true)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const PanelRoom = !overviewMode ? panelRooms[activeRoom] : undefined
 
   return (
     <DataProvider>
       <div className="w-full h-full relative">
         <Suspense fallback={<LoadingFallback />}>
-          <Scene activeRoom={activeRoom} />
+          <Scene activeRoom={activeRoom} overviewMode={overviewMode} onRoomClick={handleRoomClick} />
         </Suspense>
 
         <AnimatePresence mode="wait">
@@ -80,9 +98,14 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <HUD activeRoom={activeRoom} onRoomChange={setActiveRoom} />
-        <MiniMap activeRoom={activeRoom} onRoomChange={setActiveRoom} />
-        <ActivityFeed onRoomChange={setActiveRoom} />
+        <HUD
+          activeRoom={activeRoom}
+          onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }}
+          overviewMode={overviewMode}
+          onOverviewToggle={() => setOverviewMode(!overviewMode)}
+        />
+        {!overviewMode && <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />}
+        <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
       </div>
     </DataProvider>
   )
@@ -112,13 +135,27 @@ const roomColors: Record<RoomId, string> = {
   breeding: '#ec4899',
 }
 
+/* ─── Connection Status Colors ──────────────────────────────────────── */
+const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: string; pulse: boolean }> = {
+  connected: { color: '#22c55e', label: 'LIVE', pulse: false },
+  trying: { color: '#f59e0b', label: 'CONNECTING', pulse: true },
+  offline: { color: '#64748b', label: 'MOCK', pulse: false },
+}
+
 /* ─── Inline HUD ─────────────────────────────────────────────────── */
 import { rooms } from './data/mockData'
 
-function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (r: RoomId) => void }) {
+function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
+  activeRoom: RoomId;
+  onRoomChange: (r: RoomId) => void;
+  overviewMode: boolean;
+  onOverviewToggle: () => void;
+}) {
   const currentRoomData = rooms.find(r => r.id === activeRoom)
   const agents = useAgents()
+  const connectionStatus = useConnectionStatus()
   const roomColor = roomColors[activeRoom] || '#8b5cf6'
+  const connConfig = connectionStatusConfig[connectionStatus]
 
   // Live clock
   const [time, setTime] = useState(new Date())
@@ -164,23 +201,34 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
             </div>
           </div>
 
-          {/* Room indicator (center) */}
+          {/* Room indicator (center) — shows "OFFICE OVERVIEW" when in overview */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeRoom}
+              key={overviewMode ? 'overview' : activeRoom}
               initial={{ opacity: 0, y: -8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               className="hidden sm:flex items-center gap-2"
             >
-              <span className="text-base">{roomEmojis[activeRoom]}</span>
-              <span
-                className="text-xs tracking-widest uppercase font-mono font-medium text-glow"
-                style={{ color: roomColor }}
-              >
-                {currentRoomData?.name || 'Unknown'}
-              </span>
+              {overviewMode ? (
+                <>
+                  <span className="text-base">🏢</span>
+                  <span className="text-xs tracking-widest uppercase font-mono font-medium text-glow" style={{ color: '#8b5cf6' }}>
+                    Office Overview
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-base">{roomEmojis[activeRoom]}</span>
+                  <span
+                    className="text-xs tracking-widest uppercase font-mono font-medium text-glow"
+                    style={{ color: roomColor }}
+                  >
+                    {currentRoomData?.name || 'Unknown'}
+                  </span>
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
 
@@ -199,24 +247,43 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
               </motion.span>
             </div>
 
+            {/* Overview toggle button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onOverviewToggle}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
+              style={{
+                background: overviewMode
+                  ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)'
+                  : 'rgba(139,92,246,0.12)',
+                color: overviewMode ? '#fff' : '#8b5cf6',
+                boxShadow: overviewMode ? '0 0 20px rgba(139,92,246,0.4)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {overviewMode ? 'Overview' : 'Overview'}
+            </motion.button>
+
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onRoomChange('identity')}
               className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
               style={{
-                background: activeRoom === 'identity'
+                background: activeRoom === 'identity' && !overviewMode
                   ? 'linear-gradient(135deg, #f97316, #ea580c)'
                   : 'rgba(249,115,22,0.12)',
-                color: activeRoom === 'identity' ? '#fff' : '#f97316',
-                boxShadow: activeRoom === 'identity' ? '0 0 20px rgba(249,115,22,0.4)' : 'none',
+                color: activeRoom === 'identity' && !overviewMode ? '#fff' : '#f97316',
+                boxShadow: activeRoom === 'identity' && !overviewMode ? '0 0 20px rgba(249,115,22,0.4)' : 'none',
                 transition: 'all 0.2s ease',
               }}
             >
               Mint Agent Identity
             </motion.button>
 
-            <StatusDot color="#22c55e" label="SYSTEMS" />
+            {/* Connection status dot */}
+            <StatusDot color={connConfig.color} label={connConfig.label} pulse={connConfig.pulse} />
             <StatusDot color="#f59e0b" label="EVOLVING" pulse />
 
             {/* Clock */}
@@ -238,7 +305,9 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
         <div
           className="h-px w-full"
           style={{
-            background: `linear-gradient(90deg, transparent 5%, ${roomColor}40 30%, ${roomColor}60 50%, ${roomColor}40 70%, transparent 95%)`,
+            background: overviewMode
+              ? 'linear-gradient(90deg, transparent 5%, #8b5cf640 30%, #06b6d460 50%, #8b5cf640 70%, transparent 95%)'
+              : `linear-gradient(90deg, transparent 5%, ${roomColor}40 30%, ${roomColor}60 50%, ${roomColor}40 70%, transparent 95%)`,
           }}
         />
       </motion.div>
@@ -259,7 +328,7 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
           }}
         >
           {rooms.map((room) => {
-            const isActive = activeRoom === room.id
+            const isActive = activeRoom === room.id && !overviewMode
             const color = roomColors[room.id] || room.color
             return (
               <motion.button
@@ -272,7 +341,7 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
                   background: isActive ? `${color}18` : 'transparent',
                   color: isActive ? color : '#64748b',
                   boxShadow: isActive ? `0 0 20px ${color}25, 0 4px 12px rgba(0,0,0,0.2)` : 'none',
-                  minHeight: 44, // touch-friendly
+                  minHeight: 44,
                 }}
                 title={room.name}
                 aria-label={room.name}
@@ -281,7 +350,6 @@ function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (
                 <span className="text-sm">{roomEmojis[room.id]}</span>
                 <span className="hidden sm:inline">{room.name}</span>
 
-                {/* Active glow underline */}
                 {isActive && (
                   <motion.div
                     layoutId="room-indicator"

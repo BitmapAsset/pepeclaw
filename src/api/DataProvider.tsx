@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
-import { gateway, type AgentState } from './gateway';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
+import { gateway, discoverGateway, onConnectionStatusChange, type AgentState, type ConnectionStatus } from './gateway';
 import {
   skills as mockSkills,
   dreamNodes as mockDreamNodes,
@@ -14,13 +14,13 @@ import {
 
 // Default mock agents when gateway is unavailable
 const mockAgents: AgentState[] = [
-  { id: 'a1', name: 'Atlas', role: 'architect', status: 'working', currentRoom: 'genome', color: '#00ff88' },
-  { id: 'a2', name: 'Nova', role: 'researcher', status: 'working', currentRoom: 'dream', color: '#8b5cf6' },
-  { id: 'a3', name: 'Sentinel', role: 'defender', status: 'idle', currentRoom: 'war', color: '#ef4444' },
-  { id: 'a4', name: 'Cipher', role: 'analyst', status: 'working', currentRoom: 'redteam', color: '#f87171' },
-  { id: 'a5', name: 'Echo', role: 'learner', status: 'working', currentRoom: 'metalearning', color: '#06b6d4' },
-  { id: 'a6', name: 'Chrono', role: 'scheduler', status: 'break', currentRoom: 'temporal', color: '#f59e0b' },
-  { id: 'a7', name: 'Vault', role: 'verifier', status: 'idle', currentRoom: 'identity', color: '#f97316' },
+  { id: 'a1', name: 'Atlas', role: 'architect', status: 'working', currentRoom: 'genome', color: '#00ff88', activity: 'processing', taskDescription: 'Mutating Code Generation skill' },
+  { id: 'a2', name: 'Nova', role: 'researcher', status: 'working', currentRoom: 'dream', color: '#8b5cf6', activity: 'idle', taskDescription: 'Exploring dream merge state' },
+  { id: 'a3', name: 'Sentinel', role: 'defender', status: 'idle', currentRoom: 'war', color: '#ef4444', activity: 'idle', taskDescription: 'Monitoring threat vectors' },
+  { id: 'a4', name: 'Cipher', role: 'analyst', status: 'working', currentRoom: 'redteam', color: '#f87171', hasSubAgents: true, taskDescription: 'Debating microservices migration' },
+  { id: 'a5', name: 'Echo', role: 'learner', status: 'working', currentRoom: 'metalearning', color: '#06b6d4', isSearching: true, taskDescription: 'Analyzing learning patterns' },
+  { id: 'a6', name: 'Chrono', role: 'scheduler', status: 'break', currentRoom: 'temporal', color: '#f59e0b', activity: 'idle', taskDescription: 'Optimizing task batches' },
+  { id: 'a7', name: 'Vault', role: 'verifier', status: 'idle', currentRoom: 'identity', color: '#f97316', activity: 'idle', taskDescription: 'Verifying identity hashes' },
 ];
 
 interface DataState {
@@ -32,6 +32,7 @@ interface DataState {
   temporalData: typeof mockTemporalData;
   agents: AgentState[];
   connected: boolean;
+  connectionStatus: ConnectionStatus;
 }
 
 const defaults: DataState = {
@@ -43,12 +44,14 @@ const defaults: DataState = {
   temporalData: mockTemporalData,
   agents: mockAgents,
   connected: false,
+  connectionStatus: 'offline',
 };
 
 const DataContext = createContext<DataState>(defaults);
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DataState>(defaults);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchAll = useCallback(async (signal: AbortSignal) => {
     try {
@@ -76,6 +79,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           temporalData: temporalData ?? prev.temporalData,
           agents: agents ?? prev.agents,
           connected: anySucceeded,
+          connectionStatus: anySucceeded ? 'connected' : prev.connectionStatus,
         }));
       }
     } catch (err) {
@@ -87,11 +91,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetchAll(ac.signal);
-    const interval = setInterval(() => fetchAll(ac.signal), 15000);
+
+    // Listen for connection status changes from the gateway module
+    const unsub = onConnectionStatusChange((status) => {
+      setState(prev => ({ ...prev, connectionStatus: status }));
+    });
+
+    // Auto-discover gateway on mount, then fetch data
+    async function init() {
+      const url = await discoverGateway();
+      if (url && !ac.signal.aborted) {
+        await fetchAll(ac.signal);
+      }
+    }
+
+    init();
+
+    // Poll for data every 15 seconds when connected
+    const dataInterval = setInterval(() => fetchAll(ac.signal), 15_000);
+
+    // Retry gateway discovery every 30 seconds when offline
+    function scheduleRetry() {
+      retryTimerRef.current = setInterval(async () => {
+        const url = await discoverGateway();
+        if (url && !ac.signal.aborted) {
+          await fetchAll(ac.signal);
+        }
+      }, 30_000);
+    }
+    scheduleRetry();
+
     return () => {
       ac.abort();
-      clearInterval(interval);
+      clearInterval(dataInterval);
+      if (retryTimerRef.current) clearInterval(retryTimerRef.current);
+      unsub();
     };
   }, [fetchAll]);
 
@@ -104,4 +138,8 @@ export function useData() {
 
 export function useAgents() {
   return useContext(DataContext).agents;
+}
+
+export function useConnectionStatus(): ConnectionStatus {
+  return useContext(DataContext).connectionStatus;
 }
