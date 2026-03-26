@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meta-Learning Metrics Schema",
+  "description": "Schema for Pepe 2.0 meta-learning performance tracking metrics",
+  "definitions": {
+    "daily_analysis": {
+      "type": "object",
+      "description": "Output of conversation-analyzer.sh for a single day",
+      "required": ["date", "total_exchanges", "counts", "quality_score", "analyzed_at"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Analysis date (YYYY-MM-DD)"
+        },
+        "total_exchanges": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total user-agent exchanges analyzed"
+        },
+        "counts": {
+          "type": "object",
+          "required": ["successes", "failures", "corrections", "praise", "abandonments"],
+          "properties": {
+            "successes": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Exchanges where output was accepted without correction"
+            },
+            "failures": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Exchanges with misunderstandings or wrong approaches"
+            },
+            "corrections": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Exchanges where user corrected the output"
+            },
+            "praise": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Exchanges with explicit positive feedback"
+            },
+            "abandonments": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Threads dropped without resolution"
+            }
+          }
+        },
+        "quality_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Composite quality score for the day (0=worst, 1=best)"
+        },
+        "successes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exchange_event" },
+          "description": "Detailed success events"
+        },
+        "failures": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exchange_event" },
+          "description": "Detailed failure events"
+        },
+        "corrections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exchange_event" },
+          "description": "Detailed correction events"
+        },
+        "praise": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exchange_event" },
+          "description": "Detailed praise events"
+        },
+        "abandonments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/exchange_event" },
+          "description": "Detailed abandonment events"
+        },
+        "patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Observed patterns across conversations"
+        },
+        "improvement_signals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Actionable improvement suggestions extracted from analysis"
+        },
+        "analyzed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when analysis was performed"
+        },
+        "log_files_analyzed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of log files processed"
+        }
+      }
+    },
+    "exchange_event": {
+      "type": "object",
+      "required": ["type", "topic"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["SUCCESS", "FAILURE", "CORRECTION", "PRAISE", "ABANDONMENT"],
+          "description": "Classification of the exchange"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Brief description of the exchange topic"
+        },
+        "detail": {
+          "type": "string",
+          "description": "What specifically happened in the exchange"
+        },
+        "implicit_feedback": {
+          "type": "string",
+          "description": "What this tells us about user preferences"
+        },
+        "improvement_signal": {
+          "type": ["string", "null"],
+          "description": "Specific actionable improvement if applicable"
+        }
+      }
+    },
+    "quality_metric": {
+      "type": "object",
+      "description": "Single entry in the quality metrics JSONL log",
+      "required": ["date", "quality_score", "exchanges"],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "quality_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "exchanges": { "type": "integer", "minimum": 0 },
+        "successes": { "type": "integer", "minimum": 0 },
+        "failures": { "type": "integer", "minimum": 0 },
+        "corrections": { "type": "integer", "minimum": 0 },
+        "praise": { "type": "integer", "minimum": 0 },
+        "abandonments": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "description": "Self-modification proposal metadata",
+      "required": ["status", "impact_score", "created", "category"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "applied", "rejected", "reverted"],
+          "description": "Current status of the proposal"
+        },
+        "impact_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Estimated impact (0=none, 1=transformative)"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["skill_change", "behavior_adjustment", "memory_update", "new_skill"],
+          "description": "Type of self-modification"
+        }
+      }
+    },
+    "capability_gap": {
+      "type": "object",
+      "description": "Detected capability gap",
+      "required": ["status", "category", "priority", "frequency", "severity", "detected"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["open", "investigating", "resolved", "wont_fix"],
+          "description": "Current status of the gap"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["missing_skill", "missing_tool", "missing_knowledge", "wrong_approach", "improvement_signal"],
+          "description": "Type of capability gap"
+        },
+        "priority": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Priority score (frequency * severity normalized)"
+        },
+        "frequency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of times this gap was observed"
+        },
+        "severity": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Impact severity (0=minor, 1=blocking)"
+        },
+        "detected": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ab_test": {
+      "type": "object",
+      "description": "A/B behavior test entry",
+      "required": ["test_id", "task_type", "variant_a", "variant_b", "status"],
+      "properties": {
+        "test_id": {
+          "type": "string",
+          "description": "Unique test identifier"
+        },
+        "task_type": {
+          "type": "string",
+          "description": "Type of task being tested"
+        },
+        "variant_a": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "successes": { "type": "integer", "minimum": 0 },
+            "trials": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "variant_b": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "successes": { "type": "integer", "minimum": 0 },
+            "trials": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["running", "significant", "inconclusive", "converged"],
+          "description": "Current test status"
+        },
+        "winner": {
+          "type": ["string", "null"],
+          "enum": ["a", "b", null],
+          "description": "Winning variant (null if not yet determined)"
+        },
+        "p_value": {
+          "type": ["number", "null"],
+          "description": "Statistical significance (null if insufficient data)"
+        }
+      }
+    },
+    "meta_dashboard": {
+      "type": "object",
+      "description": "Weekly meta-metrics dashboard data",
+      "required": ["week_start", "week_end", "metrics"],
+      "properties": {
+        "week_start": { "type": "string", "format": "date" },
+        "week_end": { "type": "string", "format": "date" },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "response_quality": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Ratio of accepted vs corrected outputs"
+            },
+            "task_completion_rate": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Tasks completed vs abandoned"
+            },
+            "proactive_value": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Accepted proactive suggestions / total proactive suggestions"
+            },
+            "correction_trend": {
+              "type": "string",
+              "enum": ["improving", "stable", "declining"],
+              "description": "Direction of correction rate over time"
+            },
+            "gap_closure_rate": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Resolved gaps / total identified gaps"
+            }
+          }
+        },
+        "proposal_stats": {
+          "type": "object",
+          "properties": {
+            "total_generated": { "type": "integer" },
+            "accepted": { "type": "integer" },
+            "applied": { "type": "integer" },
+            "rejected": { "type": "integer" },
+            "reverted": { "type": "integer" },
+            "hit_rate": {
+              "type": "number",
+              "description": "Ratio of applied proposals that improved target metric"
+            }
+          }
+        }
+      }
+    }
+  }
+}

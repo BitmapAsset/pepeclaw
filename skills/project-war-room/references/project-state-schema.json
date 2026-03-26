@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openclaw.dev/schemas/project-state/v1",
+  "title": "Project State",
+  "description": "Schema for project state tracked by the Project War Room skill. Each project maintains a single state object persisted at /projects/{name}/STATE.md.",
+  "type": "object",
+  "required": [
+    "project_id",
+    "project_name",
+    "repo_path",
+    "health_score",
+    "health_grade",
+    "last_scored",
+    "git_activity",
+    "deployment",
+    "issues",
+    "blockers",
+    "velocity",
+    "dependencies",
+    "alerts",
+    "metadata"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Unique identifier for the project, typically a slug derived from the project name.",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "examples": ["pepe-2-0", "openclaw-core", "skill-genome"]
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Human-readable project name.",
+      "minLength": 1,
+      "examples": ["Pepe 2.0", "OpenClaw Core"]
+    },
+    "repo_path": {
+      "type": "string",
+      "description": "Absolute filesystem path to the project's git repository root.",
+      "examples": ["/Users/gravity/.openclaw/workspace/projects/pepe-2.0"]
+    },
+    "health_score": {
+      "type": "number",
+      "description": "Composite health score from 0 (critical) to 100 (perfect).",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "health_grade": {
+      "type": "string",
+      "description": "Letter grade derived from health_score. A (80-100), B (60-79), C (40-59), D (20-39), F (0-19).",
+      "enum": ["A", "B", "C", "D", "F"]
+    },
+    "last_scored": {
+      "type": "string",
+      "description": "ISO 8601 timestamp of the most recent health score computation.",
+      "format": "date-time",
+      "examples": ["2026-03-25T12:00:00Z"]
+    },
+    "git_activity": {
+      "type": "object",
+      "description": "Git repository activity metrics used for the Git Activity dimension (25 pts).",
+      "required": [
+        "commits_7d",
+        "commits_30d",
+        "open_prs",
+        "merged_prs_7d",
+        "stale_branches",
+        "last_commit_date",
+        "active_contributors"
+      ],
+      "properties": {
+        "commits_7d": {
+          "type": "integer",
+          "description": "Number of commits to the default branch in the last 7 days.",
+          "minimum": 0
+        },
+        "commits_30d": {
+          "type": "integer",
+          "description": "Number of commits to the default branch in the last 30 days.",
+          "minimum": 0
+        },
+        "open_prs": {
+          "type": "integer",
+          "description": "Number of currently open pull requests.",
+          "minimum": 0
+        },
+        "merged_prs_7d": {
+          "type": "integer",
+          "description": "Number of pull requests merged in the last 7 days.",
+          "minimum": 0
+        },
+        "stale_branches": {
+          "type": "integer",
+          "description": "Number of branches with no commits in the last 14 days.",
+          "minimum": 0
+        },
+        "last_commit_date": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of the most recent commit on the default branch.",
+          "format": "date-time"
+        },
+        "active_contributors": {
+          "type": "integer",
+          "description": "Number of unique contributors with commits in the last 7 days.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "deployment": {
+      "type": "object",
+      "description": "Deployment pipeline metrics used for the Deployment Health dimension (20 pts).",
+      "required": [
+        "last_deploy_date",
+        "last_deploy_status",
+        "deploy_count_30d",
+        "rollback_count_30d"
+      ],
+      "properties": {
+        "last_deploy_date": {
+          "type": ["string", "null"],
+          "description": "ISO 8601 timestamp of the most recent deployment. Null if never deployed.",
+          "format": "date-time"
+        },
+        "last_deploy_status": {
+          "type": "string",
+          "description": "Outcome of the most recent deployment.",
+          "enum": ["success", "failure", "rollback", "in_progress", "unknown"]
+        },
+        "deploy_count_30d": {
+          "type": "integer",
+          "description": "Total number of deployments in the last 30 days.",
+          "minimum": 0
+        },
+        "rollback_count_30d": {
+          "type": "integer",
+          "description": "Number of rollbacks in the last 30 days.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "issues": {
+      "type": "object",
+      "description": "Issue tracker metrics used for the Issue Health dimension (20 pts).",
+      "required": [
+        "open_count",
+        "bug_count",
+        "feature_count",
+        "avg_age_days",
+        "oldest_unresolved_days"
+      ],
+      "properties": {
+        "open_count": {
+          "type": "integer",
+          "description": "Total number of currently open issues.",
+          "minimum": 0
+        },
+        "bug_count": {
+          "type": "integer",
+          "description": "Number of open issues labeled as bugs.",
+          "minimum": 0
+        },
+        "feature_count": {
+          "type": "integer",
+          "description": "Number of open issues labeled as features or enhancements.",
+          "minimum": 0
+        },
+        "avg_age_days": {
+          "type": "number",
+          "description": "Average age in days of all open issues.",
+          "minimum": 0
+        },
+        "oldest_unresolved_days": {
+          "type": "integer",
+          "description": "Age in days of the oldest unresolved issue.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockers": {
+      "type": "object",
+      "description": "Blocker tracking metrics used for the Blocker Status dimension (20 pts).",
+      "required": [
+        "active_count",
+        "blocked_by",
+        "blocking",
+        "avg_blocker_age_days"
+      ],
+      "properties": {
+        "active_count": {
+          "type": "integer",
+          "description": "Number of currently active blockers for this project.",
+          "minimum": 0
+        },
+        "blocked_by": {
+          "type": "array",
+          "description": "List of project IDs that are currently blocking this project.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "blocking": {
+          "type": "array",
+          "description": "List of project IDs that this project is currently blocking.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "avg_blocker_age_days": {
+          "type": "number",
+          "description": "Average age in days of all active blockers.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "velocity": {
+      "type": "object",
+      "description": "Velocity and throughput metrics used for decision engine ranking.",
+      "required": [
+        "tasks_completed_7d",
+        "tasks_completed_30d",
+        "velocity_trend",
+        "story_points_7d"
+      ],
+      "properties": {
+        "tasks_completed_7d": {
+          "type": "integer",
+          "description": "Number of tasks (issues closed, PRs merged) completed in the last 7 days.",
+          "minimum": 0
+        },
+        "tasks_completed_30d": {
+          "type": "integer",
+          "description": "Number of tasks completed in the last 30 days.",
+          "minimum": 0
+        },
+        "velocity_trend": {
+          "type": "string",
+          "description": "Direction of velocity change. Computed by comparing 7-day rate to 30-day rolling average.",
+          "enum": ["up", "down", "stable"]
+        },
+        "story_points_7d": {
+          "type": "number",
+          "description": "Total story points completed in the last 7 days. Zero if story points are not tracked.",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Cross-project dependencies detected by the dependency mapper.",
+      "items": {
+        "type": "object",
+        "required": ["project_id", "dependency_type", "status"],
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "ID of the related project."
+          },
+          "dependency_type": {
+            "type": "string",
+            "description": "Nature of the dependency relationship.",
+            "enum": ["depends_on", "depended_by", "bidirectional"]
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the dependency relationship.",
+            "enum": ["healthy", "at_risk", "blocked", "unknown"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "alerts": {
+      "type": "array",
+      "description": "Active and recent alerts generated by the monitoring system.",
+      "items": {
+        "type": "object",
+        "required": ["level", "message", "timestamp"],
+        "properties": {
+          "level": {
+            "type": "string",
+            "description": "Severity level of the alert, corresponding to health score thresholds.",
+            "enum": ["critical", "warning", "attention", "info"]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable alert message describing the condition.",
+            "minLength": 1
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the alert was generated.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Bookkeeping metadata for the state object.",
+      "required": ["created_at", "updated_at", "scored_by"],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "description": "ISO 8601 timestamp when this state object was first created.",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "ISO 8601 timestamp of the most recent update to any field.",
+          "format": "date-time"
+        },
+        "scored_by": {
+          "type": "string",
+          "description": "Identifier of the agent or process that last computed the health score.",
+          "examples": ["war-room-agent", "manual-override"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
