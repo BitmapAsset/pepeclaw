@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Genome Fitness Log Entry",
+  "description": "Schema for individual entries in the append-only fitness log (fitness-log.jsonl)",
+  "type": "object",
+  "required": ["timestamp", "skill", "outcome"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the invocation"
+    },
+    "skill": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the skill that was invoked"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["accepted", "edited", "rejected"],
+      "description": "How the user responded to the skill's output"
+    },
+    "session": {
+      "type": "string",
+      "description": "Session identifier for co-occurrence tracking"
+    },
+    "co_skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Other skills invoked in the same session"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Execution time in milliseconds"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if the skill failed"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional context about the invocation",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "LLM model used"
+        },
+        "tokens_used": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens consumed"
+        },
+        "user_feedback": {
+          "type": "string",
+          "description": "Optional explicit user feedback"
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+    "fitness_summary": {
+      "title": "Skill Fitness Summary",
+      "description": "Computed fitness summary for a single skill (used in SKILL_FITNESS.md generation)",
+      "type": "object",
+      "required": ["skill", "fitness", "success_rate", "usage_frequency", "satisfaction", "total_invocations", "period_days"],
+      "properties": {
+        "skill": {
+          "type": "string",
+          "description": "Skill name"
+        },
+        "fitness": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Composite fitness score"
+        },
+        "success_rate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "accepted / (accepted + rejected)"
+        },
+        "usage_frequency": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Normalized invocation count"
+        },
+        "satisfaction": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "(accepted + 0.5*edited) / total"
+        },
+        "total_invocations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "edited": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "period_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of days in the evaluation window"
+        },
+        "last_invocation": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "genome_header": {
+      "title": "Skill Genome Header",
+      "description": "Schema for the genome block in SKILL.md YAML frontmatter",
+      "type": "object",
+      "required": ["version", "fitness", "mutations", "lineage", "tags"],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fitness": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "mutations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lineage": {
+          "type": "object",
+          "required": ["parent", "created", "last_mutated", "generation"],
+          "properties": {
+            "parent": {
+              "type": ["string", "null"]
+            },
+            "created": {
+              "type": "string",
+              "format": "date"
+            },
+            "last_mutated": {
+              "type": ["string", "null"],
+              "format": "date"
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

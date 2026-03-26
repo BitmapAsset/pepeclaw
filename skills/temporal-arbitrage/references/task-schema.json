@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openclaw.dev/schemas/temporal-arbitrage/task.json",
+  "title": "Temporal Arbitrage Task",
+  "description": "Schema for task tracking within the Temporal Arbitrage Engine. Covers time-sensitivity scoring, batch eligibility, deferral history, and energy-type alignment.",
+  "type": "object",
+  "required": ["task_id", "description"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Unique identifier for the task.",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "examples": ["task-001", "fix-auth-bypass"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the task.",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "category": {
+      "type": "string",
+      "description": "Primary category for grouping and batch detection.",
+      "enum": ["coding", "communication", "admin", "creative", "research", "review", "planning"]
+    },
+    "tags": {
+      "type": "array",
+      "description": "Freeform tags for fine-grained grouping. Used by the batch detector to cluster tasks with overlapping tags.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "created_at": {
+      "type": "string",
+      "description": "ISO 8601 datetime when the task was created.",
+      "format": "date-time"
+    },
+    "deadline": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 datetime for the task deadline. Null if no hard deadline exists.",
+      "format": "date-time",
+      "default": null
+    },
+    "effort_hours": {
+      "type": "number",
+      "description": "Estimated effort in hours to complete the task.",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "urgency_score": {
+      "type": "integer",
+      "description": "Computed urgency score from the time-scorer. Range 0 (no urgency) to 100 (critical).",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "time_sensitivity": {
+      "type": "string",
+      "description": "How the task's urgency changes over time. Appreciating tasks become more expensive to delay; depreciating tasks become cheaper when batched later.",
+      "enum": ["appreciating", "depreciating", "neutral"],
+      "default": "neutral"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current lifecycle status of the task.",
+      "enum": ["pending", "in_progress", "deferred", "completed", "deleted"],
+      "default": "pending"
+    },
+    "deferrals": {
+      "type": "array",
+      "description": "History of deferrals. Three or more entries trigger a procrastination alert.",
+      "items": {
+        "type": "object",
+        "required": ["date"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "ISO 8601 date when the task was deferred.",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Optional reason for the deferral.",
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "Task IDs that this task depends on. Also used to calculate dependency boost in scoring: tasks that block many others receive priority.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z0-9_-]+$"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "completed_at": {
+      "type": ["string", "null"],
+      "description": "ISO 8601 datetime when the task was completed. Null while incomplete.",
+      "format": "date-time",
+      "default": null
+    },
+    "energy_type": {
+      "type": "string",
+      "description": "Energy level required to perform this task effectively. Used by chronotype optimization to align tasks with the user's energy curve throughout the day.",
+      "enum": ["peak", "moderate", "low"],
+      "default": "moderate"
+    },
+    "batch_eligible": {
+      "type": "boolean",
+      "description": "Whether this task can be grouped with similar tasks for batch processing. Typically true for low-urgency, context-similar work.",
+      "default": true
+    },
+    "opportunity_cost_per_hour": {
+      "type": ["number", "null"],
+      "description": "Estimated dollar value lost per hour this task remains undone. Used by the opportunity cost calculator to compare alternatives. Null if not quantifiable.",
+      "minimum": 0,
+      "default": null
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "description": "Free-text notes, context, or links related to the task.",
+      "maxLength": 2000,
+      "default": null
+    }
+  },
+  "additionalProperties": false
+}
