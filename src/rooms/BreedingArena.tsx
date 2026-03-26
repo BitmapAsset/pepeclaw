@@ -22,7 +22,7 @@ function SkillBar({ name, fitness, color }: { name: string; fitness: number; col
 
 function ParentCard({ candidate, label }: { candidate: BreedingCandidate; label: string }) {
   return (
-    <div className="rounded-xl border p-4 flex-1" style={{ background: 'rgba(26,27,46,0.6)', borderColor: `${candidate.color}30` }}>
+    <div className="rounded-2xl border p-4 flex-1 card-tilt" style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(16px)', borderColor: `${candidate.color}30`, boxShadow: `0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
       <div className="flex items-center gap-2 mb-3">
         <div className="w-3 h-3 rounded-full" style={{ background: candidate.color, boxShadow: `0 0 8px ${candidate.color}66` }} />
         <span className="text-xs font-mono font-semibold" style={{ color: candidate.color }}>{candidate.name}</span>
@@ -52,8 +52,8 @@ function ChildCard({ parentA, parentB, visible }: { parentA: BreedingCandidate; 
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="rounded-xl border p-4 mt-4"
-      style={{ background: 'rgba(236,72,153,0.08)', borderColor: '#ec489940' }}
+      className="rounded-2xl border p-4 mt-4 glass"
+      style={{ background: 'rgba(236,72,153,0.06)', borderColor: '#ec489940', boxShadow: '0 8px 32px rgba(236,72,153,0.1)' }}
     >
       <div className="text-center mb-3">
         <div className="text-[10px] font-mono tracking-widest uppercase" style={{ color: '#ec4899' }}>Child Agent Born</div>

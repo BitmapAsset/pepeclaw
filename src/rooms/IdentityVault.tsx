@@ -97,14 +97,18 @@ export default function IdentityVault() {
               onClick={() => setSelectedAgent(agent.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="text-left p-4 rounded-xl border transition-all cursor-pointer"
+              className="text-left p-4 rounded-2xl border transition-all cursor-pointer card-tilt"
               style={{
                 background: selectedAgent === agent.id
-                  ? 'rgba(249,115,22,0.08)'
-                  : 'rgba(18,19,31,0.6)',
+                  ? 'rgba(99,102,241,0.08)'
+                  : 'rgba(255,255,255,0.02)',
                 borderColor: selectedAgent === agent.id
-                  ? 'rgba(249,115,22,0.4)'
-                  : 'rgba(42,43,61,0.6)',
+                  ? 'rgba(99,102,241,0.4)'
+                  : 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: selectedAgent === agent.id
+                  ? '0 4px 20px rgba(99,102,241,0.15)'
+                  : 'none',
               }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -134,10 +138,9 @@ export default function IdentityVault() {
               >
                 {/* DNA Visualization */}
                 <div
-                  className="rounded-xl border p-6 mb-4"
+                  className="rounded-2xl border p-6 mb-4 glass-strong"
                   style={{
-                    background: 'rgba(18,19,31,0.8)',
-                    borderColor: 'rgba(42,43,61,0.6)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                   }}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -240,10 +243,9 @@ export default function IdentityVault() {
 
                 {/* Block Genomics integration info */}
                 <div
-                  className="rounded-xl border p-4 flex items-center gap-4"
+                  className="rounded-2xl border p-4 flex items-center gap-4 glass"
                   style={{
-                    background: 'rgba(18,19,31,0.6)',
-                    borderColor: 'rgba(42,43,61,0.4)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
                   }}
                 >
                   <div

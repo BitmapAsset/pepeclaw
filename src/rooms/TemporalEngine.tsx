@@ -275,8 +275,8 @@ export default function TemporalEngine() {
 
       {/* ── Task Timeline (Gantt) ──────────────────────────────── */}
       <div
-        className="flex-1 mx-6 mb-3 overflow-auto rounded-lg"
-        style={{ background: C.surface, border: `1px solid ${C.border}` }}
+        className="flex-1 mx-6 mb-3 overflow-auto rounded-2xl glass"
+        style={{ background: 'rgba(18,19,31,0.6)' }}
       >
         <div className="min-w-[700px]">
           {/* Time axis header */}
@@ -422,8 +422,8 @@ export default function TemporalEngine() {
       <div className="grid grid-cols-2 gap-3 px-6 pb-4 shrink-0" style={{ maxHeight: '35%' }}>
         {/* ── Batch Summary (left) ─────────────────────────────── */}
         <div
-          className="rounded-lg p-4 overflow-auto"
-          style={{ background: C.surface, border: `1px solid ${C.border}` }}
+          className="rounded-2xl p-4 overflow-auto glass"
+          style={{ background: 'rgba(18,19,31,0.6)' }}
         >
           <h2 className="text-xs font-bold tracking-wider mb-3" style={{ color: C.textDim }}>
             BATCH SUMMARY
@@ -454,8 +454,8 @@ export default function TemporalEngine() {
 
         {/* ── Procrastination Tracker (right) ──────────────────── */}
         <div
-          className="rounded-lg p-4 overflow-auto"
-          style={{ background: C.surface, border: `1px solid ${C.border}` }}
+          className="rounded-2xl p-4 overflow-auto glass"
+          style={{ background: 'rgba(18,19,31,0.6)' }}
         >
           <h2 className="text-xs font-bold tracking-wider mb-3" style={{ color: C.textDim }}>
             PROCRASTINATION TRACKER

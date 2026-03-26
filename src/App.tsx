@@ -1,7 +1,7 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/mockData'
-import { DataProvider } from './api/DataProvider'
+import { DataProvider, useAgents } from './api/DataProvider'
 import { MiniMap } from './components/MiniMap'
 import { ActivityFeed } from './components/ActivityFeed'
 
@@ -24,14 +24,22 @@ function LoadingFallback() {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-40">
       <div className="flex flex-col items-center gap-4">
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold animate-pulse"
+        <motion.div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold"
           style={{
             background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-            boxShadow: '0 0 30px rgba(139,92,246,0.4)',
+            boxShadow: '0 0 40px rgba(139,92,246,0.4), 0 0 80px rgba(6,182,212,0.2)',
           }}
+          animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
           PC
+        </motion.div>
+        {/* Skeleton preview */}
+        <div className="flex flex-col items-center gap-2 w-48">
+          <div className="skeleton w-full h-3" />
+          <div className="skeleton w-3/4 h-3" />
+          <div className="skeleton w-1/2 h-3" />
         </div>
         <div className="text-xs font-mono tracking-widest uppercase" style={{ color: '#64748b' }}>
           Loading...
@@ -57,13 +65,13 @@ export default function App() {
           {PanelRoom && (
             <motion.div
               key={activeRoom}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
               className="absolute inset-0 z-30 pt-14 pb-16 overflow-hidden"
             >
-              <div className="w-full h-full bg-[#0a0b14]/95 backdrop-blur-sm">
+              <div className="w-full h-full bg-[#0a0b14]/90 backdrop-blur-md">
                 <Suspense fallback={<LoadingFallback />}>
                   <PanelRoom />
                 </Suspense>
@@ -80,133 +88,224 @@ export default function App() {
   )
 }
 
+/* ─── Room Emojis ───────────────────────────────────────────────────── */
+const roomEmojis: Record<RoomId, string> = {
+  genome: '🧬',
+  dream: '💭',
+  war: '⚔️',
+  redteam: '🔴',
+  metalearning: '🧠',
+  temporal: '⏳',
+  identity: '🔐',
+  breeding: '🧪',
+}
+
+/* ─── Room Signature Colors (updated to spec) ──────────────────────── */
+const roomColors: Record<RoomId, string> = {
+  genome: '#10b981',
+  dream: '#8b5cf6',
+  war: '#ef4444',
+  redteam: '#ef4444',
+  metalearning: '#06b6d4',
+  temporal: '#f59e0b',
+  identity: '#6366f1',
+  breeding: '#ec4899',
+}
+
 /* ─── Inline HUD ─────────────────────────────────────────────────── */
 import { rooms } from './data/mockData'
 
 function HUD({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (r: RoomId) => void }) {
   const currentRoomData = rooms.find(r => r.id === activeRoom)
+  const agents = useAgents()
+  const roomColor = roomColors[activeRoom] || '#8b5cf6'
+
+  // Live clock
+  const [time, setTime] = useState(new Date())
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <>
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <motion.div
         initial={{ y: -60 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3"
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed top-0 left-0 right-0 z-50 glass-strong"
         style={{
-          background: 'linear-gradient(180deg, rgba(10,11,20,0.95) 0%, rgba(10,11,20,0.7) 80%, transparent 100%)',
-          backdropFilter: 'blur(12px)',
+          borderBottom: `1px solid rgba(255,255,255,0.06)`,
+          background: 'linear-gradient(180deg, rgba(10,11,20,0.92) 0%, rgba(10,11,20,0.8) 100%)',
         }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white"
-            style={{
-              background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-              boxShadow: '0 0 20px rgba(139,92,246,0.3)',
-            }}
-          >
-            PC
-          </div>
-          <div>
-            <div className="text-sm font-semibold tracking-wider" style={{ color: '#e2e8f0' }}>
-              PEPECLAW
+        <div className="flex items-center justify-between px-6 py-2.5">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <motion.div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white"
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
+                boxShadow: '0 0 20px rgba(139,92,246,0.3), 0 4px 12px rgba(0,0,0,0.3)',
+              }}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            >
+              PC
+            </motion.div>
+            <div>
+              <div className="text-sm font-semibold tracking-wider text-glow" style={{ color: '#e2e8f0' }}>
+                PEPECLAW
+              </div>
+              <div className="text-[10px] tracking-widest uppercase" style={{ color: '#64748b' }}>
+                Self-Evolving AI Agents You Can See
+              </div>
             </div>
-            <div className="text-[10px] tracking-widest uppercase" style={{ color: '#64748b' }}>
-              Self-Evolving AI Agents You Can See
+          </div>
+
+          {/* Room indicator (center) */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeRoom}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="hidden sm:flex items-center gap-2"
+            >
+              <span className="text-base">{roomEmojis[activeRoom]}</span>
+              <span
+                className="text-xs tracking-widest uppercase font-mono font-medium text-glow"
+                style={{ color: roomColor }}
+              >
+                {currentRoomData?.name || 'Unknown'}
+              </span>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Right: status + controls */}
+          <div className="flex items-center gap-4">
+            {/* Agent count */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <span className="text-[10px] font-mono" style={{ color: '#64748b' }}>AGENTS</span>
+              <motion.span
+                key={agents.length}
+                initial={{ scale: 1.3, color: '#22c55e' }}
+                animate={{ scale: 1, color: '#e2e8f0' }}
+                className="text-sm font-mono font-bold"
+              >
+                {agents.length}
+              </motion.span>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onRoomChange('identity')}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
+              style={{
+                background: activeRoom === 'identity'
+                  ? 'linear-gradient(135deg, #f97316, #ea580c)'
+                  : 'rgba(249,115,22,0.12)',
+                color: activeRoom === 'identity' ? '#fff' : '#f97316',
+                boxShadow: activeRoom === 'identity' ? '0 0 20px rgba(249,115,22,0.4)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Mint Agent Identity
+            </motion.button>
+
+            <StatusDot color="#22c55e" label="SYSTEMS" />
+            <StatusDot color="#f59e0b" label="EVOLVING" pulse />
+
+            {/* Clock */}
+            <div className="hidden lg:flex flex-col items-end">
+              <span className="text-[10px] font-mono tabular-nums" style={{ color: '#e2e8f0' }}>
+                {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="text-[8px] font-mono" style={{ color: '#475569' }}>
+                {time.toLocaleDateString([], { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+
+            <div className="text-[10px] font-mono hidden sm:block" style={{ color: '#475569' }}>
+              v0.2.0
             </div>
           </div>
         </div>
-
-        {/* Room indicator */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeRoom}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-xs tracking-widest uppercase font-mono hidden sm:block"
-            style={{ color: currentRoomData?.color || '#8b5cf6' }}
-          >
-            {currentRoomData?.name || 'Unknown'}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Status indicators + Mint button */}
-        <div className="flex items-center gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onRoomChange('identity')}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
-            style={{
-              background: activeRoom === 'identity'
-                ? 'linear-gradient(135deg, #f97316, #ea580c)'
-                : 'rgba(249,115,22,0.15)',
-              color: '#f97316',
-              boxShadow: activeRoom === 'identity' ? '0 0 15px rgba(249,115,22,0.3)' : 'none',
-            }}
-          >
-            Mint Agent Identity
-          </motion.button>
-          <StatusDot color="#22c55e" label="SYSTEMS" />
-          <StatusDot color="#f59e0b" label="EVOLVING" pulse />
-          <div className="text-[10px] font-mono hidden sm:block" style={{ color: '#64748b' }}>
-            v0.2.0
-          </div>
-        </div>
+        {/* Gradient accent border at bottom */}
+        <div
+          className="h-px w-full"
+          style={{
+            background: `linear-gradient(90deg, transparent 5%, ${roomColor}40 30%, ${roomColor}60 50%, ${roomColor}40 70%, transparent 95%)`,
+          }}
+        />
       </motion.div>
 
-      {/* Bottom nav */}
+      {/* ── Bottom nav (pill-shaped glass container) ── */}
       <motion.div
         initial={{ y: 60 }}
         animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-1.5 px-4 py-3 overflow-x-auto"
-        style={{
-          background: 'linear-gradient(0deg, rgba(10,11,20,0.95) 0%, rgba(10,11,20,0.7) 80%, transparent 100%)',
-          backdropFilter: 'blur(12px)',
-        }}
+        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-3 pt-1"
+        style={{ background: 'linear-gradient(0deg, rgba(10,11,20,0.9) 0%, transparent 100%)' }}
       >
-        {rooms.map((room) => (
-          <motion.button
-            key={room.id}
-            onClick={() => onRoomChange(room.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative px-3 py-2 rounded-lg text-[11px] font-mono tracking-wider uppercase transition-all cursor-pointer border shrink-0"
-            style={{
-              background: activeRoom === room.id
-                ? `${room.color}15`
-                : 'rgba(26,27,46,0.6)',
-              borderColor: activeRoom === room.id
-                ? `${room.color}60`
-                : 'rgba(42,43,61,0.6)',
-              color: activeRoom === room.id ? room.color : '#64748b',
-              boxShadow: activeRoom === room.id
-                ? `0 0 20px ${room.color}20, inset 0 0 20px ${room.color}10`
-                : 'none',
-            }}
-          >
-            {room.name}
-            {activeRoom === room.id && (
-              <motion.div
-                layoutId="room-indicator"
-                className="absolute -bottom-1 left-1/2 w-6 h-0.5 rounded-full -translate-x-1/2"
-                style={{ background: room.color }}
-              />
-            )}
-          </motion.button>
-        ))}
+        <motion.div
+          className="glass-strong flex items-center gap-1 px-3 py-2 overflow-x-auto"
+          style={{
+            borderRadius: 20,
+            maxWidth: '100%',
+          }}
+        >
+          {rooms.map((room) => {
+            const isActive = activeRoom === room.id
+            const color = roomColors[room.id] || room.color
+            return (
+              <motion.button
+                key={room.id}
+                onClick={() => onRoomChange(room.id)}
+                whileHover={{ scale: 1.08, y: -2 }}
+                whileTap={{ scale: 0.93 }}
+                className="tab-pill relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono tracking-wider uppercase cursor-pointer border-0 shrink-0"
+                style={{
+                  background: isActive ? `${color}18` : 'transparent',
+                  color: isActive ? color : '#64748b',
+                  boxShadow: isActive ? `0 0 20px ${color}25, 0 4px 12px rgba(0,0,0,0.2)` : 'none',
+                  minHeight: 44, // touch-friendly
+                }}
+                title={room.name}
+                aria-label={room.name}
+                tabIndex={0}
+              >
+                <span className="text-sm">{roomEmojis[room.id]}</span>
+                <span className="hidden sm:inline">{room.name}</span>
+
+                {/* Active glow underline */}
+                {isActive && (
+                  <motion.div
+                    layoutId="room-indicator"
+                    className="absolute -bottom-0.5 left-3 right-3 h-[2px] rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+                      boxShadow: `0 0 8px ${color}80`,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            )
+          })}
+        </motion.div>
       </motion.div>
 
       {/* Corner decorations */}
-      <div className="fixed top-0 left-0 w-16 h-16 pointer-events-none z-40">
+      <div className="fixed top-0 left-0 w-16 h-16 pointer-events-none z-40 opacity-40">
         <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
           <path d="M0 0 L20 0 L20 2 L2 2 L2 20 L0 20 Z" fill="#2a2b3d" />
         </svg>
       </div>
-      <div className="fixed top-0 right-0 w-16 h-16 pointer-events-none z-40">
+      <div className="fixed top-0 right-0 w-16 h-16 pointer-events-none z-40 opacity-40">
         <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
           <path d="M64 0 L44 0 L44 2 L62 2 L62 20 L64 20 Z" fill="#2a2b3d" />
         </svg>
@@ -219,7 +318,10 @@ function StatusDot({ color, label, pulse }: { color: string; label: string; puls
   return (
     <div className="items-center gap-1.5 hidden md:flex">
       <div className="relative">
-        <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{ background: color, boxShadow: `0 0 6px ${color}80` }}
+        />
         {pulse && (
           <div
             className="absolute inset-0 w-2 h-2 rounded-full animate-ping"

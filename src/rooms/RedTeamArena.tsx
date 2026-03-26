@@ -92,15 +92,16 @@ function SpeechBubble({ agent, text, confidence, index }: { agent: 'attacker' | 
       transition={{ duration: 0.5, delay: index * 0.15, ease: 'easeOut' }}
     >
       <div
-        className={`relative max-w-[75%] p-4 rounded-2xl border ${
+        className={`relative max-w-[75%] p-4 rounded-2xl border card-tilt ${
           isAttacker
             ? 'bg-anima-red/5 border-anima-red/30 rounded-bl-sm'
             : 'bg-anima-blue/5 border-anima-blue/30 rounded-br-sm'
         }`}
         style={{
+          backdropFilter: 'blur(12px)',
           boxShadow: isAttacker
-            ? '0 0 15px rgba(239,68,68,0.08)'
-            : '0 0 15px rgba(59,130,246,0.08)',
+            ? '0 4px 24px rgba(239,68,68,0.1), 0 0 1px rgba(239,68,68,0.2)'
+            : '0 4px 24px rgba(59,130,246,0.1), 0 0 1px rgba(59,130,246,0.2)',
         }}
       >
         {/* Agent label */}
@@ -136,7 +137,7 @@ function BiasAlertCard({ alert, index }: { alert: typeof redTeamData.biasAlerts[
   const sev = severityColors[alert.severity]
   return (
     <motion.div
-      className={`p-3 rounded-lg border ${sev.border} ${sev.bg} backdrop-blur-sm`}
+      className={`p-3 rounded-xl border ${sev.border} ${sev.bg} glass card-tilt`}
       initial={{ opacity: 0, x: 60, scale: 0.9 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{ duration: 0.4, delay: 0.8 + index * 0.2, ease: 'easeOut' }}
@@ -226,7 +227,7 @@ export default function RedTeamArena() {
   }
 
   return (
-    <div className="relative h-full w-full bg-anima-bg overflow-hidden flex flex-col">
+    <div className="relative h-full w-full bg-anima-bg overflow-hidden flex flex-col" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
       {/* ── Dramatic lighting overlays ── */}
       <div className="pointer-events-none absolute inset-0 z-0">
         {/* Red glow from left */}

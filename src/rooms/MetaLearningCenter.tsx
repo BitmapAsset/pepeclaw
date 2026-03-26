@@ -49,10 +49,11 @@ function HoloCard({
 }) {
   return (
     <div
-      className={`relative rounded-xl overflow-hidden ${className}`}
+      className={`relative rounded-2xl overflow-hidden card-tilt ${className}`}
       style={{
-        background: colors.surface,
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(18,19,31,0.7)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
         ...style,
       }}
     >
@@ -415,8 +416,8 @@ function ProposalCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, delay: index * 0.08 }}
-      className="rounded-lg p-2.5"
-      style={{ background: colors.surfaceLight, border: `1px solid ${colors.border}` }}
+      className="rounded-xl p-2.5 card-tilt"
+      style={{ background: 'rgba(26,27,46,0.6)', backdropFilter: 'blur(8px)', border: `1px solid ${colors.border}` }}
     >
       <div className="text-xs font-semibold mb-1" style={{ color: colors.text }}>
         {proposal.title}
