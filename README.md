@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/hero.png" alt="PepeClaw — Self-Evolving AI Agents You Can See" width="800">
+  <img src="docs/screenshots/hero.jpg" alt="PepeClaw — Self-Evolving AI Agents You Can See" width="800">
 </p>
 
 <h1 align="center">🐸 PepeClaw</h1>
@@ -78,7 +78,7 @@ Or just tell your OpenClaw: **"Install PepeClaw"** — it handles everything.
 ## The 8 Rooms
 
 ### 🧬 Genome Lab
-<img src="docs/screenshots/genome-lab.png" alt="Genome Lab" width="700">
+<img src="docs/screenshots/genome-lab.jpg" alt="Genome Lab" width="700">
 
 Watch skills mutate, evolve, and compete. A rotating 3D DNA helix with orbiting skill cards shows your agent's capability genome in real-time. See fitness scores rise as skills improve across generations.
 
@@ -92,7 +92,7 @@ Project health at a glance. 3D radar with health gauges, velocity charts, and de
 Watch your agent debate itself. Two AI agents face off on opposing podiums with argument energy beams, bias detection panels, and an assumption challenge board. Your agent's ideas get stress-tested in real-time.
 
 ### 🧠 Meta-Learning Center
-<img src="docs/screenshots/meta-learning.png" alt="Meta-Learning Center" width="700">
+<img src="docs/screenshots/meta-learning.jpg" alt="Meta-Learning Center" width="700">
 
 A 3D brain with neural pathways lighting up as your agent learns. Capability rings orbit around it. See accuracy, response time, and task completion improve over time. Self-modification proposals appear in a kanban board.
 
@@ -103,7 +103,7 @@ A 3D hourglass with animated sand and a flowing timeline river. Your agent optim
 Agent identity, verified on Bitcoin. A vault door with rotating gear mechanism and floating identity cards. Integrates with Block Genomics for sovereign, on-chain agent DNA. Your agent's lineage is provable.
 
 ### 🧪 Breeding Arena
-<img src="docs/screenshots/breeding-arena.png" alt="Breeding Arena" width="700">
+<img src="docs/screenshots/breeding-arena.jpg" alt="Breeding Arena" width="700">
 
 **The showstopper.** Combine two agents' skill genomes to create hybrid offspring. DNA helixes intertwine with particle cascades, neural pathways form between parents, and a child agent materializes with inherited capabilities. Breed → mint → verify on Bitcoin.
 
@@ -153,9 +153,9 @@ PepeClaw includes 7 autonomous skills that make your agent self-improving:
 
 | Room | Preview |
 |------|---------|
-| Genome Lab | <img src="docs/screenshots/genome-lab.png" width="400"> |
-| Breeding Arena | <img src="docs/screenshots/breeding-arena.png" width="400"> |
-| Meta-Learning | <img src="docs/screenshots/meta-learning.png" width="400"> |
+| Genome Lab | <img src="docs/screenshots/genome-lab.jpg" width="400"> |
+| Breeding Arena | <img src="docs/screenshots/breeding-arena.jpg" width="400"> |
+| Meta-Learning | <img src="docs/screenshots/meta-learning.jpg" width="400"> |
 
 </details>
 
