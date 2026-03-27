@@ -22,3 +22,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent / OpenClaw files
+.env*
+!.env.example
+SOUL.md
+MEMORY.md
+USER.md
+IDENTITY.md
+AGENTS.md
+TOOLS.md
+HEARTBEAT.md
+.openclaw/
+soul-backup/
+memory/
+tmp/
