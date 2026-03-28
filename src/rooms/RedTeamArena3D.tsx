@@ -9,17 +9,17 @@ function ArenaPodium({ position, color, label }: { position: [number, number, nu
       {/* Podium base */}
       <mesh position={[0, -1.5, 0]}>
         <cylinderGeometry args={[1.2, 1.4, 0.3, 16]} />
-        <meshStandardMaterial color="#1a1b2e" emissive={color} emissiveIntensity={0.15} />
+        <meshStandardMaterial color="#1a1b2e" emissive={color} emissiveIntensity={0.5} />
       </mesh>
       {/* Podium column */}
       <mesh position={[0, -0.5, 0]}>
         <cylinderGeometry args={[0.3, 0.5, 1.8, 8]} />
-        <meshStandardMaterial color="#12131f" emissive={color} emissiveIntensity={0.1} />
+        <meshStandardMaterial color="#12131f" emissive={color} emissiveIntensity={0.3} />
       </mesh>
       {/* Podium top */}
       <mesh position={[0, 0.5, 0]}>
         <cylinderGeometry args={[0.8, 0.3, 0.2, 12]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} transparent opacity={0.8} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} transparent opacity={0.9} />
       </mesh>
       {/* Glow ring */}
       <mesh position={[0, -1.3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -107,7 +107,7 @@ function ArenaParticles() {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} vertexColors transparent opacity={0.6} sizeAttenuation />
+      <pointsMaterial size={0.1} vertexColors transparent opacity={0.8} sizeAttenuation />
     </points>
   );
 }
@@ -125,7 +125,7 @@ export function RedTeamArena3D() {
       {/* Arena floor - octagonal ring */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.7, 0]}>
         <circleGeometry args={[5, 8]} />
-        <meshStandardMaterial color="#12131f" emissive="#8b5cf6" emissiveIntensity={0.05} />
+        <meshStandardMaterial color="#12131f" emissive="#8b5cf6" emissiveIntensity={0.25} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.68, 0]}>
         <ringGeometry args={[4.8, 5, 8]} />
@@ -151,9 +151,9 @@ export function RedTeamArena3D() {
       <ArenaParticles />
 
       {/* Lighting */}
-      <pointLight position={[-4, 4, 2]} color="#ef4444" intensity={2} distance={15} />
-      <pointLight position={[4, 4, 2]} color="#3b82f6" intensity={2} distance={15} />
-      <pointLight position={[0, 5, 0]} color="#8b5cf6" intensity={1} distance={12} />
+      <pointLight position={[-4, 4, 2]} color="#ef4444" intensity={3} distance={20} />
+      <pointLight position={[4, 4, 2]} color="#3b82f6" intensity={3} distance={20} />
+      <pointLight position={[0, 5, 0]} color="#8b5cf6" intensity={2} distance={18} />
     </group>
   );
 }

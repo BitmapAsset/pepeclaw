@@ -30,7 +30,7 @@ function ParentDNA({ position, color, direction }: { position: [number, number, 
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[helixPoints, 3]} />
         </bufferGeometry>
-        <pointsMaterial size={0.08} color={color} transparent opacity={0.9} sizeAttenuation />
+        <pointsMaterial size={0.15} color={color} transparent opacity={1.0} sizeAttenuation />
       </points>
       {/* Rungs */}
       {Array.from({ length: 8 }).map((_, i) => {
@@ -39,7 +39,7 @@ function ParentDNA({ position, color, direction }: { position: [number, number, 
         return (
           <mesh key={i} position={[0, y, 0]} rotation={[0, t, 0]}>
             <boxGeometry args={[1, 0.03, 0.03]} />
-            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} transparent opacity={0.5} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.2} transparent opacity={0.8} />
           </mesh>
         )
       })}
@@ -113,7 +113,7 @@ function BreedingParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} color="#ec4899" transparent opacity={0.7} sizeAttenuation />
+      <pointsMaterial size={0.1} color="#ec4899" transparent opacity={0.9} sizeAttenuation />
     </points>
   )
 }
@@ -187,9 +187,9 @@ export function BreedingArena3D() {
       <ChildAgent />
 
       {/* Lighting */}
-      <pointLight position={[0, 4, 0]} color="#ec4899" intensity={2} distance={12} />
-      <pointLight position={[-4, 0, 0]} color="#00ff88" intensity={1} distance={8} />
-      <pointLight position={[4, 0, 0]} color="#06b6d4" intensity={1} distance={8} />
+      <pointLight position={[0, 4, 0]} color="#ec4899" intensity={3} distance={18} />
+      <pointLight position={[-4, 0, 0]} color="#00ff88" intensity={2} distance={12} />
+      <pointLight position={[4, 0, 0]} color="#06b6d4" intensity={2} distance={12} />
     </group>
   )
 }

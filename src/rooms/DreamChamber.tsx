@@ -37,7 +37,7 @@ function Starfield() {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.08} vertexColors transparent opacity={0.8} sizeAttenuation />
+      <pointsMaterial size={0.2} vertexColors transparent opacity={1.0} sizeAttenuation />
     </points>
   )
 }
@@ -115,7 +115,7 @@ function ConnectionLine({ from, to }: { from: [number, number, number]; to: [num
   return (
     <mesh ref={ref} position={midPoint} rotation={rotation}>
       <cylinderGeometry args={[0.015, 0.015, length, 4]} />
-      <meshBasicMaterial color="#8b5cf6" transparent opacity={0.25} />
+      <meshBasicMaterial color="#8b5cf6" transparent opacity={0.4} />
     </mesh>
   )
 }
@@ -127,11 +127,11 @@ function DreamNodeSphere({ node, floatSpeed }: { node: typeof dreamNodes[0]; flo
       <group position={[node.x, node.y, node.z]}>
         <mesh>
           <sphereGeometry args={[0.25, 16, 16]} />
-          <meshStandardMaterial color="#8b5cf6" emissive="#8b5cf6" emissiveIntensity={0.8} transparent opacity={0.9} />
+          <meshStandardMaterial color="#8b5cf6" emissive="#8b5cf6" emissiveIntensity={1.5} transparent opacity={1.0} />
         </mesh>
         <mesh>
           <sphereGeometry args={[0.4, 16, 16]} />
-          <meshBasicMaterial color="#8b5cf6" transparent opacity={0.1} />
+          <meshBasicMaterial color="#8b5cf6" transparent opacity={0.2} />
         </mesh>
         <Text position={[0, 0.55, 0]} fontSize={0.15} color="#c4b5fd" anchorX="center" maxWidth={2.5} font={undefined}>
           {node.title}
@@ -370,9 +370,9 @@ export function DreamChamber() {
       <MemoryPalace />
 
       {/* Ethereal lighting */}
-      <pointLight position={[0, 5, 0]} color="#6d28d9" intensity={1.5} distance={15} />
-      <pointLight position={[-5, -2, 3]} color="#0ea5e9" intensity={0.8} distance={10} />
-      <pointLight position={[4, 2, -3]} color="#a855f7" intensity={0.8} distance={10} />
+      <pointLight position={[0, 5, 0]} color="#6d28d9" intensity={3} distance={20} />
+      <pointLight position={[-5, -2, 3]} color="#0ea5e9" intensity={1.5} distance={15} />
+      <pointLight position={[4, 2, -3]} color="#a855f7" intensity={1.5} distance={15} />
     </group>
   )
 }

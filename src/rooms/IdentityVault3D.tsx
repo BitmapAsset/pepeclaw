@@ -23,13 +23,13 @@ function VaultDoor() {
       {/* Door surface */}
       <mesh position={[0, 0, 0.2]}>
         <circleGeometry args={[2, 32]} />
-        <meshStandardMaterial color="#12131f" metalness={0.9} roughness={0.2} emissive="#f97316" emissiveIntensity={0.05} />
+        <meshStandardMaterial color="#12131f" metalness={0.9} roughness={0.2} emissive="#f97316" emissiveIntensity={0.25} />
       </mesh>
       {/* Gear mechanism */}
       <group ref={gearRef} position={[0, 0, 0.3]}>
         <mesh>
           <torusGeometry args={[1.5, 0.08, 8, 32]} />
-          <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.4} metalness={0.8} />
+          <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.8} metalness={0.8} />
         </mesh>
         {/* Spokes */}
         {Array.from({ length: 8 }).map((_, i) => {
@@ -37,7 +37,7 @@ function VaultDoor() {
           return (
             <mesh key={i} position={[Math.cos(angle) * 0.75, Math.sin(angle) * 0.75, 0]} rotation={[0, 0, angle]}>
               <boxGeometry args={[1.5, 0.06, 0.06]} />
-              <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.2} metalness={0.7} />
+              <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.5} metalness={0.7} />
             </mesh>
           );
         })}
@@ -125,7 +125,7 @@ function VaultParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="#f97316" transparent opacity={0.3} sizeAttenuation />
+      <pointsMaterial size={0.08} color="#f97316" transparent opacity={0.6} sizeAttenuation />
     </points>
   );
 }
@@ -155,9 +155,9 @@ export function IdentityVault3D() {
       <VaultParticles />
 
       {/* Lighting */}
-      <pointLight position={[0, 4, 2]} color="#f97316" intensity={2} distance={15} />
-      <pointLight position={[-3, 1, 3]} color="#f59e0b" intensity={0.8} distance={10} />
-      <pointLight position={[3, 1, 3]} color="#ea580c" intensity={0.8} distance={10} />
+      <pointLight position={[0, 4, 2]} color="#f97316" intensity={3} distance={20} />
+      <pointLight position={[-3, 1, 3]} color="#f59e0b" intensity={1.5} distance={15} />
+      <pointLight position={[3, 1, 3]} color="#ea580c" intensity={1.5} distance={15} />
     </group>
   );
 }

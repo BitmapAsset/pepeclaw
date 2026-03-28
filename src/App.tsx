@@ -105,8 +105,14 @@ export default function App() {
     }))
   }, [])
 
+  // Keyboard navigation: ESC for overview, arrow keys for rooms
   useEffect(() => {
+    const navigableRooms: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding']
+
     function handleKeyDown(e: KeyboardEvent) {
+      // Don't capture when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
       if (e.key === 'Escape') {
         if (interactive.selectedAgentId) {
           setInteractive({ selectedAgentId: null, followingAgentId: null, chatInput: '' })
@@ -114,11 +120,24 @@ export default function App() {
           setOverviewMode(true)
           setActiveRoom('overview')
         }
+        return
+      }
+
+      // Arrow key room navigation
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        const currentIdx = navigableRooms.indexOf(activeRoom)
+        const base = currentIdx === -1 ? 0 : currentIdx
+        const next = e.key === 'ArrowRight'
+          ? (base + 1) % navigableRooms.length
+          : (base - 1 + navigableRooms.length) % navigableRooms.length
+        setActiveRoom(navigableRooms[next])
+        setOverviewMode(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [interactive.selectedAgentId])
+  }, [interactive.selectedAgentId, activeRoom])
 
   const isPanelOnly = panelOnlyRooms.has(activeRoom)
   const PanelRoom = !overviewMode ? panelRooms[activeRoom] : undefined
@@ -211,7 +230,7 @@ function InteractiveChat({ interactive, setInteractive }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 glass-strong rounded-xl px-4 py-3 w-80"
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 glass-strong rounded-xl px-3 sm:px-4 py-3 w-[calc(100vw-2rem)] sm:w-80 max-w-80"
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3 rounded-full" style={{ background: selectedAgent.color }} />
@@ -332,7 +351,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
           background: 'linear-gradient(180deg, rgba(10,11,20,0.92) 0%, rgba(10,11,20,0.8) 100%)',
         }}
       >
-        <div className="flex items-center justify-between px-6 py-2.5">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-2.5">
           <div className="flex items-center gap-3">
             <motion.div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold text-white"
@@ -458,12 +477,12 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         initial={{ y: 60 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-3 pt-1"
+        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-2 sm:px-4 pb-2 sm:pb-3 pt-1"
         style={{ background: 'linear-gradient(0deg, rgba(10,11,20,0.9) 0%, transparent 100%)' }}
       >
         <motion.div
-          className="glass-strong flex items-center gap-1 px-3 py-2 overflow-x-auto"
-          style={{ borderRadius: 20, maxWidth: '100%' }}
+          className="glass-strong flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-1.5 sm:py-2 overflow-x-auto"
+          style={{ borderRadius: 20, maxWidth: '100%', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
           {rooms.map((room) => {
             const isOverviewTab = room.id === 'overview'
@@ -475,12 +494,14 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
                 onClick={() => onRoomChange(room.id)}
                 whileHover={{ scale: 1.08, y: -2 }}
                 whileTap={{ scale: 0.93 }}
-                className="tab-pill relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono tracking-wider uppercase cursor-pointer border-0 shrink-0"
+                className="tab-pill relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-mono tracking-wider uppercase cursor-pointer border-0 shrink-0"
                 style={{
                   background: isActive ? `${color}18` : 'transparent',
                   color: isActive ? color : '#64748b',
                   boxShadow: isActive ? `0 0 20px ${color}25, 0 4px 12px rgba(0,0,0,0.2)` : 'none',
                   minHeight: 44,
+                  minWidth: 44,
+                  justifyContent: 'center',
                 }}
                 title={room.name}
                 aria-label={room.name}

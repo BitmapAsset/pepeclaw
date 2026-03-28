@@ -3,7 +3,6 @@ const GATEWAY_CANDIDATES = [
   import.meta.env.VITE_GATEWAY_URL,
   'http://localhost:3033',
   'http://localhost:3000',
-  typeof window !== 'undefined' ? window.location.origin : null,
 ].filter(Boolean) as string[];
 
 interface GatewayResponse<T> {
@@ -18,6 +17,7 @@ let _connectionStatus: ConnectionStatus = 'offline';
 let _statusListeners: Array<(s: ConnectionStatus) => void> = [];
 
 function setStatus(s: ConnectionStatus) {
+  if (_connectionStatus === s) return;
   _connectionStatus = s;
   _statusListeners.forEach(fn => fn(s));
 }
@@ -31,15 +31,16 @@ export function getConnectionStatus(): ConnectionStatus {
   return _connectionStatus;
 }
 
-/** Probe a URL to see if a gateway is listening */
+/** Probe a URL to see if a gateway is listening (fast timeout, silent failures) */
 async function probeUrl(url: string): Promise<boolean> {
   try {
     const res = await fetch(`${url}/api/v1/agents`, {
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(1500),
       headers: { 'Accept': 'application/json' },
     });
     return res.ok;
   } catch {
+    // Silent failure — no console output
     return false;
   }
 }

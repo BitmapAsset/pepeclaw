@@ -211,9 +211,9 @@ export function WarRoom() {
       </group>
 
       {/* War room lighting — tense and focused */}
-      <pointLight position={[0, 5, 3]} color="#ff3333" intensity={1} distance={15} />
-      <pointLight position={[-6, 2, 0]} color="#ff6600" intensity={0.5} distance={10} />
-      <pointLight position={[6, 2, 0]} color="#ff6600" intensity={0.5} distance={10} />
+      <pointLight position={[0, 5, 3]} color="#ff3333" intensity={2.5} distance={20} />
+      <pointLight position={[-6, 2, 0]} color="#ff6600" intensity={1.5} distance={15} />
+      <pointLight position={[6, 2, 0]} color="#ff6600" intensity={1.5} distance={15} />
     </group>
   )
 }

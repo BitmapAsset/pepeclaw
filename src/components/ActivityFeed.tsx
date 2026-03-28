@@ -50,11 +50,12 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
         whileHover={{ scale: 1.08, boxShadow: '0 0 16px rgba(139,92,246,0.3)' }}
         whileTap={{ scale: 0.93 }}
         onClick={() => setOpen(o => !o)}
-        className="fixed right-4 top-16 z-50 px-3 py-2 rounded-xl text-[10px] font-mono tracking-wider uppercase cursor-pointer glass-strong"
+        className="fixed right-2 sm:right-4 top-14 sm:top-16 z-50 px-3 py-2 rounded-xl text-[10px] font-mono tracking-wider uppercase cursor-pointer glass-strong"
         style={{
           color: open ? '#c4b5fd' : '#94a3b8',
           borderColor: open ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)',
-          minHeight: 44, // touch-friendly
+          minHeight: 44,
+          minWidth: 44,
         }}
       >
         <span className="flex items-center gap-1.5">
@@ -79,7 +80,7 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed right-4 top-28 z-50 w-72 max-h-[60vh] flex flex-col rounded-2xl glass-strong overflow-hidden"
+            className="fixed right-2 sm:right-4 top-24 sm:top-28 z-50 w-[calc(100vw-1rem)] sm:w-72 max-h-[60vh] flex flex-col rounded-2xl glass-strong overflow-hidden"
             style={{
               boxShadow: '0 16px 48px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1)',
             }}

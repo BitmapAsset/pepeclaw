@@ -62,7 +62,7 @@ function DNAHelix() {
             <bufferAttribute attach="attributes-position" args={[helixPoints.positions, 3]} />
             <bufferAttribute attach="attributes-color" args={[helixPoints.colors, 3]} />
           </bufferGeometry>
-          <pointsMaterial size={0.12} vertexColors transparent opacity={0.9} sizeAttenuation />
+          <pointsMaterial size={0.2} vertexColors transparent opacity={1.0} sizeAttenuation />
         </points>
         {Array.from({ length: 20 }).map((_, i) => {
           const t = (i / 20) * Math.PI * 6
@@ -73,9 +73,9 @@ function DNAHelix() {
               <meshStandardMaterial
                 color={i % 2 === 0 ? '#00ff88' : '#3b82f6'}
                 emissive={i % 2 === 0 ? '#00ff88' : '#3b82f6'}
-                emissiveIntensity={0.5}
+                emissiveIntensity={1.2}
                 transparent
-                opacity={0.6}
+                opacity={0.8}
               />
             </mesh>
           )
@@ -86,7 +86,7 @@ function DNAHelix() {
           <bufferAttribute attach="attributes-position" args={[mutationParticles.positions, 3]} />
           <bufferAttribute attach="attributes-color" args={[mutationParticles.colors, 3]} />
         </bufferGeometry>
-        <pointsMaterial size={0.06} vertexColors transparent opacity={0.6} sizeAttenuation />
+        <pointsMaterial size={0.1} vertexColors transparent opacity={0.85} sizeAttenuation />
       </points>
     </group>
   )
@@ -477,8 +477,8 @@ export function GenomeLab() {
       <EvolutionTimeline />
 
       {/* Room ambient glow */}
-      <pointLight position={[0, 3, 0]} color="#00ff88" intensity={2} distance={12} />
-      <pointLight position={[0, -3, 0]} color="#3b82f6" intensity={1.5} distance={10} />
+      <pointLight position={[0, 3, 0]} color="#00ff88" intensity={3} distance={18} />
+      <pointLight position={[0, -3, 0]} color="#3b82f6" intensity={2.5} distance={15} />
     </group>
   )
 }

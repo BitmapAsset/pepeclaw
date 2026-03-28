@@ -37,7 +37,7 @@ function TimelineRiver() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.06} color="#f59e0b" transparent opacity={0.7} sizeAttenuation />
+      <pointsMaterial size={0.1} color="#fbbf24" transparent opacity={0.9} sizeAttenuation />
     </points>
   );
 }
@@ -65,22 +65,22 @@ function Hourglass3D() {
       {/* Top cone */}
       <mesh position={[0, 1, 0]} rotation={[Math.PI, 0, 0]}>
         <coneGeometry args={[0.8, 1.5, 8]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.2} wireframe />
+        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.8} wireframe />
       </mesh>
       {/* Bottom cone */}
       <mesh position={[0, -1, 0]}>
         <coneGeometry args={[0.8, 1.5, 8]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.2} wireframe />
+        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.8} wireframe />
       </mesh>
       {/* Sand particles top */}
       <mesh ref={topRef} position={[0, 0.8, 0]}>
         <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.5} transparent opacity={0.6} />
+        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.0} transparent opacity={0.8} />
       </mesh>
       {/* Sand particles bottom */}
       <mesh ref={botRef} position={[0, -0.8, 0]}>
         <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.5} transparent opacity={0.6} />
+        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.0} transparent opacity={0.8} />
       </mesh>
       {/* Center stream */}
       <mesh>
@@ -146,7 +146,7 @@ function TemporalParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="#f59e0b" transparent opacity={0.35} sizeAttenuation />
+      <pointsMaterial size={0.08} color="#f59e0b" transparent opacity={0.6} sizeAttenuation />
     </points>
   );
 }
@@ -190,9 +190,9 @@ export function TemporalEngine3D() {
       ))}
 
       {/* Lighting */}
-      <pointLight position={[0, 5, 0]} color="#f59e0b" intensity={2} distance={15} />
-      <pointLight position={[-5, 2, 0]} color="#6366f1" intensity={1} distance={10} />
-      <pointLight position={[5, 2, 0]} color="#f97316" intensity={1} distance={10} />
+      <pointLight position={[0, 5, 0]} color="#f59e0b" intensity={3} distance={20} />
+      <pointLight position={[-5, 2, 0]} color="#6366f1" intensity={2} distance={15} />
+      <pointLight position={[5, 2, 0]} color="#f97316" intensity={2} distance={15} />
     </group>
   );
 }

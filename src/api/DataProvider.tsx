@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { gateway, discoverGateway, onConnectionStatusChange, type AgentState, type ConnectionStatus } from './gateway';
 import {
   skills as mockSkills,
@@ -12,15 +12,15 @@ import {
   type Project,
 } from '../data/mockData';
 
-// Default mock agents when gateway is unavailable
+// Default mock agents — 7 agents, one per room, each with unique activity and personality
 const mockAgents: AgentState[] = [
-  { id: 'a1', name: 'Atlas', role: 'architect', status: 'working', currentRoom: 'genome', color: '#00ff88', activity: 'processing', taskDescription: 'Mutating Code Generation skill' },
-  { id: 'a2', name: 'Nova', role: 'researcher', status: 'working', currentRoom: 'dream', color: '#8b5cf6', activity: 'idle', taskDescription: 'Exploring dream merge state' },
-  { id: 'a3', name: 'Sentinel', role: 'defender', status: 'idle', currentRoom: 'war', color: '#ef4444', activity: 'idle', taskDescription: 'Monitoring threat vectors' },
-  { id: 'a4', name: 'Cipher', role: 'analyst', status: 'working', currentRoom: 'redteam', color: '#f87171', hasSubAgents: true, taskDescription: 'Debating microservices migration' },
-  { id: 'a5', name: 'Echo', role: 'learner', status: 'working', currentRoom: 'metalearning', color: '#06b6d4', isSearching: true, taskDescription: 'Analyzing learning patterns' },
-  { id: 'a6', name: 'Chrono', role: 'scheduler', status: 'break', currentRoom: 'temporal', color: '#f59e0b', activity: 'idle', taskDescription: 'Optimizing task batches' },
-  { id: 'a7', name: 'Vault', role: 'verifier', status: 'idle', currentRoom: 'identity', color: '#f97316', activity: 'idle', taskDescription: 'Verifying identity hashes' },
+  { id: 'a1', name: 'Atlas', role: 'architect', status: 'working', currentRoom: 'genome', color: '#00ff88', activity: 'processing', taskDescription: 'Mutating Code Generation skill — gen 47 → 48' },
+  { id: 'a2', name: 'Nova', role: 'researcher', status: 'working', currentRoom: 'dream', color: '#8b5cf6', activity: 'brainstorming', taskDescription: 'Exploring dream merge: neural architecture + self-modifying prompts' },
+  { id: 'a3', name: 'Sentinel', role: 'defender', status: 'working', currentRoom: 'war', color: '#ef4444', activity: 'monitoring', taskDescription: 'Scanning for anomalous deployment patterns in PepeClaw Core' },
+  { id: 'a4', name: 'Cipher', role: 'analyst', status: 'working', currentRoom: 'redteam', color: '#f87171', hasSubAgents: true, activity: 'debating', taskDescription: 'Round 5: microservices latency vs. blast radius tradeoff' },
+  { id: 'a5', name: 'Echo', role: 'learner', status: 'working', currentRoom: 'metalearning', color: '#06b6d4', isSearching: true, activity: 'studying', taskDescription: 'Self-modifying reasoning module — accuracy +3% this cycle' },
+  { id: 'a6', name: 'Chrono', role: 'scheduler', status: 'working', currentRoom: 'temporal', color: '#f59e0b', activity: 'managing', taskDescription: 'Rebalancing batch priorities — 2 urgent tasks deferred' },
+  { id: 'a7', name: 'Vault', role: 'verifier', status: 'working', currentRoom: 'identity', color: '#f97316', activity: 'verifying', taskDescription: 'Minting identity token #48 — hash verification in progress' },
 ];
 
 interface DataState {
@@ -51,7 +51,9 @@ const DataContext = createContext<DataState>(defaults);
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DataState>(defaults);
+  const connectedRef = useRef(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dataTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchAll = useCallback(async (signal: AbortSignal) => {
     try {
@@ -70,6 +72,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .some(r => r !== null);
 
       if (!signal.aborted) {
+        connectedRef.current = anySucceeded;
         setState(prev => ({
           skills: skills ?? prev.skills,
           dreamNodes: dreamNodes ?? prev.dreamNodes,
@@ -82,10 +85,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
           connectionStatus: anySucceeded ? 'connected' : prev.connectionStatus,
         }));
       }
-    } catch (err) {
-      if (!signal.aborted) {
-        console.warn('[PepeClaw] Gateway unavailable, using mock data:', err);
-      }
+    } catch {
+      // Silent failure — mock data already loaded as defaults
     }
   }, []);
 
@@ -94,10 +95,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Listen for connection status changes from the gateway module
     const unsub = onConnectionStatusChange((status) => {
-      setState(prev => ({ ...prev, connectionStatus: status }));
+      connectedRef.current = status === 'connected';
+      setState(prev => {
+        if (prev.connectionStatus === status) return prev;
+        return { ...prev, connectionStatus: status };
+      });
     });
 
-    // Auto-discover gateway on mount, then fetch data
+    // Non-blocking gateway discovery — app renders instantly with mock data
     async function init() {
       const url = await discoverGateway();
       if (url && !ac.signal.aborted) {
@@ -105,31 +110,38 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Fire and forget — don't block render
     init();
 
-    // Poll for data every 15 seconds when connected
-    const dataInterval = setInterval(() => fetchAll(ac.signal), 15_000);
+    // Poll for data every 15s ONLY when connected
+    dataTimerRef.current = setInterval(() => {
+      if (connectedRef.current) {
+        fetchAll(ac.signal);
+      }
+    }, 15_000);
 
-    // Retry gateway discovery every 30 seconds when offline
-    function scheduleRetry() {
-      retryTimerRef.current = setInterval(async () => {
+    // Retry gateway discovery every 60s when offline (reduced from 30s, silent)
+    retryTimerRef.current = setInterval(async () => {
+      if (!connectedRef.current && !ac.signal.aborted) {
         const url = await discoverGateway();
         if (url && !ac.signal.aborted) {
           await fetchAll(ac.signal);
         }
-      }, 30_000);
-    }
-    scheduleRetry();
+      }
+    }, 60_000);
 
     return () => {
       ac.abort();
-      clearInterval(dataInterval);
+      if (dataTimerRef.current) clearInterval(dataTimerRef.current);
       if (retryTimerRef.current) clearInterval(retryTimerRef.current);
       unsub();
     };
   }, [fetchAll]);
 
-  return <DataContext.Provider value={state}>{children}</DataContext.Provider>;
+  // Memoize context value — state reference only changes on actual data updates
+  const value = useMemo(() => state, [state]);
+
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
 export function useData() {

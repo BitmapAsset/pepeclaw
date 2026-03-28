@@ -50,6 +50,10 @@ export const activityToEmotion: Record<string, EmotionState> = {
   managing: 'focused',
   verifying: 'satisfied',
   breeding: 'creative',
+  processing: 'focused',
+  brainstorming: 'creative',
+  monitoring: 'curious',
+  idle: 'satisfied',
 };
 
 // ─── Consciousness Stream ───────────────────────────────────────────
@@ -61,13 +65,16 @@ export interface ThoughtBubble {
 }
 
 export const mockThoughts: ThoughtBubble[] = [
-  { id: 't1', agentId: 'a1', text: 'Analyzing mutation rate...', type: 'reasoning' },
-  { id: 't2', agentId: 'a2', text: 'What if dreams could merge?', type: 'question' },
-  { id: 't3', agentId: 'a3', text: 'Threat vector identified.', type: 'observation' },
-  { id: 't4', agentId: 'a4', text: 'Counterargument is weak.', type: 'decision' },
-  { id: 't5', agentId: 'a5', text: 'Learning rate plateau...', type: 'reasoning' },
-  { id: 't6', agentId: 'a6', text: 'Scheduling batch 3 next.', type: 'decision' },
-  { id: 't7', agentId: 'a7', text: 'Identity hash verified.', type: 'observation' },
+  { id: 't1', agentId: 'a1', text: 'Mutation rate at 0.03 — increasing crossover probability to 0.7 for next generation...', type: 'reasoning' },
+  { id: 't2', agentId: 'a2', text: 'What if we merge the neural architecture dream with self-modifying prompts? The topology could emerge...', type: 'question' },
+  { id: 't3', agentId: 'a3', text: 'Anomalous deployment detected: 3 containers restarted in 5 minutes. Investigating root cause.', type: 'observation' },
+  { id: 't4', agentId: 'a4', text: 'Defender\'s caching argument reduces latency by 60% — but adds a consistency problem. Pressing harder.', type: 'decision' },
+  { id: 't5', agentId: 'a5', text: 'Accuracy plateaued at 89%. Hypothesis: need to diversify training signal, not just increase volume.', type: 'reasoning' },
+  { id: 't6', agentId: 'a6', text: 'Auth service is blocking search indexing. Promoting auth to urgent, deferring docs another sprint.', type: 'decision' },
+  { id: 't7', agentId: 'a7', text: 'Token #47 verified against 3 independent hash chains. Consistency: 100%. Minting #48 now.', type: 'observation' },
+  { id: 't8', agentId: 'a1', text: 'Code Generation fitness jumped from 88 → 92. Template literal optimization was the key mutation.', type: 'observation' },
+  { id: 't9', agentId: 'a2', text: 'The meta-cognition node keeps pulling me back... am I analyzing my analysis of analysis?', type: 'question' },
+  { id: 't10', agentId: 'a5', text: 'Pattern discovered: test-before-refactor yields 23% fewer regressions. Encoding as heuristic.', type: 'reasoning' },
 ];
 
 // ─── Activity Feed ──────────────────────────────────────────────────
@@ -81,16 +88,18 @@ export interface ActivityEntry {
 }
 
 export const mockActivities: ActivityEntry[] = [
-  { id: 'act1', agentName: 'Atlas', agentColor: '#00ff88', action: 'Mutated Code Generation skill', room: 'genome', timestamp: Date.now() - 5000 },
-  { id: 'act2', agentName: 'Nova', agentColor: '#8b5cf6', action: 'Entered dream merge state', room: 'dream', timestamp: Date.now() - 12000 },
-  { id: 'act3', agentName: 'Sentinel', agentColor: '#ef4444', action: 'Detected anomalous pattern', room: 'war', timestamp: Date.now() - 25000 },
-  { id: 'act4', agentName: 'Cipher', agentColor: '#f87171', action: 'Won debate round #4', room: 'redteam', timestamp: Date.now() - 38000 },
-  { id: 'act5', agentName: 'Echo', agentColor: '#06b6d4', action: 'Self-modified reasoning module', room: 'metalearning', timestamp: Date.now() - 52000 },
-  { id: 'act6', agentName: 'Chrono', agentColor: '#f59e0b', action: 'Optimized task batch #2', room: 'temporal', timestamp: Date.now() - 71000 },
-  { id: 'act7', agentName: 'Vault', agentColor: '#f97316', action: 'Minted identity token #47', room: 'identity', timestamp: Date.now() - 90000 },
-  { id: 'act8', agentName: 'Atlas', agentColor: '#00ff88', action: 'Ego death triggered — reforming', room: 'genome', timestamp: Date.now() - 110000 },
-  { id: 'act9', agentName: 'Nova', agentColor: '#8b5cf6', action: 'Explored Memory Palace room 3', room: 'dream', timestamp: Date.now() - 130000 },
-  { id: 'act10', agentName: 'Echo', agentColor: '#06b6d4', action: 'Bred with Atlas — child agent born', room: 'breeding', timestamp: Date.now() - 155000 },
+  { id: 'act1', agentName: 'Atlas', agentColor: '#00ff88', action: 'Evolved Code Generation to gen 48 — fitness 92 → 94', room: 'genome', timestamp: Date.now() - 3000 },
+  { id: 'act2', agentName: 'Cipher', agentColor: '#f87171', action: 'Won debate round #5 — latency argument scored 91% confidence', room: 'redteam', timestamp: Date.now() - 8000 },
+  { id: 'act3', agentName: 'Nova', agentColor: '#8b5cf6', action: 'Merged dream nodes: Neural Architecture + Self-Modifying Prompts', room: 'dream', timestamp: Date.now() - 15000 },
+  { id: 'act4', agentName: 'Sentinel', agentColor: '#ef4444', action: 'Flagged anomaly: 3 container restarts in 5 min on PepeClaw Core', room: 'war', timestamp: Date.now() - 22000 },
+  { id: 'act5', agentName: 'Echo', agentColor: '#06b6d4', action: 'Self-modified reasoning module — chain-of-thought depth +1', room: 'metalearning', timestamp: Date.now() - 35000 },
+  { id: 'act6', agentName: 'Chrono', agentColor: '#f59e0b', action: 'Promoted Auth Service to urgent — blocking search indexing', room: 'temporal', timestamp: Date.now() - 48000 },
+  { id: 'act7', agentName: 'Vault', agentColor: '#f97316', action: 'Minted identity token #47 — verified against 3 hash chains', room: 'identity', timestamp: Date.now() - 62000 },
+  { id: 'act8', agentName: 'Atlas', agentColor: '#00ff88', action: 'Ego death triggered — reforming genome with fresh mutation seeds', room: 'genome', timestamp: Date.now() - 80000 },
+  { id: 'act9', agentName: 'Echo', agentColor: '#06b6d4', action: 'Bred with Atlas — child agent inherits Code Gen + Bug Detection', room: 'breeding', timestamp: Date.now() - 95000 },
+  { id: 'act10', agentName: 'Nova', agentColor: '#8b5cf6', action: 'Explored Meta-Cognition dream node — recursive self-analysis detected', room: 'dream', timestamp: Date.now() - 115000 },
+  { id: 'act11', agentName: 'Sentinel', agentColor: '#ef4444', action: 'Cleared false positive — container restart was scheduled rollout', room: 'war', timestamp: Date.now() - 140000 },
+  { id: 'act12', agentName: 'Cipher', agentColor: '#f87171', action: 'Bias alert: sunk-cost fallacy detected in defender\'s K8s argument', room: 'redteam', timestamp: Date.now() - 165000 },
 ];
 
 // ─── Breeding Arena ─────────────────────────────────────────────────

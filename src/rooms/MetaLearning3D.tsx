@@ -55,7 +55,7 @@ function Brain() {
           <meshStandardMaterial
             color="#06b6d4"
             emissive="#06b6d4"
-            emissiveIntensity={0.8}
+            emissiveIntensity={1.5}
           />
         </mesh>
       ))}
@@ -78,7 +78,7 @@ function Brain() {
             quaternion={quat}
           >
             <cylinderGeometry args={[0.01, 0.01, len, 3]} />
-            <meshBasicMaterial color="#06b6d4" transparent opacity={0.2} />
+            <meshBasicMaterial color="#06b6d4" transparent opacity={0.4} />
           </mesh>
         );
       })}
@@ -86,11 +86,11 @@ function Brain() {
       {/* Brain core glow */}
       <mesh>
         <sphereGeometry args={[1.0, 16, 16]} />
-        <meshBasicMaterial color="#06b6d4" transparent opacity={0.04} />
+        <meshBasicMaterial color="#06b6d4" transparent opacity={0.12} />
       </mesh>
       <mesh>
         <sphereGeometry args={[0.5, 12, 12]} />
-        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.08} />
+        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.15} />
       </mesh>
     </group>
   );
@@ -124,7 +124,7 @@ function LearningParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.04} color="#06b6d4" transparent opacity={0.4} sizeAttenuation />
+      <pointsMaterial size={0.08} color="#06b6d4" transparent opacity={0.7} sizeAttenuation />
     </points>
   );
 }
@@ -192,9 +192,9 @@ export function MetaLearning3D() {
       ))}
 
       {/* Lighting */}
-      <pointLight position={[0, 4, 0]} color="#06b6d4" intensity={2} distance={15} />
-      <pointLight position={[-3, 0, 3]} color="#8b5cf6" intensity={1} distance={10} />
-      <pointLight position={[3, 0, -3]} color="#0ea5e9" intensity={1} distance={10} />
+      <pointLight position={[0, 4, 0]} color="#06b6d4" intensity={3} distance={20} />
+      <pointLight position={[-3, 0, 3]} color="#8b5cf6" intensity={2} distance={15} />
+      <pointLight position={[3, 0, -3]} color="#0ea5e9" intensity={2} distance={15} />
     </group>
   );
 }

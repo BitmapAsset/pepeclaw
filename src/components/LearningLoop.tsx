@@ -38,7 +38,7 @@ export function LearningLoop() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 1, duration: 0.5 }}
-      className="fixed bottom-20 left-4 z-40 flex items-end gap-1"
+      className="fixed bottom-20 left-4 z-40 hidden sm:flex items-end gap-1"
     >
       <div
         className="rounded-xl p-1.5"
@@ -112,8 +112,10 @@ export function LearningLoop() {
                     fill="none"
                     stroke={phase.color}
                     strokeWidth={1}
-                    animate={{ opacity: [0.4, 0], r: [12, 18] }}
+                    initial={{ opacity: 0.4, scale: 1 }}
+                    animate={{ opacity: [0.4, 0], scale: [1, 1.5] }}
                     transition={{ duration: 1, repeat: Infinity }}
+                    style={{ transformOrigin: `${px}px ${py}px` }}
                   />
                 )}
                 {/* Label */}

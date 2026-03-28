@@ -31,14 +31,14 @@ const roomPositions: Record<string, [number, number, number]> = {
 }
 
 const roomAmbience: Record<string, { color: string; intensity: number }> = {
-  genome: { color: '#00ff88', intensity: 0.08 },
-  dream: { color: '#8b5cf6', intensity: 0.06 },
-  war: { color: '#ef4444', intensity: 0.08 },
-  redteam: { color: '#f87171', intensity: 0.07 },
-  metalearning: { color: '#06b6d4', intensity: 0.07 },
-  temporal: { color: '#f59e0b', intensity: 0.07 },
-  identity: { color: '#f97316', intensity: 0.07 },
-  breeding: { color: '#ec4899', intensity: 0.08 },
+  genome: { color: '#00ff88', intensity: 0.35 },
+  dream: { color: '#8b5cf6', intensity: 0.3 },
+  war: { color: '#ef4444', intensity: 0.35 },
+  redteam: { color: '#f87171', intensity: 0.3 },
+  metalearning: { color: '#06b6d4', intensity: 0.3 },
+  temporal: { color: '#f59e0b', intensity: 0.3 },
+  identity: { color: '#f97316', intensity: 0.3 },
+  breeding: { color: '#ec4899', intensity: 0.35 },
 }
 
 const agentRoomOffsets: Record<string, [number, number, number][]> = {
@@ -100,17 +100,17 @@ function CameraRig({ target, overviewMode, followPosition }: {
       );
       cameraRef.current.position.lerp(_lerpCamPos, 0.06);
     } else if (overviewMode) {
-      targetVec.current.lerp(OVERVIEW_CENTER, 0.04);
-      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, 0.04);
+      targetVec.current.lerp(OVERVIEW_CENTER, 0.05);
+      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, 0.05);
     } else {
       _lerpTarget.set(target[0], target[1], target[2]);
-      targetVec.current.lerp(_lerpTarget, 0.04);
+      targetVec.current.lerp(_lerpTarget, 0.06);
       _lerpCamPos.set(
         targetVec.current.x + 6,
         targetVec.current.y + 8,
         targetVec.current.z + 10,
       );
-      cameraRef.current.position.lerp(_lerpCamPos, 0.04);
+      cameraRef.current.position.lerp(_lerpCamPos, 0.06);
     }
     cameraRef.current.lookAt(targetVec.current);
   })
@@ -138,7 +138,7 @@ function RoomFloorMarker({ position, color }: { position: [number, number, numbe
     <group position={[position[0], -3.98, position[2]]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[12, 12]} />
-        <meshBasicMaterial color={color} transparent opacity={0.03} />
+        <meshBasicMaterial color={color} transparent opacity={0.08} />
       </mesh>
       <lineSegments rotation={[-Math.PI / 2, 0, 0]} geometry={_roomFloorEdges}>
         <lineBasicMaterial color={color} transparent opacity={0.15} />
@@ -246,7 +246,7 @@ function GlobalParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.03} color="#8b5cf6" transparent opacity={0.25} sizeAttenuation />
+      <pointsMaterial size={0.06} color="#8b5cf6" transparent opacity={0.5} sizeAttenuation />
     </points>
   )
 }
@@ -309,8 +309,8 @@ function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
         maxPolarAngle={Math.PI / 2.2}
       />
 
-      <ambientLight intensity={0.12} />
-      <directionalLight position={[10, 15, 10]} intensity={0.25} color="#e0e0ff" />
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[10, 15, 10]} intensity={0.6} color="#e0e0ff" />
       <RoomAmbientLight activeRoom={activeRoom} />
 
       <FloorGrid />
@@ -367,7 +367,7 @@ export function Scene({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
     >
       <color attach="background" args={['#0a0b14']} />
-      <fog attach="fog" args={['#0a0b14', 30, 70]} />
+      <fog attach="fog" args={['#0a0b14', 50, 120]} />
       <SceneContent
         activeRoom={activeRoom}
         overviewMode={overviewMode}
