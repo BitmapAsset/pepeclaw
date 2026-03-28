@@ -43,12 +43,23 @@ function DNAHelix() {
     time.current += delta
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.3
+      // Pulsing scale effect on the helix
+      const pulse = 1 + Math.sin(time.current * 2) * 0.03
+      groupRef.current.scale.set(pulse, 1, pulse)
     }
     if (particlesRef.current) {
       const positions = particlesRef.current.geometry.attributes.position.array as Float32Array
       for (let i = 0; i < positions.length / 3; i++) {
         positions[i * 3 + 1] += delta * (0.5 + Math.random() * 0.5)
-        if (positions[i * 3 + 1] > 5) positions[i * 3 + 1] = -5
+        // Spiral outward motion
+        const angle = time.current * 0.5 + i * 0.3
+        positions[i * 3] += Math.cos(angle) * delta * 0.1
+        positions[i * 3 + 2] += Math.sin(angle) * delta * 0.1
+        if (positions[i * 3 + 1] > 5) {
+          positions[i * 3 + 1] = -5
+          positions[i * 3] = (Math.random() - 0.5) * 4
+          positions[i * 3 + 2] = (Math.random() - 0.5) * 4
+        }
       }
       particlesRef.current.geometry.attributes.position.needsUpdate = true
     }

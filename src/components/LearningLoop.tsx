@@ -53,16 +53,7 @@ export function LearningLoop() {
           <circle cx={cx} cy={cy} r={r + 6} fill="none" stroke="#1a1b2e" strokeWidth={1} />
 
           {/* Spinning arc */}
-          <motion.circle
-            cx={cx}
-            cy={cy}
-            r={r + 6}
-            fill="none"
-            stroke={phases[activePhase].color}
-            strokeWidth={2}
-            strokeDasharray={`${(Math.PI * 2 * (r + 6)) / 4} ${(Math.PI * 2 * (r + 6)) * 3 / 4}`}
-            strokeLinecap="round"
-            opacity={0.6}
+          <motion.g
             animate={{ rotate: 360 }}
             transition={{
               duration: speed / 500,
@@ -70,7 +61,19 @@ export function LearningLoop() {
               ease: 'linear',
             }}
             style={{ transformOrigin: `${cx}px ${cy}px` }}
-          />
+          >
+            <circle
+              cx={cx}
+              cy={cy}
+              r={r + 6}
+              fill="none"
+              stroke={phases[activePhase].color}
+              strokeWidth={2}
+              strokeDasharray={`${(Math.PI * 2 * (r + 6)) / 4} ${(Math.PI * 2 * (r + 6)) * 3 / 4}`}
+              strokeLinecap="round"
+              opacity={0.6}
+            />
+          </motion.g>
 
           {/* Phase nodes */}
           {phases.map((phase, i) => {
@@ -92,31 +95,37 @@ export function LearningLoop() {
                   opacity={isActive ? 0.8 : 0.4}
                 />
                 {/* Node */}
-                <motion.circle
-                  cx={px}
-                  cy={py}
-                  r={isActive ? 8 : 5}
-                  fill={isActive ? `${phase.color}30` : '#12131f'}
-                  stroke={phase.color}
-                  strokeWidth={isActive ? 2 : 1}
+                <motion.g
                   animate={isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                   transition={{ duration: 0.6, repeat: isActive ? Infinity : 0 }}
                   style={{ transformOrigin: `${px}px ${py}px` }}
-                />
-                {/* Glow for active */}
-                {isActive && (
-                  <motion.circle
+                >
+                  <circle
                     cx={px}
                     cy={py}
-                    r={12}
-                    fill="none"
+                    r={isActive ? 8 : 5}
+                    fill={isActive ? `${phase.color}30` : '#12131f'}
                     stroke={phase.color}
-                    strokeWidth={1}
+                    strokeWidth={isActive ? 2 : 1}
+                  />
+                </motion.g>
+                {/* Glow for active */}
+                {isActive && (
+                  <motion.g
                     initial={{ opacity: 0.4, scale: 1 }}
                     animate={{ opacity: [0.4, 0], scale: [1, 1.5] }}
                     transition={{ duration: 1, repeat: Infinity }}
                     style={{ transformOrigin: `${px}px ${py}px` }}
-                  />
+                  >
+                    <circle
+                      cx={px}
+                      cy={py}
+                      r={12}
+                      fill="none"
+                      stroke={phase.color}
+                      strokeWidth={1}
+                    />
+                  </motion.g>
                 )}
                 {/* Label */}
                 <text

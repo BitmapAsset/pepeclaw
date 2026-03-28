@@ -78,10 +78,23 @@ const OVERVIEW_CAM_POS = new THREE.Vector3(7.5 + 25, 35, 40);
 const _lerpTarget = new THREE.Vector3();
 const _lerpCamPos = new THREE.Vector3();
 
-function CameraRig({ target, overviewMode, followPosition }: {
+// Per-room camera offsets for cinematic variety
+const roomCameraOffsets: Record<string, [number, number, number]> = {
+  genome:       [5, 7, 9],      // slightly lower, closer to DNA helix
+  dream:        [4, 9, 11],     // higher, dreamy overview
+  war:          [7, 6, 8],      // tighter, war room intensity
+  redteam:      [8, 7, 9],      // wide view of arena
+  metalearning: [5, 8, 10],     // balanced, see the brain
+  temporal:     [6, 6, 10],     // slightly lower, see hourglass up close
+  identity:     [4, 7, 11],     // further back, see the vault door
+  breeding:     [6, 7, 9],      // balanced, see both parents
+}
+
+function CameraRig({ target, overviewMode, followPosition, activeRoom }: {
   target: [number, number, number];
   overviewMode: boolean;
   followPosition: [number, number, number] | null;
+  activeRoom: string;
 }) {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   const targetVec = useRef(new THREE.Vector3(...target))
@@ -89,8 +102,10 @@ function CameraRig({ target, overviewMode, followPosition }: {
   useFrame(() => {
     if (!cameraRef.current) return;
 
+    // Smoother lerp factor for cinematic transitions
+    const lerpSpeed = 0.04;
+
     if (followPosition) {
-      // Follow mode: camera tracks the followed agent
       _lerpTarget.set(followPosition[0], followPosition[1], followPosition[2]);
       targetVec.current.lerp(_lerpTarget, 0.06);
       _lerpCamPos.set(
@@ -100,17 +115,18 @@ function CameraRig({ target, overviewMode, followPosition }: {
       );
       cameraRef.current.position.lerp(_lerpCamPos, 0.06);
     } else if (overviewMode) {
-      targetVec.current.lerp(OVERVIEW_CENTER, 0.05);
-      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, 0.05);
+      targetVec.current.lerp(OVERVIEW_CENTER, lerpSpeed);
+      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, lerpSpeed);
     } else {
+      const offset = roomCameraOffsets[activeRoom] ?? [6, 8, 10];
       _lerpTarget.set(target[0], target[1], target[2]);
-      targetVec.current.lerp(_lerpTarget, 0.06);
+      targetVec.current.lerp(_lerpTarget, lerpSpeed);
       _lerpCamPos.set(
-        targetVec.current.x + 6,
-        targetVec.current.y + 8,
-        targetVec.current.z + 10,
+        targetVec.current.x + offset[0],
+        targetVec.current.y + offset[1],
+        targetVec.current.z + offset[2],
       );
-      cameraRef.current.position.lerp(_lerpCamPos, 0.06);
+      cameraRef.current.position.lerp(_lerpCamPos, lerpSpeed);
     }
     cameraRef.current.lookAt(targetVec.current);
   })
@@ -134,15 +150,27 @@ const _roomFloorPlane = new THREE.PlaneGeometry(12, 12);
 const _roomFloorEdges = new THREE.EdgesGeometry(_roomFloorPlane);
 
 function RoomFloorMarker({ position, color }: { position: [number, number, number]; color: string }) {
+  const glowRef = useRef<THREE.Mesh>(null)
+  useFrame(() => {
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.15 + Math.sin(performance.now() * 0.001) * 0.08
+    }
+  })
+
   return (
     <group position={[position[0], -3.98, position[2]]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Soft glowing floor */}
+      <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[12, 12]} />
-        <meshBasicMaterial color={color} transparent opacity={0.08} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.15} transparent opacity={0.12} />
       </mesh>
+      {/* Brighter edge glow */}
       <lineSegments rotation={[-Math.PI / 2, 0, 0]} geometry={_roomFloorEdges}>
-        <lineBasicMaterial color={color} transparent opacity={0.15} />
+        <lineBasicMaterial color={color} transparent opacity={0.35} />
       </lineSegments>
+      {/* Soft point light under each room */}
+      <pointLight position={[0, 0.5, 0]} color={color} intensity={0.4} distance={8} />
     </group>
   )
 }
@@ -203,39 +231,51 @@ function RoomAgents({ selectedAgentId, onAgentSelect, onAgentFollow }: {
 
 function RoomAmbientLight({ activeRoom }: { activeRoom: RoomId }) {
   const ref = useRef<THREE.PointLight>(null)
+  const fillRef = useRef<THREE.PointLight>(null)
   const targetColor = useRef(new THREE.Color(roomAmbience[activeRoom]?.color ?? '#8b5cf6'))
 
   useFrame(() => {
-    if (ref.current && roomAmbience[activeRoom]) {
+    if (roomAmbience[activeRoom]) {
       const target = new THREE.Color(roomAmbience[activeRoom].color)
       targetColor.current.lerp(target, 0.03)
-      ref.current.color.copy(targetColor.current)
+      if (ref.current) ref.current.color.copy(targetColor.current)
+      if (fillRef.current) fillRef.current.color.copy(targetColor.current)
     }
   })
 
-  return <pointLight ref={ref} position={[7.5, 10, 0]} intensity={roomAmbience[activeRoom]?.intensity ?? 0.07} distance={60} />
+  return (
+    <>
+      <pointLight ref={ref} position={[7.5, 10, 0]} intensity={roomAmbience[activeRoom]?.intensity ?? 0.07} distance={60} />
+      {/* Fill light from below for atmosphere */}
+      <pointLight ref={fillRef} position={[7.5, -2, 0]} intensity={(roomAmbience[activeRoom]?.intensity ?? 0.07) * 0.3} distance={40} />
+    </>
+  )
 }
 
 function GlobalParticles() {
   const ref = useRef<THREE.Points>(null)
 
-  const positions = useMemo(() => {
-    const count = 200
+  const { positions, sizes } = useMemo(() => {
+    const count = 350
     const pos = new Float32Array(count * 3)
+    const sz = new Float32Array(count)
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 80 + 7.5
-      pos[i * 3 + 1] = Math.random() * 15 - 2
+      pos[i * 3 + 1] = Math.random() * 18 - 3
       pos[i * 3 + 2] = (Math.random() - 0.5) * 40
+      sz[i] = 0.04 + Math.random() * 0.08
     }
-    return pos
+    return { positions: pos, sizes: sz }
   }, [])
 
   useFrame((_, delta) => {
     if (ref.current) {
       const posArray = ref.current.geometry.attributes.position.array as Float32Array
       for (let i = 0; i < posArray.length / 3; i++) {
-        posArray[i * 3 + 1] += delta * 0.15
-        if (posArray[i * 3 + 1] > 13) posArray[i * 3 + 1] = -2
+        posArray[i * 3 + 1] += delta * (0.1 + sizes[i] * 0.8)
+        // Gentle horizontal drift
+        posArray[i * 3] += Math.sin(posArray[i * 3 + 1] * 0.5 + i) * delta * 0.03
+        if (posArray[i * 3 + 1] > 15) posArray[i * 3 + 1] = -3
       }
       ref.current.geometry.attributes.position.needsUpdate = true
     }
@@ -246,7 +286,7 @@ function GlobalParticles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.06} color="#8b5cf6" transparent opacity={0.5} sizeAttenuation />
+      <pointsMaterial size={0.1} color="#a78bfa" transparent opacity={0.6} sizeAttenuation />
     </points>
   )
 }
@@ -300,7 +340,7 @@ function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
 
   return (
     <>
-      <CameraRig target={targetPos} overviewMode={overviewMode} followPosition={followPosition} />
+      <CameraRig target={targetPos} overviewMode={overviewMode} followPosition={followPosition} activeRoom={activeRoom} />
       <OrbitControls
         enablePan={overviewMode}
         enableZoom

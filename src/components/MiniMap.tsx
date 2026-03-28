@@ -21,9 +21,13 @@ export function MiniMap({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRo
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.3, duration: 0.4 }}
-      className="fixed bottom-20 right-2 sm:right-4 z-40 glass-strong rounded-xl p-2 sm:p-2.5"
+      className="fixed bottom-20 right-2 sm:right-4 z-40 rounded-2xl p-2 sm:p-2.5"
       style={{
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.05)',
+        background: 'rgba(10,11,20,0.8)',
+        backdropFilter: 'blur(24px) saturate(1.3)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.05), inset 0 1px 0 rgba(255,255,255,0.06)',
       }}
     >
       {/* Header */}
@@ -89,13 +93,23 @@ export function MiniMap({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRo
                   )}
                 </div>
               )}
-              {/* Active room indicator */}
+              {/* Active room indicator — fixed position div, no layoutId to avoid SVG circle attribute bug */}
               {isActive && (
                 <motion.div
-                  className="absolute -bottom-0.5 left-1/4 right-1/4 h-[2px] rounded-full"
-                  style={{ background: room.color, boxShadow: `0 0 6px ${room.color}` }}
-                  layoutId="minimap-indicator"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={{
+                    position: 'absolute',
+                    bottom: -2,
+                    left: '25%',
+                    right: '25%',
+                    height: 2,
+                    borderRadius: 1,
+                    background: room.color,
+                    boxShadow: `0 0 8px ${room.color}`,
+                    transformOrigin: 'center',
+                  }}
                 />
               )}
             </motion.button>

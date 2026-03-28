@@ -12,7 +12,7 @@ import {
   type Project,
 } from '../data/mockData';
 
-// Default mock agents — 7 agents, one per room, each with unique activity and personality
+// Default mock agents — 9 agents across all 8 rooms, diverse activities and emotions
 const mockAgents: AgentState[] = [
   { id: 'a1', name: 'Atlas', role: 'architect', status: 'working', currentRoom: 'genome', color: '#00ff88', activity: 'processing', taskDescription: 'Mutating Code Generation skill — gen 47 → 48' },
   { id: 'a2', name: 'Nova', role: 'researcher', status: 'working', currentRoom: 'dream', color: '#8b5cf6', activity: 'brainstorming', taskDescription: 'Exploring dream merge: neural architecture + self-modifying prompts' },
@@ -21,6 +21,8 @@ const mockAgents: AgentState[] = [
   { id: 'a5', name: 'Echo', role: 'learner', status: 'working', currentRoom: 'metalearning', color: '#06b6d4', isSearching: true, activity: 'studying', taskDescription: 'Self-modifying reasoning module — accuracy +3% this cycle' },
   { id: 'a6', name: 'Chrono', role: 'scheduler', status: 'working', currentRoom: 'temporal', color: '#f59e0b', activity: 'managing', taskDescription: 'Rebalancing batch priorities — 2 urgent tasks deferred' },
   { id: 'a7', name: 'Vault', role: 'verifier', status: 'working', currentRoom: 'identity', color: '#f97316', activity: 'verifying', taskDescription: 'Minting identity token #48 — hash verification in progress' },
+  { id: 'a8', name: 'Helix', role: 'breeder', status: 'working', currentRoom: 'breeding', color: '#ec4899', activity: 'processing', taskDescription: 'Crossover: Atlas × Echo — blending 6 skill genes' },
+  { id: 'a9', name: 'Shade', role: 'adversary', status: 'idle', currentRoom: 'redteam', color: '#a855f7', activity: 'debating', taskDescription: 'Playing devil\'s advocate on authentication assumptions' },
 ];
 
 interface DataState {
@@ -120,15 +122,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     }, 15_000);
 
-    // Retry gateway discovery every 60s when offline (reduced from 30s, silent)
+    // Retry gateway discovery every 120s when offline (quiet, debug only)
     retryTimerRef.current = setInterval(async () => {
       if (!connectedRef.current && !ac.signal.aborted) {
+        console.debug('[PepeClaw] Retrying gateway discovery...');
         const url = await discoverGateway();
         if (url && !ac.signal.aborted) {
+          console.debug('[PepeClaw] Gateway found:', url);
           await fetchAll(ac.signal);
         }
       }
-    }, 60_000);
+    }, 120_000);
 
     return () => {
       ac.abort();

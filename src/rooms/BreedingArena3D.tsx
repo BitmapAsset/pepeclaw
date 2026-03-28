@@ -186,10 +186,16 @@ export function BreedingArena3D() {
       {/* Child materializing */}
       <ChildAgent />
 
+      {/* Connection beam between parents */}
+      <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.02, 0.02, 6, 4]} />
+        <meshStandardMaterial color="#ec4899" emissive="#ec4899" emissiveIntensity={0.8} transparent opacity={0.3} />
+      </mesh>
+
       {/* Lighting */}
-      <pointLight position={[0, 4, 0]} color="#ec4899" intensity={3} distance={18} />
-      <pointLight position={[-4, 0, 0]} color="#00ff88" intensity={2} distance={12} />
-      <pointLight position={[4, 0, 0]} color="#06b6d4" intensity={2} distance={12} />
+      <pointLight position={[0, 4, 0]} color="#ec4899" intensity={3.5} distance={18} />
+      <pointLight position={[-4, 0, 0]} color="#00ff88" intensity={2.5} distance={12} />
+      <pointLight position={[4, 0, 0]} color="#06b6d4" intensity={2.5} distance={12} />
     </group>
   )
 }

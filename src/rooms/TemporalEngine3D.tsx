@@ -42,10 +42,54 @@ function TimelineRiver() {
   );
 }
 
+function SandParticles() {
+  const ref = useRef<THREE.Points>(null);
+  const positions = useMemo(() => {
+    const count = 80;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const spread = Math.random() * 0.15;
+      pos[i * 3] = (Math.random() - 0.5) * spread;
+      pos[i * 3 + 1] = Math.random() * 1.6 - 0.8;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * spread;
+    }
+    return pos;
+  }, []);
+
+  useFrame((_, delta) => {
+    if (!ref.current) return;
+    const posArray = ref.current.geometry.attributes.position.array as Float32Array;
+    for (let i = 0; i < posArray.length / 3; i++) {
+      posArray[i * 3 + 1] -= delta * (0.6 + Math.random() * 0.4);
+      const y = posArray[i * 3 + 1];
+      const funnelWidth = Math.abs(y) * 0.3 + 0.02;
+      posArray[i * 3] += (Math.random() - 0.5) * delta * 0.1;
+      posArray[i * 3] = Math.max(-funnelWidth, Math.min(funnelWidth, posArray[i * 3]));
+      posArray[i * 3 + 2] = Math.max(-funnelWidth, Math.min(funnelWidth, posArray[i * 3 + 2]));
+      if (posArray[i * 3 + 1] < -0.8) {
+        posArray[i * 3 + 1] = 0.8;
+        posArray[i * 3] = (Math.random() - 0.5) * 0.3;
+        posArray[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+      }
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.04} color="#fbbf24" transparent opacity={0.9} sizeAttenuation />
+    </points>
+  );
+}
+
 function Hourglass3D() {
   const topRef = useRef<THREE.Mesh>(null);
   const botRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
+  const glowRef = useRef<THREE.PointLight>(null);
 
   useFrame((_, delta) => {
     if (groupRef.current) {
@@ -58,35 +102,42 @@ function Hourglass3D() {
       topRef.current.scale.setScalar(Math.max(0.2, topScale));
       botRef.current.scale.setScalar(Math.max(0.2, botScale));
     }
+    if (glowRef.current) {
+      glowRef.current.intensity = 1.5 + Math.sin(performance.now() * 0.002) * 0.5;
+    }
   });
 
   return (
     <group ref={groupRef}>
       {/* Top cone */}
       <mesh position={[0, 1, 0]} rotation={[Math.PI, 0, 0]}>
-        <coneGeometry args={[0.8, 1.5, 8]} />
+        <coneGeometry args={[0.8, 1.5, 12]} />
         <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.8} wireframe />
       </mesh>
       {/* Bottom cone */}
       <mesh position={[0, -1, 0]}>
-        <coneGeometry args={[0.8, 1.5, 8]} />
+        <coneGeometry args={[0.8, 1.5, 12]} />
         <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.8} wireframe />
       </mesh>
-      {/* Sand particles top */}
+      {/* Sand mass top */}
       <mesh ref={topRef} position={[0, 0.8, 0]}>
         <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.0} transparent opacity={0.8} />
+        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.2} transparent opacity={0.8} />
       </mesh>
-      {/* Sand particles bottom */}
+      {/* Sand mass bottom */}
       <mesh ref={botRef} position={[0, -0.8, 0]}>
         <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.0} transparent opacity={0.8} />
+        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1.2} transparent opacity={0.8} />
       </mesh>
+      {/* Flowing sand particles */}
+      <SandParticles />
       {/* Center stream */}
       <mesh>
-        <cylinderGeometry args={[0.02, 0.02, 0.8, 4]} />
-        <meshBasicMaterial color="#f59e0b" transparent opacity={0.5} />
+        <cylinderGeometry args={[0.03, 0.03, 0.8, 6]} />
+        <meshStandardMaterial color="#f59e0b" emissive="#fbbf24" emissiveIntensity={1.5} transparent opacity={0.6} />
       </mesh>
+      {/* Inner glow */}
+      <pointLight ref={glowRef} color="#f59e0b" intensity={1.5} distance={4} />
     </group>
   );
 }

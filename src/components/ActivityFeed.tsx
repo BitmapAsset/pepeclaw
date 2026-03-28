@@ -17,13 +17,19 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
   // Simulate new activity arriving every 8s
   useEffect(() => {
     const actions = [
-      'Evolved skill chromosome',
-      'Completed dream synthesis',
-      'Flagged bias in argument',
-      'Optimized batch schedule',
-      'Verified identity hash',
-      'Triggered mutation cycle',
-      'Self-modified learning rate',
+      'Evolved skill chromosome — fitness +4%',
+      'Completed dream synthesis: emergent pattern detected',
+      'Flagged confirmation bias in Round 7 argument',
+      'Optimized batch schedule — 3 tasks parallelized',
+      'Verified identity hash #0x4a8f...c2e1',
+      'Triggered mutation cycle: Code Gen gen 48→49',
+      'Self-modified learning rate: 0.003→0.0025',
+      'Bred new agent variant — inheriting 6 skills',
+      'Detected anomalous latency spike in Auth Service',
+      'Completed ego death cycle — rebirth score: 89%',
+      'Cross-pollinated Reasoning + Planning skills',
+      'Discovered novel optimization pathway via dreams',
+      'Resolved debate: monolith wins by confidence 0.73',
     ]
     const interval = setInterval(() => {
       const agents = ['Atlas', 'Nova', 'Sentinel', 'Cipher', 'Echo', 'Chrono', 'Vault']
@@ -80,9 +86,13 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed right-2 sm:right-4 top-24 sm:top-28 z-50 w-[calc(100vw-1rem)] sm:w-72 max-h-[60vh] flex flex-col rounded-2xl glass-strong overflow-hidden"
+            className="fixed right-2 sm:right-4 top-24 sm:top-28 z-50 w-[calc(100vw-1rem)] sm:w-72 max-h-[60vh] flex flex-col rounded-2xl overflow-hidden"
             style={{
-              boxShadow: '0 16px 48px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1)',
+              background: 'rgba(10,11,20,0.82)',
+              backdropFilter: 'blur(24px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06)',
             }}
           >
             <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>

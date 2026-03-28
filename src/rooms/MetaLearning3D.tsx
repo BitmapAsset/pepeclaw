@@ -6,6 +6,8 @@ import * as THREE from 'three';
 function Brain() {
   const groupRef = useRef<THREE.Group>(null);
   const pathwayRefs = useRef<THREE.Mesh[]>([]);
+  const nodeRefs = useRef<THREE.Mesh[]>([]);
+  const firingRef = useRef<number[]>([]);
 
   // Generate brain-like node network
   const { nodes, connections } = useMemo(() => {
@@ -29,6 +31,8 @@ function Brain() {
         }
       }
     }
+    // Initialize firing timers
+    firingRef.current = ns.map(() => Math.random() * 5);
     return { nodes: ns, connections: conns };
   }, []);
 
@@ -36,22 +40,46 @@ function Brain() {
     if (groupRef.current) {
       groupRef.current.rotation.y += delta * 0.15;
     }
-    // Pulse neural pathways
+    const t = performance.now() * 0.001;
+
+    // Fire neurons — random neurons light up brightly then fade
+    nodeRefs.current.forEach((mesh, i) => {
+      if (!mesh) return;
+      firingRef.current[i] -= delta;
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      if (firingRef.current[i] <= 0) {
+        // Neuron fires!
+        firingRef.current[i] = 2 + Math.random() * 4; // next fire in 2-6s
+        mat.emissiveIntensity = 4.0;
+        mesh.scale.setScalar(1.8);
+      } else if (firingRef.current[i] < 0.5) {
+        // About to fire — building up
+        const buildup = 1 - firingRef.current[i] / 0.5;
+        mat.emissiveIntensity = 1.5 + buildup * 2;
+        mesh.scale.setScalar(1 + buildup * 0.5);
+      } else {
+        // Cooling down
+        mat.emissiveIntensity = Math.max(1.5, mat.emissiveIntensity - delta * 4);
+        mesh.scale.setScalar(Math.max(1, mesh.scale.x - delta * 2));
+      }
+    });
+
+    // Pulse neural pathways with signal propagation
     pathwayRefs.current.forEach((mesh, i) => {
       if (mesh) {
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        const t = performance.now() * 0.001;
-        mat.opacity = 0.1 + Math.sin(t * 2 + i * 0.5) * 0.15;
+        const wave = Math.sin(t * 3 + i * 0.8) * 0.5 + 0.5;
+        mat.opacity = 0.1 + wave * 0.3;
       }
     });
   });
 
   return (
     <group ref={groupRef}>
-      {/* Brain nodes */}
+      {/* Brain nodes — firing neurons */}
       {nodes.map((pos, i) => (
-        <mesh key={i} position={pos}>
-          <sphereGeometry args={[0.06, 6, 6]} />
+        <mesh key={i} position={pos} ref={el => { if (el) nodeRefs.current[i] = el; }}>
+          <sphereGeometry args={[0.06, 8, 8]} />
           <meshStandardMaterial
             color="#06b6d4"
             emissive="#06b6d4"
@@ -77,21 +105,23 @@ function Brain() {
             position={mid}
             quaternion={quat}
           >
-            <cylinderGeometry args={[0.01, 0.01, len, 3]} />
+            <cylinderGeometry args={[0.012, 0.012, len, 4]} />
             <meshBasicMaterial color="#06b6d4" transparent opacity={0.4} />
           </mesh>
         );
       })}
 
-      {/* Brain core glow */}
+      {/* Brain core glow — pulsing */}
       <mesh>
         <sphereGeometry args={[1.0, 16, 16]} />
         <meshBasicMaterial color="#06b6d4" transparent opacity={0.12} />
       </mesh>
       <mesh>
         <sphereGeometry args={[0.5, 12, 12]} />
-        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.15} />
+        <meshStandardMaterial color="#8b5cf6" emissive="#8b5cf6" emissiveIntensity={0.3} transparent opacity={0.15} />
       </mesh>
+      {/* Inner core light */}
+      <pointLight color="#06b6d4" intensity={1.5} distance={4} />
     </group>
   );
 }

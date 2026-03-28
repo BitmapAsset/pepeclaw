@@ -38,59 +38,94 @@ const statusRingColors: Record<string, string> = {
   break: '#64748b',
 };
 
-function EmotionAura({ emotion, radius = 0.55, hasError }: { emotion: EmotionState; radius?: number; hasError?: boolean }) {
-  const ref = useRef<THREE.Mesh>(null);
+function EmotionAura({ emotion, radius = 0.55, hasError, color }: { emotion: EmotionState; radius?: number; hasError?: boolean; color?: string }) {
+  const innerRef = useRef<THREE.Mesh>(null);
+  const outerRef = useRef<THREE.Mesh>(null);
   const time = useRef(Math.random() * 100);
-  const auraColor = hasError ? '#ef4444' : emotionColors[emotion];
+  const auraColor = hasError ? '#ef4444' : color || emotionColors[emotion];
   const speed = hasError ? 5.0 : emotion === 'stressed' ? 3.5 : emotion === 'curious' ? 2.0 : 1.2;
 
   useFrame((_, delta) => {
     time.current += delta;
-    if (ref.current) {
-      const mat = ref.current.material as THREE.MeshBasicMaterial;
+    if (innerRef.current) {
+      const mat = innerRef.current.material as THREE.MeshBasicMaterial;
       if (hasError) {
-        mat.opacity = 0.05 + Math.abs(Math.sin(time.current * speed)) * 0.15;
-        ref.current.scale.setScalar(1 + Math.sin(time.current * speed) * 0.15);
+        mat.opacity = 0.08 + Math.abs(Math.sin(time.current * speed)) * 0.18;
+        innerRef.current.scale.setScalar(1 + Math.sin(time.current * speed) * 0.15);
       } else {
-        mat.opacity = 0.08 + Math.sin(time.current * speed) * 0.06;
-        ref.current.scale.setScalar(1 + Math.sin(time.current * speed * 0.5) * 0.08);
+        mat.opacity = 0.12 + Math.sin(time.current * speed) * 0.08;
+        innerRef.current.scale.setScalar(1 + Math.sin(time.current * speed * 0.5) * 0.08);
       }
+    }
+    // Outer aura — slow breathing
+    if (outerRef.current) {
+      const mat = outerRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.04 + Math.sin(time.current * 0.8) * 0.03;
+      outerRef.current.scale.setScalar(1.2 + Math.sin(time.current * 0.6) * 0.1);
     }
   });
 
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[radius, 16, 16]} />
-      <meshBasicMaterial color={auraColor} transparent opacity={0.1} depthWrite={false} />
-    </mesh>
+    <group>
+      {/* Inner bright aura */}
+      <mesh ref={innerRef}>
+        <sphereGeometry args={[radius, 16, 16]} />
+        <meshBasicMaterial color={auraColor} transparent opacity={0.12} depthWrite={false} />
+      </mesh>
+      {/* Outer soft glow */}
+      <mesh ref={outerRef}>
+        <sphereGeometry args={[radius * 1.6, 16, 16]} />
+        <meshBasicMaterial color={auraColor} transparent opacity={0.04} depthWrite={false} />
+      </mesh>
+    </group>
   );
 }
 
 /* Selection highlight ring */
 function SelectionRing({ color }: { color: string }) {
-  const ref = useRef<THREE.Mesh>(null);
+  const innerRef = useRef<THREE.Mesh>(null);
+  const outerRef = useRef<THREE.Mesh>(null);
   const time = useRef(0);
 
   useFrame((_, delta) => {
     time.current += delta;
-    if (ref.current) {
-      ref.current.rotation.z = time.current * 0.5;
-      const mat = ref.current.material as THREE.MeshStandardMaterial;
+    if (innerRef.current) {
+      innerRef.current.rotation.z = time.current * 0.8;
+      const mat = innerRef.current.material as THREE.MeshStandardMaterial;
       mat.emissiveIntensity = 0.8 + Math.sin(time.current * 3) * 0.3;
+    }
+    if (outerRef.current) {
+      outerRef.current.rotation.z = -time.current * 0.4;
+      const scale = 1 + Math.sin(time.current * 2) * 0.08;
+      outerRef.current.scale.set(scale, scale, 1);
+      const mat = outerRef.current.material as THREE.MeshStandardMaterial;
+      mat.opacity = 0.4 + Math.sin(time.current * 2.5) * 0.2;
     }
   });
 
   return (
-    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.63, 0]}>
-      <torusGeometry args={[0.5, 0.03, 8, 32]} />
-      <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={1}
-        transparent
-        opacity={0.9}
-      />
-    </mesh>
+    <group>
+      <mesh ref={innerRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.63, 0]}>
+        <torusGeometry args={[0.5, 0.03, 8, 32]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={1}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+      <mesh ref={outerRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.63, 0]}>
+        <torusGeometry args={[0.7, 0.015, 8, 48]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.6}
+          transparent
+          opacity={0.5}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -236,25 +271,40 @@ export function Agent3D({ id, name, color, status, position, activity, taskDescr
       {/* Selection ring (interactive mode) */}
       {selected && <SelectionRing color={color} />}
 
-      {/* Body */}
+      {/* Body — torso */}
       <mesh position={[0, 0, 0]}>
-        <cylinderGeometry args={[0.15, 0.18, 0.5, 8]} />
+        <cylinderGeometry args={[0.16, 0.2, 0.55, 8]} />
+        <meshStandardMaterial {...materialProps} />
+      </mesh>
+      {/* Shoulder line */}
+      <mesh position={[0, 0.22, 0]}>
+        <boxGeometry args={[0.44, 0.06, 0.12]} />
         <meshStandardMaterial {...materialProps} />
       </mesh>
 
       {/* Head */}
       <Float speed={2} rotationIntensity={0.02} floatIntensity={0.05}>
-        <mesh position={[0, 0.45, 0]}>
-          <sphereGeometry args={[0.15, 12, 12]} />
+        <mesh position={[0, 0.48, 0]}>
+          <sphereGeometry args={[0.17, 12, 12]} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
-        <mesh position={[-0.05, 0.47, 0.13]}>
-          <sphereGeometry args={[0.025, 6, 6]} />
+        {/* Eyes */}
+        <mesh position={[-0.055, 0.5, 0.14]}>
+          <sphereGeometry args={[0.03, 6, 6]} />
           <meshBasicMaterial color="#ffffff" />
         </mesh>
-        <mesh position={[0.05, 0.47, 0.13]}>
-          <sphereGeometry args={[0.025, 6, 6]} />
+        <mesh position={[0.055, 0.5, 0.14]}>
+          <sphereGeometry args={[0.03, 6, 6]} />
           <meshBasicMaterial color="#ffffff" />
+        </mesh>
+        {/* Pupils */}
+        <mesh position={[-0.055, 0.5, 0.165]}>
+          <sphereGeometry args={[0.015, 6, 6]} />
+          <meshBasicMaterial color="#0a0b14" />
+        </mesh>
+        <mesh position={[0.055, 0.5, 0.165]}>
+          <sphereGeometry args={[0.015, 6, 6]} />
+          <meshBasicMaterial color="#0a0b14" />
         </mesh>
       </Float>
 
@@ -287,29 +337,30 @@ export function Agent3D({ id, name, color, status, position, activity, taskDescr
       </mesh>
 
       {/* Name tag + activity */}
-      <Html position={[0, 0.8, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 0.9, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
         <div
           style={{
-            background: 'rgba(10,11,20,0.85)',
+            background: 'rgba(10,11,20,0.9)',
+            backdropFilter: 'blur(8px)',
             border: `1px solid ${hasError ? '#ef4444' : selected ? '#fff' : color}`,
-            borderRadius: 4,
-            padding: '2px 8px',
-            fontSize: 10,
+            borderRadius: 6,
+            padding: '3px 10px',
+            fontSize: 11,
             fontFamily: 'monospace',
             color: '#e2e8f0',
             whiteSpace: 'nowrap',
             boxShadow: selected
-              ? `0 0 12px ${color}88, 0 0 4px #ffffff44`
-              : `0 0 8px ${hasError ? '#ef444444' : color + '44'}`,
+              ? `0 0 16px ${color}88, 0 0 4px #ffffff44`
+              : `0 0 10px ${hasError ? '#ef444466' : color + '55'}`,
             textAlign: 'center',
           }}
         >
-          {name}
-          <span style={{ marginLeft: 4, fontSize: 8, color: hasError ? '#ef4444' : statusRingColors[status] }}>
+          <span style={{ fontWeight: 600, color: selected ? '#fff' : color }}>{name}</span>
+          <span style={{ marginLeft: 5, fontSize: 9, color: hasError ? '#ef4444' : statusRingColors[status] }}>
             {hasError ? '✕' : status === 'working' ? '●' : status === 'idle' ? '○' : '◌'}
           </span>
           {labelText && (
-            <div style={{ fontSize: 8, color: '#94a3b8', marginTop: 1, maxWidth: 160 }}>
+            <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 2, maxWidth: 180 }}>
               {labelText}
             </div>
           )}
@@ -330,8 +381,8 @@ export function Agent3D({ id, name, color, status, position, activity, taskDescr
         </group>
       )}
 
-      <EmotionAura emotion={emotion} hasError={hasError} />
-      <pointLight color={hasError ? '#ef4444' : color} intensity={selected ? 0.6 : 0.3} distance={selected ? 5 : 3} />
+      <EmotionAura emotion={emotion} hasError={hasError} color={color} />
+      <pointLight color={hasError ? '#ef4444' : color} intensity={selected ? 1.0 : 0.5} distance={selected ? 6 : 4} />
     </group>
   );
 }

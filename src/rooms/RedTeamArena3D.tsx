@@ -136,15 +136,20 @@ export function RedTeamArena3D() {
       <ArenaPodium position={[-3, 0, 0]} color="#ef4444" label="ATTACKER" />
       <ArenaPodium position={[3, 0, 0]} color="#3b82f6" label="DEFENDER" />
 
-      {/* VS indicator */}
+      {/* VS indicator — pulsing diamond */}
       <Float speed={1.5} floatIntensity={0.3}>
         <mesh position={[0, 1.5, 0]}>
           <octahedronGeometry args={[0.4]} />
-          <meshStandardMaterial color="#8b5cf6" emissive="#8b5cf6" emissiveIntensity={0.6} wireframe />
+          <meshStandardMaterial color="#8b5cf6" emissive="#8b5cf6" emissiveIntensity={1.2} wireframe />
         </mesh>
-        <Text position={[0, 1.5, 0]} fontSize={0.2} color="#fff" anchorX="center" font={undefined}>
+        <mesh position={[0, 1.5, 0]}>
+          <octahedronGeometry args={[0.6]} />
+          <meshBasicMaterial color="#8b5cf6" transparent opacity={0.08} wireframe />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.22} color="#fff" anchorX="center" font={undefined}>
           VS
         </Text>
+        <pointLight position={[0, 1.5, 0]} color="#8b5cf6" intensity={1} distance={5} />
       </Float>
 
       <ArgumentBeams />

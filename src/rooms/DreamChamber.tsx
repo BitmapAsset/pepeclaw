@@ -37,7 +37,7 @@ function Starfield() {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.2} vertexColors transparent opacity={1.0} sizeAttenuation />
+      <pointsMaterial size={0.25} vertexColors transparent opacity={1.0} sizeAttenuation />
     </points>
   )
 }

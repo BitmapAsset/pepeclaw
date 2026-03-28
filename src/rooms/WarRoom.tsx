@@ -181,6 +181,25 @@ function ProjectCard({ project, index }: { project: typeof projects[0]; index: n
   )
 }
 
+function AlertPulse() {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    if (ref.current) {
+      const t = performance.now() * 0.001;
+      const mat = ref.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.03 + Math.sin(t * 1.5) * 0.02;
+      ref.current.scale.setScalar(1 + Math.sin(t * 1.5) * 0.02);
+    }
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -3.5, 0]}>
+      <circleGeometry args={[8, 32]} />
+      <meshBasicMaterial color="#ef4444" transparent opacity={0.03} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
 export function WarRoom() {
   return (
     <group>
@@ -210,10 +229,13 @@ export function WarRoom() {
         ))}
       </group>
 
+      {/* Pulsing red alert floor */}
+      <AlertPulse />
+
       {/* War room lighting — tense and focused */}
-      <pointLight position={[0, 5, 3]} color="#ff3333" intensity={2.5} distance={20} />
-      <pointLight position={[-6, 2, 0]} color="#ff6600" intensity={1.5} distance={15} />
-      <pointLight position={[6, 2, 0]} color="#ff6600" intensity={1.5} distance={15} />
+      <pointLight position={[0, 5, 3]} color="#ff3333" intensity={3} distance={20} />
+      <pointLight position={[-6, 2, 0]} color="#ff6600" intensity={2} distance={15} />
+      <pointLight position={[6, 2, 0]} color="#ff6600" intensity={2} distance={15} />
     </group>
   )
 }

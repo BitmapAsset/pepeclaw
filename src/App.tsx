@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useCallback, useRef } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback, useRef, Component, type ReactNode, type ErrorInfo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/mockData'
 import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider'
@@ -35,6 +35,48 @@ const panelRooms: Partial<Record<RoomId, React.LazyExoticComponent<React.Compone
 
 // Rooms that are panel-only (no 3D scene behind them)
 const panelOnlyRooms = new Set<RoomId>(['settings', 'replay', 'activitylog', 'optimizer'])
+
+class RoomErrorBoundary extends Component<
+  { children: ReactNode; roomName?: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode; roomName?: string }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.debug('[PepeClaw] Room error:', error.message, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
+          <div className="text-3xl">⚠️</div>
+          <div className="text-sm font-mono text-center" style={{ color: '#94a3b8' }}>
+            {this.props.roomName || 'This room'} encountered an error
+          </div>
+          <div className="text-[10px] font-mono px-3 py-1.5 rounded-lg" style={{ background: '#1a1b2e', color: '#ef4444' }}>
+            {this.state.error?.message || 'Unknown error'}
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 rounded-lg text-[11px] font-mono cursor-pointer border-0"
+            style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function LoadingFallback() {
   return (
@@ -123,21 +165,32 @@ export default function App() {
         return
       }
 
-      // Arrow key room navigation
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      // Space bar → toggle overview
+      if (e.key === ' ') {
+        e.preventDefault()
+        const next = !overviewMode
+        setOverviewMode(next)
+        if (next) setActiveRoom('overview')
+        return
+      }
+
+      // Arrow key room navigation (Left/Right = linear, Up/Down = row jump)
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         e.preventDefault()
         const currentIdx = navigableRooms.indexOf(activeRoom)
         const base = currentIdx === -1 ? 0 : currentIdx
-        const next = e.key === 'ArrowRight'
-          ? (base + 1) % navigableRooms.length
-          : (base - 1 + navigableRooms.length) % navigableRooms.length
+        let next = base
+        if (e.key === 'ArrowRight') next = (base + 1) % navigableRooms.length
+        else if (e.key === 'ArrowLeft') next = (base - 1 + navigableRooms.length) % navigableRooms.length
+        else if (e.key === 'ArrowDown') next = (base + 4) % navigableRooms.length  // jump to next row
+        else if (e.key === 'ArrowUp') next = (base - 4 + navigableRooms.length) % navigableRooms.length
         setActiveRoom(navigableRooms[next])
         setOverviewMode(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [interactive.selectedAgentId, activeRoom])
+  }, [interactive.selectedAgentId, activeRoom, overviewMode])
 
   const isPanelOnly = panelOnlyRooms.has(activeRoom)
   const PanelRoom = !overviewMode ? panelRooms[activeRoom] : undefined
@@ -169,16 +222,18 @@ export default function App() {
           {PanelRoom && (
             <motion.div
               key={activeRoom}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
               className="absolute inset-0 z-30 pt-14 pb-16 overflow-hidden"
             >
               <div className={`w-full h-full ${isPanelOnly ? 'bg-[#0a0b14]' : 'bg-[#0a0b14]/90 backdrop-blur-md'}`}>
-                <Suspense fallback={<LoadingFallback />}>
-                  <PanelRoom />
-                </Suspense>
+                <RoomErrorBoundary roomName={rooms.find(r => r.id === activeRoom)?.name}>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PanelRoom />
+                  </Suspense>
+                </RoomErrorBoundary>
               </div>
             </motion.div>
           )}
@@ -197,7 +252,9 @@ export default function App() {
           }}
         />
         {!overviewMode && !isPanelOnly && (
-          <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+          <div className="hidden sm:block">
+            <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+          </div>
         )}
         <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
         <SkillScore />
@@ -230,7 +287,14 @@ function InteractiveChat({ interactive, setInteractive }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 glass-strong rounded-xl px-3 sm:px-4 py-3 w-[calc(100vw-2rem)] sm:w-80 max-w-80"
+      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 rounded-2xl px-3 sm:px-4 py-3 w-[calc(100vw-2rem)] sm:w-80 max-w-80"
+      style={{
+        background: 'rgba(10,11,20,0.85)',
+        backdropFilter: 'blur(24px) saturate(1.3)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+      }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-3 h-3 rounded-full" style={{ background: selectedAgent.color }} />
@@ -312,9 +376,9 @@ const roomColors: Record<RoomId, string> = {
 
 /* ─── Connection Status Colors ──────────────────────────────────────── */
 const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: string; pulse: boolean }> = {
-  connected: { color: '#22c55e', label: 'LIVE', pulse: false },
+  connected: { color: '#3b82f6', label: 'LIVE', pulse: false },
   trying: { color: '#f59e0b', label: 'CONNECTING', pulse: true },
-  offline: { color: '#64748b', label: 'MOCK', pulse: false },
+  offline: { color: '#22c55e', label: 'MOCK', pulse: false },
 }
 
 /* ─── Inline HUD ─────────────────────────────────────────────────── */
@@ -331,6 +395,7 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
   const connectionStatus = useConnectionStatus()
   const roomColor = roomColors[activeRoom] || '#8b5cf6'
   const connConfig = connectionStatusConfig[connectionStatus]
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const [time, setTime] = useState(new Date())
   useEffect(() => {
@@ -345,10 +410,12 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         initial={{ y: -60 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 glass-strong"
+        className="fixed top-0 left-0 right-0 z-50"
         style={{
-          borderBottom: `1px solid rgba(255,255,255,0.06)`,
-          background: 'linear-gradient(180deg, rgba(10,11,20,0.92) 0%, rgba(10,11,20,0.8) 100%)',
+          borderBottom: `1px solid rgba(255,255,255,0.08)`,
+          background: 'linear-gradient(180deg, rgba(10,11,20,0.88) 0%, rgba(10,11,20,0.75) 100%)',
+          backdropFilter: 'blur(24px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
         }}
       >
         <div className="flex items-center justify-between px-3 sm:px-6 py-2.5">
@@ -365,10 +432,10 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               PC
             </motion.div>
             <div>
-              <div className="text-sm font-semibold tracking-wider text-glow" style={{ color: '#e2e8f0' }}>
+              <div className="text-sm font-bold tracking-wider text-glow" style={{ color: '#e2e8f0', letterSpacing: '0.15em' }}>
                 PEPECLAW
               </div>
-              <div className="text-[10px] tracking-widest uppercase" style={{ color: '#64748b' }}>
+              <div className="text-[9px] tracking-widest uppercase font-mono hidden sm:block" style={{ color: '#64748b' }}>
                 Self-Evolving AI Agents You Can See
               </div>
             </div>
@@ -402,6 +469,26 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
           </AnimatePresence>
 
           <div className="flex items-center gap-4">
+            {/* Mobile hamburger */}
+            <button
+              className="flex md:hidden items-center justify-center w-9 h-9 rounded-lg cursor-pointer border-0"
+              style={{ background: mobileMenuOpen ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)' }}
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                {mobileMenuOpen ? (
+                  <path d="M4 4L14 14M14 4L4 14" stroke="#e2e8f0" strokeWidth="1.5" strokeLinecap="round" />
+                ) : (
+                  <>
+                    <line x1="3" y1="5" x2="15" y2="5" stroke="#e2e8f0" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="3" y1="9" x2="15" y2="9" stroke="#e2e8f0" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="3" y1="13" x2="15" y2="13" stroke="#e2e8f0" strokeWidth="1.5" strokeLinecap="round" />
+                  </>
+                )}
+              </svg>
+            </button>
+
             <div className="hidden md:flex items-center gap-1.5">
               <span className="text-[10px] font-mono" style={{ color: '#64748b' }}>AGENTS</span>
               <motion.span
@@ -472,12 +559,56 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
         />
       </motion.div>
 
+      {/* ── Mobile drawer ── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-14 left-0 right-0 bottom-0 md:hidden"
+            style={{
+              zIndex: 45,
+              background: 'rgba(10,11,20,0.92)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+            }}
+          >
+            <div className="p-4 grid grid-cols-2 gap-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
+              {rooms.map((room) => {
+                const isOverviewTab = room.id === 'overview'
+                const isActive = isOverviewTab ? overviewMode : activeRoom === room.id && !overviewMode
+                const color = roomColors[room.id] || room.color
+                return (
+                  <motion.button
+                    key={room.id}
+                    onClick={() => { onRoomChange(room.id); setMobileMenuOpen(false) }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 px-3 py-3 rounded-xl text-[11px] font-mono tracking-wider cursor-pointer border-0"
+                    style={{
+                      background: isActive ? `${color}18` : 'rgba(255,255,255,0.04)',
+                      color: isActive ? color : '#94a3b8',
+                      border: isActive ? `1px solid ${color}40` : '1px solid rgba(255,255,255,0.06)',
+                      minHeight: 48,
+                    }}
+                  >
+                    <span className="text-lg">{roomEmojis[room.id]}</span>
+                    <span className="font-medium">{room.name}</span>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Bottom nav ── */}
       <motion.div
         initial={{ y: 60 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-2 sm:px-4 pb-2 sm:pb-3 pt-1"
+        className="fixed bottom-0 left-0 right-0 z-50 hidden md:flex justify-center px-2 sm:px-4 pb-2 sm:pb-3 pt-1"
         style={{ background: 'linear-gradient(0deg, rgba(10,11,20,0.9) 0%, transparent 100%)' }}
       >
         <motion.div
@@ -492,23 +623,27 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
               <motion.button
                 key={room.id}
                 onClick={() => onRoomChange(room.id)}
-                whileHover={{ scale: 1.08, y: -2 }}
+                whileHover={{ scale: 1.06, y: -2 }}
                 whileTap={{ scale: 0.93 }}
+                animate={isActive ? { scale: 1.04 } : { scale: 1 }}
                 className="tab-pill relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-xl text-[10px] sm:text-[11px] font-mono tracking-wider uppercase cursor-pointer border-0 shrink-0"
                 style={{
-                  background: isActive ? `${color}18` : 'transparent',
+                  background: isActive ? `${color}20` : 'transparent',
                   color: isActive ? color : '#64748b',
-                  boxShadow: isActive ? `0 0 20px ${color}25, 0 4px 12px rgba(0,0,0,0.2)` : 'none',
+                  boxShadow: isActive ? `0 0 20px ${color}30, 0 4px 12px rgba(0,0,0,0.3), inset 0 0 12px ${color}10` : 'none',
+                  borderLeft: isActive ? `2px solid ${color}` : '2px solid transparent',
                   minHeight: 44,
                   minWidth: 44,
                   justifyContent: 'center',
+                  fontWeight: isActive ? 600 : 400,
+                  transition: 'border-left 0.3s ease, background 0.3s ease',
                 }}
                 title={room.name}
                 aria-label={room.name}
                 tabIndex={0}
               >
                 <span className="text-sm">{roomEmojis[room.id]}</span>
-                <span className="hidden sm:inline">{room.name}</span>
+                <span className="hidden sm:inline font-medium">{room.name}</span>
                 {isActive && (
                   <motion.div
                     layoutId="room-indicator"
@@ -525,6 +660,45 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
           })}
         </motion.div>
       </motion.div>
+
+      {/* ── Mobile compact bottom bar ── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-center justify-between px-4 pb-3 pt-1"
+        style={{ background: 'linear-gradient(0deg, rgba(10,11,20,0.95) 0%, transparent 100%)' }}
+      >
+        <button
+          onClick={() => {
+            const navigable: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding']
+            const idx = navigable.indexOf(activeRoom)
+            const prev = idx <= 0 ? navigable.length - 1 : idx - 1
+            onRoomChange(navigable[prev])
+          }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer border-0"
+          style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}
+          aria-label="Previous room"
+        >
+          ◀
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{roomEmojis[activeRoom]}</span>
+          <span className="text-[11px] font-mono font-semibold tracking-wider uppercase" style={{ color: roomColor }}>
+            {overviewMode ? 'Overview' : (rooms.find(r => r.id === activeRoom)?.name || activeRoom)}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            const navigable: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding']
+            const idx = navigable.indexOf(activeRoom)
+            const next = idx === -1 ? 0 : (idx + 1) % navigable.length
+            onRoomChange(navigable[next])
+          }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer border-0"
+          style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8' }}
+          aria-label="Next room"
+        >
+          ▶
+        </button>
+      </div>
 
       {/* Corner decorations */}
       <div className="fixed top-0 left-0 w-16 h-16 pointer-events-none z-40 opacity-40">
@@ -602,12 +776,13 @@ function LearningPulse() {
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            className="absolute top-full right-0 mt-2 w-72 rounded-xl overflow-hidden z-50"
+            className="absolute top-full right-0 mt-2 w-72 rounded-2xl overflow-hidden z-50"
             style={{
-              background: 'rgba(10,11,20,0.95)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(139,92,246,0.2)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              background: 'rgba(10,11,20,0.85)',
+              backdropFilter: 'blur(24px) saturate(1.3)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
             }}
           >
             <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid #1a1b2e' }}>
