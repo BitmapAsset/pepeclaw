@@ -22,11 +22,11 @@ describe('DataProvider', () => {
 
     const { result } = renderHook(() => useData(), { wrapper });
 
-    // Should immediately have mock data
-    expect(result.current.skills.length).toBeGreaterThan(0);
-    expect(result.current.dreamNodes.length).toBeGreaterThan(0);
-    expect(result.current.projects.length).toBeGreaterThan(0);
-    expect(result.current.agents.length).toBeGreaterThan(0);
+    // Without gateway, all data starts empty (no mock fallback)
+    expect(result.current.skills.length).toBe(0);
+    expect(result.current.dreamNodes.length).toBe(0);
+    expect(result.current.projects.length).toBe(0);
+    expect(result.current.agents.length).toBe(0);
     expect(result.current.connected).toBe(false);
   });
 
@@ -58,11 +58,9 @@ describe('DataProvider', () => {
 
     const { result } = renderHook(() => useAgents(), { wrapper });
 
+    // Without a gateway connection, agents array starts empty (no mock fallback)
     expect(Array.isArray(result.current)).toBe(true);
-    expect(result.current.length).toBeGreaterThan(0);
-    expect(result.current[0]).toHaveProperty('id');
-    expect(result.current[0]).toHaveProperty('name');
-    expect(result.current[0]).toHaveProperty('currentRoom');
+    expect(result.current.length).toBe(0);
   });
 
   it('handles partial gateway responses gracefully', async () => {

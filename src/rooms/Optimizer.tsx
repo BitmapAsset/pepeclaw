@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { optimizerData } from '../data/mockData';
+import { useData } from '../api/DataProvider';
+import type { OptimizerSection } from '../data/types';
 
 const colors = {
   bg: '#0a0b14',
@@ -76,7 +77,7 @@ function SectionCard({
   section,
   index,
 }: {
-  section: typeof optimizerData[0];
+  section: OptimizerSection;
   index: number;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -192,9 +193,10 @@ function SectionCard({
 }
 
 export default function Optimizer() {
-  const overallScore = Math.round(
-    optimizerData.reduce((sum, s) => sum + s.score, 0) / optimizerData.length
-  );
+  const { optimizerSections } = useData();
+  const overallScore = optimizerSections.length ? Math.round(
+    optimizerSections.reduce((sum, s) => sum + s.score, 0) / optimizerSections.length
+  ) : 0;
 
   return (
     <div
@@ -247,7 +249,7 @@ export default function Optimizer() {
               : 'Significant optimization opportunities exist.'}
           </div>
           <div className="flex gap-2 mt-3">
-            {optimizerData.map(s => (
+            {optimizerSections.map(s => (
               <div key={s.name} className="flex items-center gap-1">
                 <span className="text-xs">{s.icon}</span>
                 <span className="text-[10px] font-mono" style={{ color: scoreColor(s.score) }}>
@@ -261,7 +263,7 @@ export default function Optimizer() {
 
       {/* Section Cards */}
       <div className="flex flex-col gap-3">
-        {optimizerData.map((section, i) => (
+        {optimizerSections.map((section, i) => (
           <SectionCard key={section.name} section={section} index={i} />
         ))}
       </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { redTeamData } from '../data/mockData'
-import type { AssumptionCard } from '../data/mockData'
+import type { AssumptionCard } from '../data/types'
+import { useData } from '../api/DataProvider'
 
 // ─── Bias type icons (SVG-free, text-based) ─────────────────────────
 const biasIcons: Record<string, string> = {
@@ -133,7 +133,7 @@ function SpeechBubble({ agent, text, confidence, index }: { agent: 'attacker' | 
   )
 }
 
-function BiasAlertCard({ alert, index }: { alert: typeof redTeamData.biasAlerts[0]; index: number }) {
+function BiasAlertCard({ alert, index }: { alert: import('../data/types').BiasAlert; index: number }) {
   const sev = severityColors[alert.severity]
   return (
     <motion.div
@@ -218,6 +218,8 @@ function AssumptionFlipCard({ card, onFlip }: { card: AssumptionCard & { flipped
 // ─── Main Component ──────────────────────────────────────────────────
 
 export default function RedTeamArena() {
+  const { redTeamData } = useData()
+  if (!redTeamData) return <div className="flex items-center justify-center h-full text-sm font-mono" style={{ color: '#64748b' }}>Connect to OpenClaw Gateway</div>
   const { topic, attackerName, defenderName, attackerScore, defenderScore, arguments: args, biasAlerts, assumptions } = redTeamData
 
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({})

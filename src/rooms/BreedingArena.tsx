@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { breedingCandidates, type BreedingCandidate } from '../data/mockData'
+import type { BreedingCandidate } from '../data/types'
+import { useData } from '../api/DataProvider'
 
 function SkillBar({ name, fitness, color }: { name: string; fitness: number; color: string }) {
   return (
@@ -38,14 +39,18 @@ function ParentCard({ candidate, label }: { candidate: BreedingCandidate; label:
 }
 
 function ChildCard({ parentA, parentB, visible }: { parentA: BreedingCandidate; parentB: BreedingCandidate; visible: boolean }) {
-  if (!visible) return null
+  const childData = useMemo(() => {
+    const s = (seed: number) => { const x = Math.sin(seed * 9301 + 49297) * 233280; return x - Math.floor(x); };
+    const skills = parentA.skills.map((sk, i) => {
+      const other = parentB.skills[i]
+      const fitness = Math.round((sk.fitness + other.fitness) / 2 + (s(i) - 0.5) * 10)
+      return { name: sk.name, fitness: Math.min(100, Math.max(0, fitness)), color: '#f472b6' }
+    })
+    const childId = Math.floor(s(42) * 999).toString().padStart(3, '0')
+    return { skills, childId }
+  }, [parentA, parentB])
 
-  // Simulated child: mix skills from both parents
-  const childSkills = parentA.skills.map((s, i) => {
-    const other = parentB.skills[i]
-    const fitness = Math.round((s.fitness + other.fitness) / 2 + (Math.random() - 0.5) * 10)
-    return { name: s.name, fitness: Math.min(100, Math.max(0, fitness)), color: '#f472b6' }
-  })
+  if (!visible) return null
 
   return (
     <motion.div
@@ -58,11 +63,11 @@ function ChildCard({ parentA, parentB, visible }: { parentA: BreedingCandidate; 
       <div className="text-center mb-3">
         <div className="text-[10px] font-mono tracking-widest uppercase" style={{ color: '#ec4899' }}>Child Agent Born</div>
         <div className="text-sm font-mono font-bold mt-1" style={{ color: '#f472b6' }}>
-          {parentA.name.slice(0, 2)}{parentB.name.slice(0, 2)}-{Math.floor(Math.random() * 999).toString().padStart(3, '0')}
+          {parentA.name.slice(0, 2)}{parentB.name.slice(0, 2)}-{childData.childId}
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        {childSkills.map(s => (
+        {childData.skills.map(s => (
           <SkillBar key={s.name} name={s.name} fitness={s.fitness} color={s.color} />
         ))}
       </div>
@@ -76,6 +81,7 @@ function ChildCard({ parentA, parentB, visible }: { parentA: BreedingCandidate; 
 }
 
 export default function BreedingArena() {
+  const { breedingCandidates } = useData()
   const [breeding, setBreeding] = useState(false)
   const [childVisible, setChildVisible] = useState(false)
   const parentA = breedingCandidates[0]

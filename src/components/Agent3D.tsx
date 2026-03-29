@@ -2,7 +2,7 @@ import { useRef, useMemo, useCallback } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
-import { activityToEmotion, emotionColors, type EmotionState } from '../data/mockData';
+import { activityToEmotion, emotionColors, type EmotionState } from '../data/types';
 
 export type AgentActivity =
   | 'examining' | 'meditating' | 'strategizing' | 'debating'
@@ -41,11 +41,12 @@ const statusRingColors: Record<string, string> = {
 function EmotionAura({ emotion, radius = 0.55, hasError, color }: { emotion: EmotionState; radius?: number; hasError?: boolean; color?: string }) {
   const innerRef = useRef<THREE.Mesh>(null);
   const outerRef = useRef<THREE.Mesh>(null);
-  const time = useRef(Math.random() * 100);
+  const time = useRef<number | null>(null);
   const auraColor = hasError ? '#ef4444' : color || emotionColors[emotion];
   const speed = hasError ? 5.0 : emotion === 'stressed' ? 3.5 : emotion === 'curious' ? 2.0 : 1.2;
 
   useFrame((_, delta) => {
+    if (time.current === null) time.current = Math.random() * 100;
     time.current += delta;
     if (innerRef.current) {
       const mat = innerRef.current.material as THREE.MeshBasicMaterial;
@@ -131,7 +132,7 @@ function SelectionRing({ color }: { color: string }) {
 
 export function Agent3D({ id, name, color, status, position, activity, taskDescription, hasError, selected, onSelect, onFollow }: Agent3DProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const time = useRef(Math.random() * 100);
+  const time = useRef<number | null>(null);
   const armLRef = useRef<THREE.Group>(null);
   const armRRef = useRef<THREE.Group>(null);
   const legLRef = useRef<THREE.Mesh>(null);
@@ -159,6 +160,7 @@ export function Agent3D({ id, name, color, status, position, activity, taskDescr
   }, [id, selected, onSelect, onFollow]);
 
   useFrame((_, delta) => {
+    if (time.current === null) time.current = Math.random() * 100;
     time.current += delta * animSpeed;
     const t = time.current;
 

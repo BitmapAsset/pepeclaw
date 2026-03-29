@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { mockActivities, rooms, type ActivityEntry, type RoomId } from '../data/mockData'
+import { rooms, type ActivityEntry, type RoomId } from '../data/types'
+import { useData } from '../api/DataProvider'
 
 function timeAgo(ts: number): string {
   const seconds = Math.floor((Date.now() - ts) / 1000)
@@ -11,8 +12,14 @@ function timeAgo(ts: number): string {
 }
 
 export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => void }) {
+  const { activities } = useData()
   const [open, setOpen] = useState(false)
-  const [entries, setEntries] = useState<ActivityEntry[]>(mockActivities)
+  const [entries, setEntries] = useState<ActivityEntry[]>([])
+
+  // Seed entries when data arrives
+  useEffect(() => {
+    if (activities.length > 0) setEntries(activities)
+  }, [activities])
 
   // Simulate new activity arriving every 8s
   useEffect(() => {

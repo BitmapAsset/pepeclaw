@@ -50,3 +50,14 @@ memory/
 soul-backup/
 backups/
 tmp/
+
+# === BUILD CACHES ===
+.turbo
+.next
+*.sst
+
+# === INTERNAL FILES ===
+IMPORTANT_NOTE.md
+
+autoresearch/
+autoresearch-v2/

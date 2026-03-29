@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { mockMicroLearnings } from '../data/mockData';
+import { useData } from '../api/DataProvider';
 
 const scoreConfig: Record<number, { color: string; bg: string; label: string }> = {
   4: { color: '#22c55e', bg: 'rgba(34,197,94,0.15)', label: 'Excellent' },
@@ -18,12 +18,14 @@ interface ScorePopup {
 }
 
 export function SkillScore() {
+  const { microLearnings } = useData();
   const [popups, setPopups] = useState<ScorePopup[]>([]);
 
   useEffect(() => {
+    if (microLearnings.length === 0) return;
     let idx = 0;
     const interval = setInterval(() => {
-      const learning = mockMicroLearnings[idx % mockMicroLearnings.length];
+      const learning = microLearnings[idx % microLearnings.length];
       const popup: ScorePopup = {
         id: `${learning.id}-${Date.now()}`,
         score: learning.score,

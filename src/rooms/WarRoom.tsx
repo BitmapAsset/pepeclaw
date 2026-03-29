@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
-import { projects } from '../data/mockData'
+import { useData } from '../api/DataProvider'
 
 const statusColors = { green: '#22c55e', yellow: '#eab308', red: '#ef4444' }
 
@@ -101,8 +101,8 @@ function StatusLight({ status, position }: { status: 'green' | 'yellow' | 'red';
   )
 }
 
-function ProjectCard({ project, index }: { project: typeof projects[0]; index: number }) {
-  const x = (index - (projects.length - 1) / 2) * 3.2
+function ProjectCard({ project, index, total }: { project: import('../data/types').Project; index: number; total: number }) {
+  const x = (index - (total - 1) / 2) * 3.2
 
   return (
     <group position={[x, 0, 0]}>
@@ -201,6 +201,7 @@ function AlertPulse() {
 }
 
 export function WarRoom() {
+  const { projects } = useData()
   return (
     <group>
       <Text
@@ -225,7 +226,7 @@ export function WarRoom() {
 
       <group position={[0, -0.5, 0]}>
         {projects.map((project, i) => (
-          <ProjectCard key={project.name} project={project} index={i} />
+          <ProjectCard key={project.name} project={project} index={i} total={projects.length} />
         ))}
       </group>
 

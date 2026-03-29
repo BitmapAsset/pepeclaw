@@ -13,8 +13,8 @@ import { BreedingArena3D } from '../rooms/BreedingArena3D'
 import { Agent3D } from './Agent3D'
 import { ConsciousnessStream } from './ConsciousnessStream'
 import { useAgents } from '../api/DataProvider'
-import { sceneRoomIds } from '../data/mockData'
-import type { RoomId } from '../data/mockData'
+import { sceneRoomIds } from '../data/types'
+import type { RoomId } from '../data/types'
 import type { AgentActivity } from './Agent3D'
 import type { AgentState } from '../api/gateway'
 
@@ -252,6 +252,11 @@ function RoomAmbientLight({ activeRoom }: { activeRoom: RoomId }) {
   )
 }
 
+function seededRandom(seed: number) {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+
 function GlobalParticles() {
   const ref = useRef<THREE.Points>(null)
 
@@ -260,10 +265,10 @@ function GlobalParticles() {
     const pos = new Float32Array(count * 3)
     const sz = new Float32Array(count)
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 80 + 7.5
-      pos[i * 3 + 1] = Math.random() * 18 - 3
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 40
-      sz[i] = 0.04 + Math.random() * 0.08
+      pos[i * 3] = (seededRandom(i * 4) - 0.5) * 80 + 7.5
+      pos[i * 3 + 1] = seededRandom(i * 4 + 1) * 18 - 3
+      pos[i * 3 + 2] = (seededRandom(i * 4 + 2) - 0.5) * 40
+      sz[i] = 0.04 + seededRandom(i * 4 + 3) * 0.08
     }
     return { positions: pos, sizes: sz }
   }, [])

@@ -1,69 +1,55 @@
-// ─── Core Types ─────────────────────────────────────────────────────
-export interface Skill {
-  name: string;
-  fitness: number;
-  generation: number;
-  status: 'stable' | 'mutating' | 'evolved';
-  color: string;
-}
+import type {
+  Skill,
+  DreamNode,
+  Project,
+  ThoughtBubble,
+  ActivityEntry,
+  BreedingCandidate,
+  RedTeamData,
+  MetaLearningData,
+  TemporalData,
+  MicroLearning,
+  SkillMutation,
+  TraceEntry,
+  OptimizerSection,
+  UserModelDimension,
+} from '../../src/data/types';
 
-export interface DreamNode {
-  id: string;
-  title: string;
-  x: number;
-  y: number;
-  z: number;
-  connections: string[];
-  entry?: string;
-}
-
-export interface Project {
-  name: string;
-  health: number;
-  velocity: number[];
-  status: 'green' | 'yellow' | 'red';
-  alerts: string[];
-}
-
-export type RoomId = 'overview' | 'genome' | 'dream' | 'war' | 'redteam' | 'metalearning' | 'temporal' | 'identity' | 'breeding' | 'optimizer' | 'replay' | 'settings' | 'activitylog';
-
-// Room IDs that have 3D scenes
-export const sceneRoomIds: RoomId[] = ['genome', 'dream', 'war', 'redteam', 'metalearning', 'temporal', 'identity', 'breeding'];
-
-// ─── Emotion Engine ─────────────────────────────────────────────────
-export type EmotionState = 'focused' | 'creative' | 'stressed' | 'curious' | 'satisfied';
-
-export const emotionColors: Record<EmotionState, string> = {
-  focused: '#3b82f6',
-  creative: '#a855f7',
-  stressed: '#ef4444',
-  curious: '#22c55e',
-  satisfied: '#eab308',
-};
-
-export const activityToEmotion: Record<string, EmotionState> = {
-  examining: 'curious',
-  meditating: 'creative',
-  strategizing: 'focused',
-  debating: 'stressed',
-  studying: 'curious',
-  managing: 'focused',
-  verifying: 'satisfied',
-  breeding: 'creative',
-  processing: 'focused',
-  brainstorming: 'creative',
-  monitoring: 'curious',
-  idle: 'satisfied',
-};
+// Re-export all types and constants for test convenience
+export {
+  rooms,
+  sceneRoomIds,
+  emotionColors,
+  activityToEmotion,
+} from '../../src/data/types';
+export type {
+  Skill,
+  DreamNode,
+  Project,
+  RoomId,
+  EmotionState,
+  ThoughtBubble,
+  ActivityEntry,
+  BreedingCandidate,
+  Argument,
+  BiasAlert,
+  AssumptionCard,
+  RedTeamData,
+  MetricPoint,
+  ModificationProposal,
+  CapabilityAxis,
+  MetaLearningData,
+  TimelineTask,
+  TaskBatch,
+  TemporalData,
+  MicroLearning,
+  SkillMutation,
+  TraceEntry,
+  OptimizerSection,
+  UserModelDimension,
+} from '../../src/data/types';
 
 // ─── Consciousness Stream ───────────────────────────────────────────
-export interface ThoughtBubble {
-  id: string;
-  agentId: string;
-  text: string;
-  type: 'reasoning' | 'decision' | 'observation' | 'question';
-}
-
 export const mockThoughts: ThoughtBubble[] = [
   { id: 't1', agentId: 'a1', text: 'Mutation rate at 0.03 — increasing crossover probability to 0.7 for next generation...', type: 'reasoning' },
   { id: 't2', agentId: 'a2', text: 'What if we merge the neural architecture dream with self-modifying prompts? The topology could emerge...', type: 'question' },
@@ -78,15 +64,6 @@ export const mockThoughts: ThoughtBubble[] = [
 ];
 
 // ─── Activity Feed ──────────────────────────────────────────────────
-export interface ActivityEntry {
-  id: string;
-  agentName: string;
-  agentColor: string;
-  action: string;
-  room: RoomId;
-  timestamp: number;
-}
-
 export const mockActivities: ActivityEntry[] = [
   { id: 'act1', agentName: 'Atlas', agentColor: '#00ff88', action: 'Evolved Code Generation to gen 48 — fitness 92 → 94', room: 'genome', timestamp: Date.now() - 3000 },
   { id: 'act2', agentName: 'Cipher', agentColor: '#f87171', action: 'Won debate round #5 — latency argument scored 91% confidence', room: 'redteam', timestamp: Date.now() - 8000 },
@@ -103,13 +80,6 @@ export const mockActivities: ActivityEntry[] = [
 ];
 
 // ─── Breeding Arena ─────────────────────────────────────────────────
-export interface BreedingCandidate {
-  id: string;
-  name: string;
-  color: string;
-  skills: { name: string; fitness: number; color: string }[];
-}
-
 export const breedingCandidates: BreedingCandidate[] = [
   {
     id: 'bc1', name: 'Atlas', color: '#00ff88',
@@ -129,7 +99,7 @@ export const breedingCandidates: BreedingCandidate[] = [
   },
 ];
 
-// ─── Genome Lab Data ────────────────────────────────────────────────
+// ─── Genome Lab ────────────────────────────────────────────────
 export const skills: Skill[] = [
   { name: 'Code Generation', fitness: 92, generation: 47, status: 'stable', color: '#00ff88' },
   { name: 'Bug Detection', fitness: 78, generation: 31, status: 'mutating', color: '#ff6b35' },
@@ -140,7 +110,7 @@ export const skills: Skill[] = [
   { name: 'Security Audit', fitness: 54, generation: 12, status: 'mutating', color: '#ef4444' },
 ];
 
-// ─── Dream Chamber Data ─────────────────────────────────────────────
+// ─── Dream Chamber ─────────────────────────────────────────────
 export const dreamNodes: DreamNode[] = [
   { id: 'a', title: 'Neural Architecture Search', x: -3, y: 1, z: 0, connections: ['b', 'c'], entry: 'Explored topology optimization via evolutionary strategies...' },
   { id: 'b', title: 'Self-Modifying Prompts', x: 2, y: 2.5, z: -1, connections: ['a', 'd'], entry: 'What if prompts could rewrite themselves based on output quality?' },
@@ -150,7 +120,7 @@ export const dreamNodes: DreamNode[] = [
   { id: 'f', title: 'Meta-Cognition', x: -2, y: -2, z: -1, connections: ['e', 'd'], entry: 'The agent began analyzing its own analysis patterns...' },
 ];
 
-// ─── War Room Data ──────────────────────────────────────────────────
+// ─── War Room ──────────────────────────────────────────────────
 export const projects: Project[] = [
   { name: 'PepeClaw Core', health: 94, velocity: [65, 72, 80, 78, 85, 91, 94], status: 'green', alerts: [] },
   { name: 'Skill Evolution', health: 67, velocity: [45, 52, 48, 55, 60, 58, 67], status: 'yellow', alerts: ['Mutation rate above threshold'] },
@@ -159,96 +129,35 @@ export const projects: Project[] = [
   { name: 'Meta-Learning', health: 71, velocity: [50, 55, 60, 63, 68, 70, 71], status: 'yellow', alerts: ['Self-modification pending review'] },
 ];
 
-// ─── Navigation ─────────────────────────────────────────────────────
-export const rooms: { id: RoomId; name: string; position: [number, number, number]; color: string }[] = [
-  { id: 'overview', name: 'Overview', position: [7.5, 0, 0], color: '#8b5cf6' },
-  { id: 'genome', name: 'Genome Lab', position: [-8, 0, 0], color: '#00ff88' },
-  { id: 'dream', name: 'Dream Chamber', position: [0, 0, 0], color: '#8b5cf6' },
-  { id: 'war', name: 'War Room', position: [8, 0, 0], color: '#ef4444' },
-  { id: 'redteam', name: 'Red Team Arena', position: [16, 0, 0], color: '#f87171' },
-  { id: 'metalearning', name: 'Meta-Learning', position: [24, 0, 0], color: '#06b6d4' },
-  { id: 'temporal', name: 'Temporal Engine', position: [32, 0, 0], color: '#f59e0b' },
-  { id: 'identity', name: 'Identity Vault', position: [40, 0, 0], color: '#f97316' },
-  { id: 'breeding', name: 'Breeding Arena', position: [48, 0, 0], color: '#ec4899' },
-  { id: 'optimizer', name: 'Optimizer', position: [0, 0, 0], color: '#f97316' },
-  { id: 'replay', name: 'Replay', position: [0, 0, 0], color: '#a855f7' },
-  { id: 'activitylog', name: 'Activity Log', position: [0, 0, 0], color: '#f59e0b' },
-  { id: 'settings', name: 'Settings', position: [0, 0, 0], color: '#64748b' },
-];
-
-// ─── Red Team Arena Data ─────────────────────────────────────────────
-export interface Argument {
-  id: string;
-  agent: 'attacker' | 'defender';
-  text: string;
-  confidence: number;
-  timestamp: number;
-}
-
-export interface BiasAlert {
-  id: string;
-  type: 'confirmation' | 'anchoring' | 'availability' | 'sunk-cost' | 'bandwagon';
-  severity: 'low' | 'medium' | 'high';
-  description: string;
-  relatedArgumentId: string;
-}
-
-export interface AssumptionCard {
-  id: string;
-  assumption: string;
-  isFlipped: boolean;
-  reality: string;
-  status: 'unchallenged' | 'challenged' | 'debunked';
-}
-
-export const redTeamData = {
+// ─── Red Team Arena ─────────────────────────────────────────────
+export const redTeamData: RedTeamData = {
   topic: 'Should we migrate the monolith to microservices?',
   attackerName: 'Challenger',
   defenderName: 'Advocate',
   attackerScore: 72,
   defenderScore: 65,
   arguments: [
-    { id: 'a1', agent: 'attacker' as const, text: 'Microservices increase deployment complexity by 3x. Our team of 8 cannot handle 15+ services.', confidence: 85, timestamp: 1 },
-    { id: 'a2', agent: 'defender' as const, text: 'Independent deployment reduces blast radius. Each team owns their domain boundary.', confidence: 78, timestamp: 2 },
-    { id: 'a3', agent: 'attacker' as const, text: 'Network latency between services adds 40ms p99. Current monolith handles requests in 12ms.', confidence: 91, timestamp: 3 },
-    { id: 'a4', agent: 'defender' as const, text: 'Caching and async messaging patterns can reduce cross-service calls by 60%.', confidence: 70, timestamp: 4 },
-    { id: 'a5', agent: 'attacker' as const, text: 'Distributed tracing, service mesh, and container orchestration — that\'s 3 new infrastructure layers.', confidence: 88, timestamp: 5 },
-    { id: 'a6', agent: 'defender' as const, text: 'Managed platforms like K8s-as-a-service reduce operational overhead. We don\'t need to build from scratch.', confidence: 65, timestamp: 6 },
+    { id: 'a1', agent: 'attacker', text: 'Microservices increase deployment complexity by 3x. Our team of 8 cannot handle 15+ services.', confidence: 85, timestamp: 1 },
+    { id: 'a2', agent: 'defender', text: 'Independent deployment reduces blast radius. Each team owns their domain boundary.', confidence: 78, timestamp: 2 },
+    { id: 'a3', agent: 'attacker', text: 'Network latency between services adds 40ms p99. Current monolith handles requests in 12ms.', confidence: 91, timestamp: 3 },
+    { id: 'a4', agent: 'defender', text: 'Caching and async messaging patterns can reduce cross-service calls by 60%.', confidence: 70, timestamp: 4 },
+    { id: 'a5', agent: 'attacker', text: 'Distributed tracing, service mesh, and container orchestration — that\'s 3 new infrastructure layers.', confidence: 88, timestamp: 5 },
+    { id: 'a6', agent: 'defender', text: 'Managed platforms like K8s-as-a-service reduce operational overhead. We don\'t need to build from scratch.', confidence: 65, timestamp: 6 },
   ],
   biasAlerts: [
-    { id: 'b1', type: 'sunk-cost' as const, severity: 'high' as const, description: 'Defender may be anchored to existing migration investment', relatedArgumentId: 'a2' },
-    { id: 'b2', type: 'confirmation' as const, severity: 'medium' as const, description: 'Attacker selectively citing worst-case latency numbers', relatedArgumentId: 'a3' },
-    { id: 'b3', type: 'bandwagon' as const, severity: 'low' as const, description: 'Defender appeals to industry trend rather than specific evidence', relatedArgumentId: 'a6' },
+    { id: 'b1', type: 'sunk-cost', severity: 'high', description: 'Defender may be anchored to existing migration investment', relatedArgumentId: 'a2' },
+    { id: 'b2', type: 'confirmation', severity: 'medium', description: 'Attacker selectively citing worst-case latency numbers', relatedArgumentId: 'a3' },
+    { id: 'b3', type: 'bandwagon', severity: 'low', description: 'Defender appeals to industry trend rather than specific evidence', relatedArgumentId: 'a6' },
   ],
   assumptions: [
-    { id: 'as1', assumption: 'Team can learn K8s in 2 months', isFlipped: false, reality: 'Average ramp-up is 4-6 months for production readiness', status: 'challenged' as const },
-    { id: 'as2', assumption: 'Current monolith will hit scaling limits in 6 months', isFlipped: false, reality: 'Vertical scaling can extend runway by 18 months at 3x cost', status: 'unchallenged' as const },
-    { id: 'as3', assumption: 'Microservices improve developer velocity', isFlipped: true, reality: 'Only true above ~50 engineers; below that, coordination cost dominates', status: 'debunked' as const },
+    { id: 'as1', assumption: 'Team can learn K8s in 2 months', isFlipped: false, reality: 'Average ramp-up is 4-6 months for production readiness', status: 'challenged' },
+    { id: 'as2', assumption: 'Current monolith will hit scaling limits in 6 months', isFlipped: false, reality: 'Vertical scaling can extend runway by 18 months at 3x cost', status: 'unchallenged' },
+    { id: 'as3', assumption: 'Microservices improve developer velocity', isFlipped: true, reality: 'Only true above ~50 engineers; below that, coordination cost dominates', status: 'debunked' },
   ],
 };
 
-// ─── Meta-Learning Center Data ───────────────────────────────────────
-export interface MetricPoint {
-  timestamp: string;
-  value: number;
-}
-
-export interface ModificationProposal {
-  id: string;
-  title: string;
-  description: string;
-  status: 'proposed' | 'in-progress' | 'completed' | 'rejected';
-  impact: 'low' | 'medium' | 'high';
-  category: string;
-}
-
-export interface CapabilityAxis {
-  axis: string;
-  current: number;
-  target: number;
-}
-
-export const metaLearningData = {
+// ─── Meta-Learning Center ───────────────────────────────────────
+export const metaLearningData: MetaLearningData = {
   performanceMetrics: {
     accuracy: [
       { timestamp: 'Week 1', value: 62 },
@@ -282,12 +191,12 @@ export const metaLearningData = {
     ],
   },
   proposals: [
-    { id: 'p1', title: 'Add chain-of-thought reasoning', description: 'Implement explicit reasoning steps before task execution', status: 'completed' as const, impact: 'high' as const, category: 'Reasoning' },
-    { id: 'p2', title: 'Expand context window usage', description: 'Better utilize available context for long-form tasks', status: 'in-progress' as const, impact: 'high' as const, category: 'Memory' },
-    { id: 'p3', title: 'Improve error recovery', description: 'Add retry logic with exponential backoff and alternative strategies', status: 'in-progress' as const, impact: 'medium' as const, category: 'Resilience' },
-    { id: 'p4', title: 'Code review self-check', description: 'Run automated review on generated code before submission', status: 'proposed' as const, impact: 'medium' as const, category: 'Quality' },
-    { id: 'p5', title: 'Multi-language pattern matching', description: 'Apply patterns learned in Python to JavaScript and vice versa', status: 'proposed' as const, impact: 'low' as const, category: 'Transfer' },
-    { id: 'p6', title: 'Deprecate verbose logging', description: 'Remove excessive debug output that slows execution', status: 'rejected' as const, impact: 'low' as const, category: 'Performance' },
+    { id: 'p1', title: 'Add chain-of-thought reasoning', description: 'Implement explicit reasoning steps before task execution', status: 'completed', impact: 'high', category: 'Reasoning' },
+    { id: 'p2', title: 'Expand context window usage', description: 'Better utilize available context for long-form tasks', status: 'in-progress', impact: 'high', category: 'Memory' },
+    { id: 'p3', title: 'Improve error recovery', description: 'Add retry logic with exponential backoff and alternative strategies', status: 'in-progress', impact: 'medium', category: 'Resilience' },
+    { id: 'p4', title: 'Code review self-check', description: 'Run automated review on generated code before submission', status: 'proposed', impact: 'medium', category: 'Quality' },
+    { id: 'p5', title: 'Multi-language pattern matching', description: 'Apply patterns learned in Python to JavaScript and vice versa', status: 'proposed', impact: 'low', category: 'Transfer' },
+    { id: 'p6', title: 'Deprecate verbose logging', description: 'Remove excessive debug output that slows execution', status: 'rejected', impact: 'low', category: 'Performance' },
   ],
   capabilities: [
     { axis: 'Reasoning', current: 82, target: 95 },
@@ -305,25 +214,8 @@ export const metaLearningData = {
   ],
 };
 
-// ─── Temporal Engine Data ────────────────────────────────────────────
-export interface TimelineTask {
-  id: string;
-  title: string;
-  priority: 'urgent' | 'normal' | 'low' | 'done';
-  startTime: number;
-  endTime: number;
-  batchId: string;
-  deferrals: number;
-  description: string;
-}
-
-export interface TaskBatch {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export const temporalData = {
+// ─── Temporal Engine ────────────────────────────────────────────
+export const temporalData: TemporalData = {
   batches: [
     { id: 'batch-1', name: 'Core Infrastructure', color: '#6366f1' },
     { id: 'batch-2', name: 'Feature Development', color: '#8b5cf6' },
@@ -331,31 +223,23 @@ export const temporalData = {
     { id: 'batch-4', name: 'Documentation', color: '#14b8a6' },
   ],
   tasks: [
-    { id: 't1', title: 'Set up CI/CD pipeline', priority: 'done' as const, startTime: 0, endTime: 3, batchId: 'batch-1', deferrals: 0, description: 'Configure GitHub Actions for automated testing and deployment' },
-    { id: 't2', title: 'Database migration framework', priority: 'done' as const, startTime: 1, endTime: 4, batchId: 'batch-1', deferrals: 1, description: 'Implement versioned schema migrations with rollback support' },
-    { id: 't3', title: 'Auth service implementation', priority: 'urgent' as const, startTime: 3, endTime: 7, batchId: 'batch-2', deferrals: 0, description: 'JWT-based authentication with refresh token rotation' },
-    { id: 't4', title: 'Fix memory leak in worker', priority: 'urgent' as const, startTime: 4, endTime: 5, batchId: 'batch-3', deferrals: 2, description: 'Worker process accumulating 50MB/hr due to unclosed connections' },
-    { id: 't5', title: 'API rate limiting', priority: 'normal' as const, startTime: 5, endTime: 8, batchId: 'batch-2', deferrals: 0, description: 'Token bucket algorithm with per-user quotas' },
-    { id: 't6', title: 'Update API docs', priority: 'low' as const, startTime: 2, endTime: 9, batchId: 'batch-4', deferrals: 4, description: 'Swagger/OpenAPI spec update for v2 endpoints' },
-    { id: 't7', title: 'Real-time notifications', priority: 'normal' as const, startTime: 6, endTime: 10, batchId: 'batch-2', deferrals: 1, description: 'WebSocket-based notification system with fallback to SSE' },
-    { id: 't8', title: 'Fix timezone rendering bug', priority: 'done' as const, startTime: 3, endTime: 4, batchId: 'batch-3', deferrals: 0, description: 'UTC offset not applied in calendar component' },
-    { id: 't9', title: 'Performance benchmarks', priority: 'low' as const, startTime: 7, endTime: 11, batchId: 'batch-1', deferrals: 3, description: 'Establish baseline metrics for API response times' },
-    { id: 't10', title: 'Write onboarding guide', priority: 'low' as const, startTime: 8, endTime: 12, batchId: 'batch-4', deferrals: 5, description: 'Developer onboarding documentation — keeps getting pushed back' },
-    { id: 't11', title: 'Search indexing service', priority: 'urgent' as const, startTime: 9, endTime: 12, batchId: 'batch-2', deferrals: 0, description: 'Elasticsearch integration for full-text search across entities' },
-    { id: 't12', title: 'Fix broken OAuth flow', priority: 'urgent' as const, startTime: 10, endTime: 11, batchId: 'batch-3', deferrals: 0, description: 'Google OAuth callback URL mismatch in production' },
+    { id: 't1', title: 'Set up CI/CD pipeline', priority: 'done', startTime: 0, endTime: 3, batchId: 'batch-1', deferrals: 0, description: 'Configure GitHub Actions for automated testing and deployment' },
+    { id: 't2', title: 'Database migration framework', priority: 'done', startTime: 1, endTime: 4, batchId: 'batch-1', deferrals: 1, description: 'Implement versioned schema migrations with rollback support' },
+    { id: 't3', title: 'Auth service implementation', priority: 'urgent', startTime: 3, endTime: 7, batchId: 'batch-2', deferrals: 0, description: 'JWT-based authentication with refresh token rotation' },
+    { id: 't4', title: 'Fix memory leak in worker', priority: 'urgent', startTime: 4, endTime: 5, batchId: 'batch-3', deferrals: 2, description: 'Worker process accumulating 50MB/hr due to unclosed connections' },
+    { id: 't5', title: 'API rate limiting', priority: 'normal', startTime: 5, endTime: 8, batchId: 'batch-2', deferrals: 0, description: 'Token bucket algorithm with per-user quotas' },
+    { id: 't6', title: 'Update API docs', priority: 'low', startTime: 2, endTime: 9, batchId: 'batch-4', deferrals: 4, description: 'Swagger/OpenAPI spec update for v2 endpoints' },
+    { id: 't7', title: 'Real-time notifications', priority: 'normal', startTime: 6, endTime: 10, batchId: 'batch-2', deferrals: 1, description: 'WebSocket-based notification system with fallback to SSE' },
+    { id: 't8', title: 'Fix timezone rendering bug', priority: 'done', startTime: 3, endTime: 4, batchId: 'batch-3', deferrals: 0, description: 'UTC offset not applied in calendar component' },
+    { id: 't9', title: 'Performance benchmarks', priority: 'low', startTime: 7, endTime: 11, batchId: 'batch-1', deferrals: 3, description: 'Establish baseline metrics for API response times' },
+    { id: 't10', title: 'Write onboarding guide', priority: 'low', startTime: 8, endTime: 12, batchId: 'batch-4', deferrals: 5, description: 'Developer onboarding documentation — keeps getting pushed back' },
+    { id: 't11', title: 'Search indexing service', priority: 'urgent', startTime: 9, endTime: 12, batchId: 'batch-2', deferrals: 0, description: 'Elasticsearch integration for full-text search across entities' },
+    { id: 't12', title: 'Fix broken OAuth flow', priority: 'urgent', startTime: 10, endTime: 11, batchId: 'batch-3', deferrals: 0, description: 'Google OAuth callback URL mismatch in production' },
   ],
   currentHour: 8,
 };
 
-// ─── Evolution Visualization Data ──────────────────────────────────
-export interface MicroLearning {
-  id: string;
-  text: string;
-  timestamp: number;
-  skill: string;
-  score: 1 | 2 | 3 | 4;
-}
-
+// ─── Evolution Visualization ──────────────────────────────────
 export const mockMicroLearnings: MicroLearning[] = [
   { id: 'ml1', text: 'Learned to chain tool calls for file operations', timestamp: Date.now() - 2000, skill: 'Code Generation', score: 4 },
   { id: 'ml2', text: 'Improved error message parsing accuracy', timestamp: Date.now() - 15000, skill: 'Bug Detection', score: 3 },
@@ -371,17 +255,6 @@ export const mockMicroLearnings: MicroLearning[] = [
   { id: 'ml12', text: 'Learned to detect SQL injection in ORM queries', timestamp: Date.now() - 500000, skill: 'Security Audit', score: 4 },
 ];
 
-export interface SkillMutation {
-  id: string;
-  skill: string;
-  oldFitness: number;
-  newFitness: number;
-  generation: number;
-  timestamp: number;
-  change: string;
-  color: string;
-}
-
 export const mockMutations: SkillMutation[] = [
   { id: 'sm1', skill: 'Code Generation', oldFitness: 85, newFitness: 88, generation: 44, timestamp: Date.now() - 600000, change: 'Added async/await pattern library', color: '#00ff88' },
   { id: 'sm2', skill: 'Bug Detection', oldFitness: 72, newFitness: 70, generation: 28, timestamp: Date.now() - 500000, change: 'Regression in null-check detection', color: '#ff6b35' },
@@ -392,17 +265,6 @@ export const mockMutations: SkillMutation[] = [
   { id: 'sm7', skill: 'Security Audit', oldFitness: 48, newFitness: 54, generation: 12, timestamp: Date.now() - 100000, change: 'XSS detection in JSX templates', color: '#ef4444' },
   { id: 'sm8', skill: 'Refactoring', oldFitness: 86, newFitness: 88, generation: 39, timestamp: Date.now() - 50000, change: 'Dead code elimination improved', color: '#06b6d4' },
 ];
-
-export interface TraceEntry {
-  id: string;
-  tool: string;
-  duration: number;
-  success: boolean;
-  startTime: number;
-  input: string;
-  output: string;
-  category: 'file' | 'search' | 'execute' | 'network' | 'ai';
-}
 
 export const mockTraces: TraceEntry[] = [
   { id: 'tr1', tool: 'Read', duration: 12, success: true, startTime: 0, input: 'src/App.tsx', output: '527 lines read', category: 'file' },
@@ -419,13 +281,7 @@ export const mockTraces: TraceEntry[] = [
   { id: 'tr12', tool: 'Bash', duration: 2800, success: true, startTime: 11060, input: 'npm run build', output: 'Build successful', category: 'execute' },
 ];
 
-export interface OptimizerSection {
-  name: string;
-  score: number;
-  icon: string;
-  recommendations: { text: string; priority: 'high' | 'medium' | 'low'; fixed: boolean }[];
-}
-
+// ─── Optimizer ──────────────────────────────────────────────────
 export const optimizerData: OptimizerSection[] = [
   {
     name: 'Memory', score: 72, icon: '🧠',
@@ -462,7 +318,7 @@ export const optimizerData: OptimizerSection[] = [
   },
 ];
 
-export const userModelDimensions = [
+export const userModelDimensions: UserModelDimension[] = [
   { axis: 'Communication', value: 78, description: 'Prefers concise, technical responses' },
   { axis: 'Technical Level', value: 92, description: 'Senior engineer, deep systems knowledge' },
   { axis: 'Patience', value: 65, description: 'Wants fast results, minimal back-and-forth' },

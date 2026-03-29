@@ -2,12 +2,13 @@ import { useRef, useMemo, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { mockThoughts, type ThoughtBubble } from '../data/mockData'
+import type { ThoughtBubble } from '../data/types'
+import { useData } from '../api/DataProvider'
 
 /* ── Thought Bubble ─────────────────────────────────────────── */
 function ThoughtBubbleDisplay({ thought, offset }: { thought: ThoughtBubble; offset: [number, number, number] }) {
   const ref = useRef<THREE.Group>(null)
-  const time = useRef(Math.random() * 100)
+  const time = useRef<number | null>(null)
 
   const typeColors: Record<string, string> = {
     reasoning: '#3b82f6',
@@ -17,6 +18,7 @@ function ThoughtBubbleDisplay({ thought, offset }: { thought: ThoughtBubble; off
   }
 
   useFrame((_, delta) => {
+    if (time.current === null) time.current = Math.random() * 100
     time.current += delta
     if (ref.current) {
       ref.current.position.y = offset[1] + Math.sin(time.current * 1.5) * 0.1
@@ -60,7 +62,7 @@ function ThoughtBubbleDisplay({ thought, offset }: { thought: ThoughtBubble; off
 /* ── Neural Pathways ───────────────────────────────────────── */
 function NeuralPathway({ from, to, color }: { from: THREE.Vector3; to: THREE.Vector3; color: string }) {
   const ref = useRef<THREE.Mesh>(null)
-  const time = useRef(Math.random() * 100)
+  const time = useRef<number | null>(null)
 
   const { midPoint, length, rotation } = useMemo(() => {
     const mid = from.clone().add(to).multiplyScalar(0.5)
@@ -73,6 +75,7 @@ function NeuralPathway({ from, to, color }: { from: THREE.Vector3; to: THREE.Vec
   }, [from, to])
 
   useFrame((_, delta) => {
+    if (time.current === null) time.current = Math.random() * 100
     time.current += delta
     if (ref.current) {
       const mat = ref.current.material as THREE.MeshBasicMaterial
@@ -148,21 +151,30 @@ function DecisionTree({ position }: { position: [number, number, number] }) {
 
 /* ── Main Consciousness Stream ─────────────────────────────── */
 export function ConsciousnessStream({ agentPositions }: { agentPositions: Map<string, [number, number, number]> }) {
-  const [activeThoughts, setActiveThoughts] = useState<ThoughtBubble[]>(mockThoughts.slice(0, 3))
+  const { thoughts } = useData()
+  const [activeThoughts, setActiveThoughts] = useState<ThoughtBubble[]>([])
+
+  // Seed initial thoughts when data arrives
+  useEffect(() => {
+    if (thoughts.length > 0 && activeThoughts.length === 0) {
+      setActiveThoughts(thoughts.slice(0, 3))
+    }
+  }, [thoughts, activeThoughts.length])
 
   // Rotate visible thoughts every 4 seconds
   useEffect(() => {
+    if (thoughts.length === 0) return
     let idx = 3
     const interval = setInterval(() => {
       setActiveThoughts(prev => {
         const next = [...prev.slice(1)]
-        next.push(mockThoughts[idx % mockThoughts.length])
+        next.push(thoughts[idx % thoughts.length])
         idx++
         return next
       })
     }, 4000)
     return () => clearInterval(interval)
-  }, [])
+  }, [thoughts])
 
   // Neural pathway connections between agents
   const pathways = useMemo(() => {

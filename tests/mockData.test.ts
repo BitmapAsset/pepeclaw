@@ -12,7 +12,7 @@ import {
   breedingCandidates,
   emotionColors,
   activityToEmotion,
-} from '../src/data/mockData';
+} from './__mocks__/mockData';
 
 describe('Mock Data Integrity', () => {
   it('skills array has entries with valid structure', () => {

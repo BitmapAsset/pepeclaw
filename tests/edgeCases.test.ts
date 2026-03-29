@@ -8,7 +8,7 @@ import {
   metaLearningData,
   temporalData,
   breedingCandidates,
-} from '../src/data/mockData';
+} from './__mocks__/mockData';
 
 describe('Edge Cases & Robustness', () => {
   describe('Dream node graph connectivity', () => {

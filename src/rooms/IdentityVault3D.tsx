@@ -130,9 +130,10 @@ function VaultParticles() {
     const count = 100;
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 12;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 8;
+      const s = (seed: number) => { const x = Math.sin(seed * 9301 + 49297) * 233280; return x - Math.floor(x); };
+      pos[i * 3] = (s(i * 3) - 0.5) * 12;
+      pos[i * 3 + 1] = (s(i * 3 + 1) - 0.5) * 8;
+      pos[i * 3 + 2] = (s(i * 3 + 2) - 0.5) * 8;
     }
     return pos;
   }, []);

@@ -103,25 +103,49 @@ export type AgentState = AgentSession;
 
 export const gateway = {
   getSkills: (signal?: AbortSignal) =>
-    fetchEndpoint<import('../data/mockData').Skill[]>('/api/v1/skills', signal),
+    fetchEndpoint<import('../data/types').Skill[]>('/api/v1/skills', signal),
 
   getDreamNodes: (signal?: AbortSignal) =>
-    fetchEndpoint<import('../data/mockData').DreamNode[]>('/api/v1/dreams', signal),
+    fetchEndpoint<import('../data/types').DreamNode[]>('/api/v1/dreams', signal),
 
   getProjects: (signal?: AbortSignal) =>
-    fetchEndpoint<import('../data/mockData').Project[]>('/api/v1/projects', signal),
+    fetchEndpoint<import('../data/types').Project[]>('/api/v1/projects', signal),
 
   getRedTeamData: (signal?: AbortSignal) =>
-    fetchEndpoint<typeof import('../data/mockData').redTeamData>('/api/v1/redteam', signal),
+    fetchEndpoint<import('../data/types').RedTeamData>('/api/v1/redteam', signal),
 
   getMetaLearningData: (signal?: AbortSignal) =>
-    fetchEndpoint<typeof import('../data/mockData').metaLearningData>('/api/v1/metalearning', signal),
+    fetchEndpoint<import('../data/types').MetaLearningData>('/api/v1/metalearning', signal),
 
   getTemporalData: (signal?: AbortSignal) =>
-    fetchEndpoint<typeof import('../data/mockData').temporalData>('/api/v1/temporal', signal),
+    fetchEndpoint<import('../data/types').TemporalData>('/api/v1/temporal', signal),
 
   getAgents: (signal?: AbortSignal) =>
     fetchEndpoint<AgentSession[]>('/api/v1/agents', signal),
+
+  getThoughts: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').ThoughtBubble[]>('/api/v1/thoughts', signal),
+
+  getActivities: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').ActivityEntry[]>('/api/v1/activities', signal),
+
+  getMicroLearnings: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').MicroLearning[]>('/api/v1/microlearnings', signal),
+
+  getMutations: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').SkillMutation[]>('/api/v1/mutations', signal),
+
+  getTraces: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').TraceEntry[]>('/api/v1/traces', signal),
+
+  getBreedingCandidates: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').BreedingCandidate[]>('/api/v1/breeding', signal),
+
+  getOptimizerData: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').OptimizerSection[]>('/api/v1/optimizer', signal),
+
+  getUserModel: (signal?: AbortSignal) =>
+    fetchEndpoint<import('../data/types').UserModelDimension[]>('/api/v1/usermodel', signal),
 
   /** Send TTS request — returns audio ArrayBuffer */
   postTTS: async (text: string, signal?: AbortSignal): Promise<ArrayBuffer> => {

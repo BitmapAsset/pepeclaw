@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import type { RoomId } from '../data/mockData';
+import type { RoomId } from '../data/types';
 import { useData } from '../api/DataProvider';
 
 const roomLayout: { id: RoomId; label: string; emoji: string; x: number; y: number; color: string }[] = [

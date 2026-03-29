@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { temporalData, type TimelineTask } from '../data/mockData';
+import type { TimelineTask } from '../data/types';
+import { useData } from '../api/DataProvider';
 
 // ─── Theme ───────────────────────────────────────────────────────────
 const C = {
@@ -181,7 +182,8 @@ function ClockIcon() {
 
 // ─── Main Component ──────────────────────────────────────────────────
 export default function TemporalEngine() {
-  const { batches, tasks, currentHour } = temporalData;
+  const { temporalData } = useData();
+  const { batches, tasks, currentHour } = temporalData ?? { batches: [], tasks: [], currentHour: new Date().getHours() };
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
 
   // Group tasks by batch

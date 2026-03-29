@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect, useCallback, useRef, Component, type ReactNode, type ErrorInfo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import type { RoomId } from './data/mockData'
+import type { RoomId } from './data/types'
 import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider'
 import type { ConnectionStatus } from './api/gateway'
 import { MiniMap } from './components/MiniMap'
@@ -382,7 +382,8 @@ const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: s
 }
 
 /* ─── Inline HUD ─────────────────────────────────────────────────── */
-import { rooms, mockMicroLearnings } from './data/mockData'
+import { rooms } from './data/types'
+import { useData } from './api/DataProvider'
 
 function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
   activeRoom: RoomId;
@@ -716,7 +717,8 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
 }
 
 function LearningPulse() {
-  const [count, setCount] = useState(mockMicroLearnings.length)
+  const { microLearnings } = useData()
+  const [count, setCount] = useState(microLearnings.length)
   const [showDropdown, setShowDropdown] = useState(false)
   const [pulsing, setPulsing] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval>>(null)
@@ -792,7 +794,7 @@ function LearningPulse() {
               <span className="text-[9px] font-mono" style={{ color: '#64748b' }}>{count} today</span>
             </div>
             <div className="max-h-48 overflow-y-auto">
-              {mockMicroLearnings.slice(0, 8).map((ml, i) => {
+              {microLearnings.slice(0, 8).map((ml, i) => {
                 const scoreColor = ml.score >= 4 ? '#22c55e' : ml.score >= 3 ? '#f59e0b' : ml.score >= 2 ? '#f97316' : '#ef4444';
                 return (
                   <motion.div

@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgents } from '../api/DataProvider';
-import { mockActivities, mockTraces, type RoomId, type ActivityEntry } from '../data/mockData';
+import { useAgents, useData } from '../api/DataProvider';
+import type { RoomId, ActivityEntry } from '../data/types';
 
 const roomColors: Record<string, string> = {
   genome: '#10b981', dream: '#8b5cf6', war: '#ef4444', redteam: '#ef4444',
@@ -36,24 +36,25 @@ function formatDuration(ms: number): string {
 
 /* ── Traces Waterfall ─────────────────────────────────────────── */
 function TracesView() {
+  const { traces } = useData();
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterSuccess, setFilterSuccess] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const maxEnd = useMemo(() =>
-    Math.max(...mockTraces.map(t => t.startTime + t.duration)),
-  []);
+    traces.length ? Math.max(...traces.map(t => t.startTime + t.duration)) : 0,
+  [traces]);
 
   const filtered = useMemo(() => {
-    return mockTraces.filter(t => {
+    return traces.filter(t => {
       if (filterCategory !== 'all' && t.category !== filterCategory) return false;
       if (filterSuccess === 'success' && !t.success) return false;
       if (filterSuccess === 'fail' && t.success) return false;
       return true;
     });
-  }, [filterCategory, filterSuccess]);
+  }, [traces, filterCategory, filterSuccess]);
 
-  const categories = [...new Set(mockTraces.map(t => t.category))];
+  const categories = [...new Set(traces.map(t => t.category))];
 
   return (
     <div className="flex flex-col h-full">
@@ -194,12 +195,14 @@ function TracesView() {
 /* ── Main Component ───────────────────────────────────────────── */
 export default function ActivityLog() {
   const agents = useAgents();
+  const { activities: gatewayActivities } = useData();
   const [tab, setTab] = useState<'activity' | 'traces'>('activity');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAgent, setFilterAgent] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [filterAction, setFilterAction] = useState<string>('all');
 
+  const baseTimestamp = useRef(Date.now());
   const activities: ActivityEntry[] = useMemo(() => {
     const live: ActivityEntry[] = agents.map((a, i) => ({
       id: `live-${a.id}-${i}`,
@@ -207,10 +210,10 @@ export default function ActivityLog() {
       agentColor: a.color,
       action: a.taskDescription ?? a.activity ?? a.status,
       room: a.currentRoom as RoomId,
-      timestamp: Date.now() - i * 3000,
+      timestamp: baseTimestamp.current - i * 3000,
     }));
-    return [...live, ...mockActivities].sort((a, b) => b.timestamp - a.timestamp);
-  }, [agents]);
+    return [...live, ...gatewayActivities].sort((a, b) => b.timestamp - a.timestamp);
+  }, [agents, gatewayActivities]);
 
   const uniqueAgents = useMemo(() => [...new Set(activities.map(a => a.agentName))], [activities]);
   const uniqueRooms = useMemo(() => [...new Set(activities.map(a => a.room))], [activities]);

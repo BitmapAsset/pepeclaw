@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { metaLearningData, userModelDimensions } from '../data/mockData';
-import type { MetricPoint, ModificationProposal } from '../data/mockData';
+import type { MetricPoint, ModificationProposal } from '../data/types';
+import { useData } from '../api/DataProvider';
 
 // ─── Theme Constants ────────────────────────────────────────────────
 const colors = {
@@ -187,6 +187,8 @@ function MiniLineChart({
 
 // ─── Radar Chart ────────────────────────────────────────────────────
 function RadarChart() {
+  const { metaLearningData } = useData();
+  if (!metaLearningData) return null;
   const { capabilities } = metaLearningData;
   const n = capabilities.length;
   const cx = 150;
@@ -337,6 +339,8 @@ function RadarChart() {
 
 // ─── Kanban Board ───────────────────────────────────────────────────
 function KanbanBoard() {
+  const { metaLearningData } = useData();
+  if (!metaLearningData) return null;
   const { proposals } = metaLearningData;
   const rejected = proposals.filter((p) => p.status === 'rejected');
 
@@ -561,6 +565,7 @@ function BeforeAfterCard({
 
 // ─── User Model Radar ───────────────────────────────────────────────
 function UserModelRadar() {
+  const { userModelDimensions } = useData();
   const n = userModelDimensions.length;
   const cx = 150;
   const cy = 150;
@@ -700,7 +705,8 @@ function UserModelRadar() {
 
 // ─── Main Component ─────────────────────────────────────────────────
 export default function MetaLearningCenter() {
-  const { performanceMetrics, beforeAfter } = metaLearningData;
+  const { metaLearningData } = useData();
+  const { performanceMetrics, beforeAfter } = metaLearningData ?? { performanceMetrics: { accuracy: [], responseTime: [], taskCompletion: [] }, beforeAfter: [] };
 
   return (
     <div

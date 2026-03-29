@@ -1,13 +1,14 @@
-# Contributing to Pepe 2.0
+# Contributing to PepeClaw
 
 We welcome contributions! Here's how to get involved.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/openclaw/pepe-2.0.git
-cd pepe-2.0
-./install.sh
+git clone https://github.com/BitmapAsset/pepeclaw.git
+cd pepeclaw
+npm install
+npm run dev
 ```
 
 ## How to Contribute
@@ -16,7 +17,7 @@ cd pepe-2.0
 Open an issue describing the bug, your environment (OS, bash version), and steps to reproduce.
 
 ### Suggest Features
-Open an issue with the `[feature]` tag. Explain how it compounds with existing systems — the best Pepe 2.0 features make other systems better.
+Open an issue with the `[feature]` tag. Explain how it compounds with existing systems — the best PepeClaw features make other systems better.
 
 ### Submit a Skill Mutation
 Found a better approach for an existing skill? Submit a "mutation PR":

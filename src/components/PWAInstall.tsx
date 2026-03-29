@@ -8,14 +8,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem('pepeclaw-pwa-dismissed'));
 
   useEffect(() => {
-    // Check if already dismissed
-    if (localStorage.getItem('pepeclaw-pwa-dismissed')) {
-      setDismissed(true);
-      return;
-    }
+    if (dismissed) return;
 
     const handler = (e: Event) => {
       e.preventDefault();

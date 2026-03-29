@@ -2,7 +2,8 @@ import { useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text, Float, Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { skills, mockMutations } from '../data/mockData'
+import type { Skill } from '../data/types'
+import { useData } from '../api/DataProvider'
 
 /* ── DNA Helix ──────────────────────────────────────────────── */
 function DNAHelix() {
@@ -104,7 +105,7 @@ function DNAHelix() {
 }
 
 /* ── Skill Gene Editor (CRISPR) ─────────────────────────────── */
-function GeneSegment({ skill, index, total }: { skill: typeof skills[0]; index: number; total: number }) {
+function GeneSegment({ skill, index, total }: { skill: Skill; index: number; total: number }) {
   const ref = useRef<THREE.Group>(null)
   const [hovered, setHovered] = useState(false)
   const time = useRef(Math.random() * 100)
@@ -170,6 +171,7 @@ function GeneSegment({ skill, index, total }: { skill: typeof skills[0]; index: 
 }
 
 function GeneEditor() {
+  const { skills } = useData()
   return (
     <group position={[5.5, 0, -1]}>
       <Text position={[0, 3.5, 0]} fontSize={0.2} color="#00ff88" anchorX="center" font={undefined}>
@@ -315,8 +317,8 @@ function EgoDeathEffect() {
 }
 
 /* ── Skill Card ─────────────────────────────────────────────── */
-function SkillCard({ skill, index }: { skill: typeof skills[0]; index: number }) {
-  const angle = (index / skills.length) * Math.PI * 2
+function SkillCard({ skill, index, total }: { skill: Skill; index: number; total: number }) {
+  const angle = (index / total) * Math.PI * 2
   const radius = 3.5
   const x = Math.cos(angle) * radius
   const z = Math.sin(angle) * radius
@@ -370,9 +372,10 @@ function EvolutionTimeline() {
     }
   })
 
+  const { mutations } = useData()
   const sortedMutations = useMemo(() =>
-    [...mockMutations].sort((a, b) => a.timestamp - b.timestamp),
-  [])
+    [...mutations].sort((a, b) => a.timestamp - b.timestamp),
+  [mutations])
 
   return (
     <group position={[0, -4.5, 0]} ref={groupRef}>
@@ -463,6 +466,7 @@ function EvolutionTimeline() {
 
 /* ── Main Export ─────────────────────────────────────────────── */
 export function GenomeLab() {
+  const { skills } = useData()
   return (
     <group>
       <Text position={[0, 4.5, 0]} fontSize={0.5} color="#00ff88" anchorX="center" font={undefined}>
@@ -475,7 +479,7 @@ export function GenomeLab() {
       <DNAHelix />
 
       {skills.map((skill, i) => (
-        <SkillCard key={skill.name} skill={skill} index={i} />
+        <SkillCard key={skill.name} skill={skill} index={i} total={skills.length} />
       ))}
 
       {/* Gene Editor — CRISPR for AI */}

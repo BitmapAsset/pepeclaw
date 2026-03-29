@@ -2,7 +2,7 @@ import { useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Text, Float, Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { dreamNodes } from '../data/mockData'
+import { useData } from '../api/DataProvider'
 
 /* ── Starfield ──────────────────────────────────────────────── */
 function Starfield() {
@@ -121,7 +121,7 @@ function ConnectionLine({ from, to }: { from: [number, number, number]; to: [num
 }
 
 /* ── Dream Node ─────────────────────────────────────────────── */
-function DreamNodeSphere({ node, floatSpeed }: { node: typeof dreamNodes[0]; floatSpeed: number }) {
+function DreamNodeSphere({ node, floatSpeed }: { node: import('../data/types').DreamNode; floatSpeed: number }) {
   return (
     <Float speed={floatSpeed} rotationIntensity={0.05} floatIntensity={0.5}>
       <group position={[node.x, node.y, node.z]}>
@@ -320,11 +320,13 @@ function MemoryPalace() {
 
 /* ── Main Export ─────────────────────────────────────────────── */
 export function DreamChamber() {
+  const { dreamNodes } = useData()
+
   const nodeMap = useMemo(() => {
     const map: Record<string, [number, number, number]> = {}
     dreamNodes.forEach(n => { map[n.id] = [n.x, n.y, n.z] })
     return map
-  }, [])
+  }, [dreamNodes])
 
   const connections = useMemo(() => {
     const seen = new Set<string>()
@@ -339,11 +341,11 @@ export function DreamChamber() {
       })
     })
     return conns
-  }, [nodeMap])
+  }, [dreamNodes, nodeMap])
 
   const floatSpeeds = useMemo(
     () => dreamNodes.map(() => 0.8 + Math.random()),
-    [],
+    [dreamNodes],
   )
 
   return (
