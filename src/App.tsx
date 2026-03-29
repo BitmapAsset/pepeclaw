@@ -11,8 +11,8 @@ import { SkillScore } from './components/SkillScore'
 import { LearningLoop } from './components/LearningLoop'
 import { ConnectionGuide } from './components/ConnectionGuide'
 
+import { Scene } from './components/Scene'
 import type { CameraMode } from './components/Scene'
-const Scene = lazy(() => import('./components/Scene').then(m => ({ default: m.Scene })))
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
 const MetaLearningCenter = lazy(() => import('./rooms/MetaLearningCenter'))
 const TemporalEngine = lazy(() => import('./rooms/TemporalEngine'))
@@ -212,18 +212,16 @@ export default function App() {
       <div className="w-full h-full relative">
         {/* 3D Scene — always rendered unless in panel-only room */}
         {!isPanelOnly && (
-          <Suspense fallback={<LoadingFallback />}>
-            <Scene
-              activeRoom={activeRoom}
-              overviewMode={overviewMode}
-              onRoomClick={handleRoomClick}
-              selectedAgentId={interactive.selectedAgentId}
-              followingAgentId={interactive.followingAgentId}
-              onAgentSelect={handleAgentSelect}
-              onAgentFollow={handleAgentFollow}
-              cameraMode={cameraMode}
-            />
-          </Suspense>
+          <Scene
+            activeRoom={activeRoom}
+            overviewMode={overviewMode}
+            onRoomClick={handleRoomClick}
+            selectedAgentId={interactive.selectedAgentId}
+            followingAgentId={interactive.followingAgentId}
+            onAgentSelect={handleAgentSelect}
+            onAgentFollow={handleAgentFollow}
+            cameraMode={cameraMode}
+          />
         )}
 
         {/* Panel-only rooms get a dark background */}

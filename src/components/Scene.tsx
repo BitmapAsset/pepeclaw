@@ -1,5 +1,5 @@
 import { useRef, useMemo, useCallback } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera, OrthographicCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { GenomeLab } from '../rooms/GenomeLab'
@@ -116,21 +116,12 @@ function CameraRig({ target, overviewMode, followPosition, activeRoom, cameraMod
   const orthoRef = useRef<THREE.OrthographicCamera>(null)
   const targetVec = useRef(new THREE.Vector3(...target))
   const currentZoom = useRef(ISO_OVERVIEW_ZOOM)
-  const { set } = useThree()
 
-  // Switch active camera when mode changes
-  const activeCamRef = useRef(cameraMode)
   useFrame(() => {
     const isIso = cameraMode === 'isometric'
     const cam = isIso ? orthoRef.current : perspRef.current
 
     if (!cam) return;
-
-    // Make the correct camera the default when mode changes
-    if (activeCamRef.current !== cameraMode) {
-      activeCamRef.current = cameraMode
-      set({ camera: cam })
-    }
 
     const lerpSpeed = 0.04;
 
@@ -197,20 +188,23 @@ function CameraRig({ target, overviewMode, followPosition, activeRoom, cameraMod
 
   return (
     <>
-      <PerspectiveCamera
-        ref={perspRef}
-        makeDefault={cameraMode === 'perspective'}
-        position={[6, 8, 10]}
-        fov={50}
-      />
-      <OrthographicCamera
-        ref={orthoRef}
-        makeDefault={cameraMode === 'isometric'}
-        position={[ISO_OVERVIEW_POS.x, ISO_OVERVIEW_POS.y, ISO_OVERVIEW_POS.z]}
-        zoom={ISO_OVERVIEW_ZOOM}
-        near={0.1}
-        far={500}
-      />
+      {cameraMode === 'perspective' ? (
+        <PerspectiveCamera
+          ref={perspRef}
+          makeDefault
+          position={[6, 8, 10]}
+          fov={50}
+        />
+      ) : (
+        <OrthographicCamera
+          ref={orthoRef}
+          makeDefault
+          position={[ISO_OVERVIEW_POS.x, ISO_OVERVIEW_POS.y, ISO_OVERVIEW_POS.z]}
+          zoom={ISO_OVERVIEW_ZOOM}
+          near={0.1}
+          far={500}
+        />
+      )}
     </>
   )
 }
