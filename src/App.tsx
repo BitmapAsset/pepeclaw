@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense, useEffect, useCallback, useRef, Component, type ReactNode, type ErrorInfo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/types'
-import { DataProvider, useAgents, useConnectionStatus } from './api/DataProvider'
+import { DataProvider, useAgents, useConnectionStatus, useDemoMode, useDataActions } from './api/DataProvider'
 import type { ConnectionStatus } from './api/gateway'
 import { MiniMap } from './components/MiniMap'
 import { ActivityFeed } from './components/ActivityFeed'
@@ -9,7 +9,9 @@ import { AgentVoice } from './components/AgentVoice'
 import { PWAInstall } from './components/PWAInstall'
 import { SkillScore } from './components/SkillScore'
 import { LearningLoop } from './components/LearningLoop'
+import { ConnectionGuide } from './components/ConnectionGuide'
 
+import type { CameraMode } from './components/Scene'
 const Scene = lazy(() => import('./components/Scene').then(m => ({ default: m.Scene })))
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
 const MetaLearningCenter = lazy(() => import('./rooms/MetaLearningCenter'))
@@ -115,6 +117,16 @@ export interface InteractiveState {
 export default function App() {
   const [activeRoom, setActiveRoom] = useState<RoomId>('overview')
   const [overviewMode, setOverviewMode] = useState(true)
+  const [cameraMode, setCameraMode] = useState<CameraMode>(() => {
+    try { return (localStorage.getItem('pepeclaw-camera-mode') as CameraMode) || 'isometric' } catch { return 'isometric' }
+  })
+  const toggleCameraMode = useCallback(() => {
+    setCameraMode(prev => {
+      const next = prev === 'isometric' ? 'perspective' : 'isometric'
+      try { localStorage.setItem('pepeclaw-camera-mode', next) } catch {}
+      return next
+    })
+  }, [])
   const [interactive, setInteractive] = useState<InteractiveState>({
     selectedAgentId: null,
     followingAgentId: null,
@@ -209,6 +221,7 @@ export default function App() {
               followingAgentId={interactive.followingAgentId}
               onAgentSelect={handleAgentSelect}
               onAgentFollow={handleAgentFollow}
+              cameraMode={cameraMode}
             />
           </Suspense>
         )}
@@ -250,6 +263,8 @@ export default function App() {
             setOverviewMode(next)
             if (next) setActiveRoom('overview')
           }}
+          cameraMode={cameraMode}
+          onCameraToggle={toggleCameraMode}
         />
         {!overviewMode && !isPanelOnly && (
           <div className="hidden sm:block">
@@ -260,8 +275,26 @@ export default function App() {
         <SkillScore />
         <LearningLoop />
         <PWAInstall />
+        <ConnectionGuideWrapper />
       </div>
     </DataProvider>
+  )
+}
+
+/* ─── Connection Guide Wrapper (uses DataProvider hooks) ─── */
+function ConnectionGuideWrapper() {
+  const connectionStatus = useConnectionStatus()
+  const demoMode = useDemoMode()
+  const { enterDemoMode, connectToGateway } = useDataActions()
+
+  if (connectionStatus === 'connected' || demoMode) return null
+
+  return (
+    <ConnectionGuide
+      connectionStatus={connectionStatus}
+      onConnect={connectToGateway}
+      onDemoMode={enterDemoMode}
+    />
   )
 }
 
@@ -385,11 +418,13 @@ const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: s
 import { rooms } from './data/types'
 import { useData } from './api/DataProvider'
 
-function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
+function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, cameraMode, onCameraToggle }: {
   activeRoom: RoomId;
   onRoomChange: (r: RoomId) => void;
   overviewMode: boolean;
   onOverviewToggle: () => void;
+  cameraMode: CameraMode;
+  onCameraToggle: () => void;
 }) {
   const currentRoomData = rooms.find(r => r.id === activeRoom)
   const agents = useAgents()
@@ -503,6 +538,35 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle }: {
             </div>
 
             <AgentVoice />
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onCameraToggle}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-mono tracking-wider uppercase cursor-pointer border-0"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                color: '#94a3b8',
+                transition: 'all 0.2s ease',
+              }}
+              title={`Switch to ${cameraMode === 'isometric' ? 'Perspective' : 'Isometric'} view`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {cameraMode === 'isometric' ? (
+                  <>
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <path d="M8 21h8M12 17v4" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M2 7l10-4 10 4-10 4z" />
+                    <path d="M2 7v10l10 4V11" />
+                    <path d="M22 7v10l-10 4V11" />
+                  </>
+                )}
+              </svg>
+              <span className="hidden sm:inline">{cameraMode === 'isometric' ? 'ISO' : 'PERSP'}</span>
+            </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.05 }}

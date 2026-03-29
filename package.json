@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "bash scripts/post-install.sh"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

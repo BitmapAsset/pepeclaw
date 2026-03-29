@@ -1,6 +1,6 @@
 import { useRef, useMemo, useCallback } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { OrbitControls, PerspectiveCamera, OrthographicCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { GenomeLab } from '../rooms/GenomeLab'
 import { DreamChamber } from '../rooms/DreamChamber'
@@ -72,8 +72,20 @@ function mapAgentToActivity(agent: AgentState): AgentActivity {
   return defaultAgentActivities[agent.currentRoom] ?? 'examining';
 }
 
+export type CameraMode = 'isometric' | 'perspective'
+
 const OVERVIEW_CENTER = new THREE.Vector3(7.5, 0, 0);
 const OVERVIEW_CAM_POS = new THREE.Vector3(7.5 + 25, 35, 40);
+
+// Isometric camera: classic ~35° elevation (arctan(1/√2)), offset at 45° azimuth
+const ISO_DISTANCE = 50;
+const ISO_OVERVIEW_POS = new THREE.Vector3(
+  7.5 + ISO_DISTANCE * 0.5,
+  ISO_DISTANCE * 0.707,
+  ISO_DISTANCE * 0.5,
+);
+const ISO_OVERVIEW_ZOOM = 18;
+const ISO_ROOM_ZOOM = 42;
 
 const _lerpTarget = new THREE.Vector3();
 const _lerpCamPos = new THREE.Vector3();
@@ -90,48 +102,117 @@ const roomCameraOffsets: Record<string, [number, number, number]> = {
   breeding:     [6, 7, 9],      // balanced, see both parents
 }
 
-function CameraRig({ target, overviewMode, followPosition, activeRoom }: {
+// Isometric room offset direction (consistent angle for all rooms)
+const ISO_ROOM_OFFSET = new THREE.Vector3(25, 35.35, 25);
+
+function CameraRig({ target, overviewMode, followPosition, activeRoom, cameraMode }: {
   target: [number, number, number];
   overviewMode: boolean;
   followPosition: [number, number, number] | null;
   activeRoom: string;
+  cameraMode: CameraMode;
 }) {
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null)
+  const perspRef = useRef<THREE.PerspectiveCamera>(null)
+  const orthoRef = useRef<THREE.OrthographicCamera>(null)
   const targetVec = useRef(new THREE.Vector3(...target))
+  const currentZoom = useRef(ISO_OVERVIEW_ZOOM)
+  const { set } = useThree()
 
+  // Switch active camera when mode changes
+  const activeCamRef = useRef(cameraMode)
   useFrame(() => {
-    if (!cameraRef.current) return;
+    const isIso = cameraMode === 'isometric'
+    const cam = isIso ? orthoRef.current : perspRef.current
 
-    // Smoother lerp factor for cinematic transitions
+    if (!cam) return;
+
+    // Make the correct camera the default when mode changes
+    if (activeCamRef.current !== cameraMode) {
+      activeCamRef.current = cameraMode
+      set({ camera: cam })
+    }
+
     const lerpSpeed = 0.04;
 
-    if (followPosition) {
-      _lerpTarget.set(followPosition[0], followPosition[1], followPosition[2]);
-      targetVec.current.lerp(_lerpTarget, 0.06);
-      _lerpCamPos.set(
-        targetVec.current.x + 3,
-        targetVec.current.y + 4,
-        targetVec.current.z + 5,
-      );
-      cameraRef.current.position.lerp(_lerpCamPos, 0.06);
-    } else if (overviewMode) {
-      targetVec.current.lerp(OVERVIEW_CENTER, lerpSpeed);
-      cameraRef.current.position.lerp(OVERVIEW_CAM_POS, lerpSpeed);
+    if (isIso) {
+      const orthoCam = cam as THREE.OrthographicCamera
+      const targetZoom = overviewMode ? ISO_OVERVIEW_ZOOM : ISO_ROOM_ZOOM;
+
+      if (followPosition) {
+        _lerpTarget.set(followPosition[0], followPosition[1], followPosition[2]);
+        targetVec.current.lerp(_lerpTarget, 0.06);
+        _lerpCamPos.set(
+          targetVec.current.x + ISO_ROOM_OFFSET.x * 0.4,
+          targetVec.current.y + ISO_ROOM_OFFSET.y * 0.4,
+          targetVec.current.z + ISO_ROOM_OFFSET.z * 0.4,
+        );
+        cam.position.lerp(_lerpCamPos, 0.06);
+        currentZoom.current += (ISO_ROOM_ZOOM * 1.2 - currentZoom.current) * 0.06;
+      } else if (overviewMode) {
+        targetVec.current.lerp(OVERVIEW_CENTER, lerpSpeed);
+        cam.position.lerp(ISO_OVERVIEW_POS, lerpSpeed);
+        currentZoom.current += (targetZoom - currentZoom.current) * lerpSpeed;
+      } else {
+        _lerpTarget.set(target[0], target[1], target[2]);
+        targetVec.current.lerp(_lerpTarget, lerpSpeed);
+        _lerpCamPos.set(
+          targetVec.current.x + ISO_ROOM_OFFSET.x,
+          targetVec.current.y + ISO_ROOM_OFFSET.y,
+          targetVec.current.z + ISO_ROOM_OFFSET.z,
+        );
+        cam.position.lerp(_lerpCamPos, lerpSpeed);
+        currentZoom.current += (targetZoom - currentZoom.current) * lerpSpeed;
+      }
+      orthoCam.zoom = currentZoom.current;
+      orthoCam.updateProjectionMatrix();
+      cam.lookAt(targetVec.current);
     } else {
-      const offset = roomCameraOffsets[activeRoom] ?? [6, 8, 10];
-      _lerpTarget.set(target[0], target[1], target[2]);
-      targetVec.current.lerp(_lerpTarget, lerpSpeed);
-      _lerpCamPos.set(
-        targetVec.current.x + offset[0],
-        targetVec.current.y + offset[1],
-        targetVec.current.z + offset[2],
-      );
-      cameraRef.current.position.lerp(_lerpCamPos, lerpSpeed);
+      // Perspective mode — original behavior
+      if (followPosition) {
+        _lerpTarget.set(followPosition[0], followPosition[1], followPosition[2]);
+        targetVec.current.lerp(_lerpTarget, 0.06);
+        _lerpCamPos.set(
+          targetVec.current.x + 3,
+          targetVec.current.y + 4,
+          targetVec.current.z + 5,
+        );
+        cam.position.lerp(_lerpCamPos, 0.06);
+      } else if (overviewMode) {
+        targetVec.current.lerp(OVERVIEW_CENTER, lerpSpeed);
+        cam.position.lerp(OVERVIEW_CAM_POS, lerpSpeed);
+      } else {
+        const offset = roomCameraOffsets[activeRoom] ?? [6, 8, 10];
+        _lerpTarget.set(target[0], target[1], target[2]);
+        targetVec.current.lerp(_lerpTarget, lerpSpeed);
+        _lerpCamPos.set(
+          targetVec.current.x + offset[0],
+          targetVec.current.y + offset[1],
+          targetVec.current.z + offset[2],
+        );
+        cam.position.lerp(_lerpCamPos, lerpSpeed);
+      }
+      cam.lookAt(targetVec.current);
     }
-    cameraRef.current.lookAt(targetVec.current);
   })
 
-  return <PerspectiveCamera ref={cameraRef} makeDefault position={[6, 8, 10]} fov={50} />
+  return (
+    <>
+      <PerspectiveCamera
+        ref={perspRef}
+        makeDefault={cameraMode === 'perspective'}
+        position={[6, 8, 10]}
+        fov={50}
+      />
+      <OrthographicCamera
+        ref={orthoRef}
+        makeDefault={cameraMode === 'isometric'}
+        position={[ISO_OVERVIEW_POS.x, ISO_OVERVIEW_POS.y, ISO_OVERVIEW_POS.z]}
+        zoom={ISO_OVERVIEW_ZOOM}
+        near={0.1}
+        far={500}
+      />
+    </>
+  )
 }
 
 function FloorGrid() {
@@ -316,7 +397,7 @@ function RoomClickTarget({ roomId, position, onRoomClick }: {
   )
 }
 
-function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, followingAgentId, onAgentSelect, onAgentFollow }: {
+function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, followingAgentId, onAgentSelect, onAgentFollow, cameraMode }: {
   activeRoom: RoomId;
   overviewMode: boolean;
   onRoomClick: (roomId: RoomId) => void;
@@ -324,6 +405,7 @@ function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
   followingAgentId: string | null;
   onAgentSelect: (id: string | null) => void;
   onAgentFollow: (id: string) => void;
+  cameraMode: CameraMode;
 }) {
   const agents = useAgents()
 
@@ -345,12 +427,15 @@ function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
 
   return (
     <>
-      <CameraRig target={targetPos} overviewMode={overviewMode} followPosition={followPosition} activeRoom={activeRoom} />
+      <CameraRig target={targetPos} overviewMode={overviewMode} followPosition={followPosition} activeRoom={activeRoom} cameraMode={cameraMode} />
       <OrbitControls
         enablePan={overviewMode}
         enableZoom
-        minDistance={followingAgentId ? 3 : overviewMode ? 20 : 6}
-        maxDistance={overviewMode ? 80 : 25}
+        enableRotate={cameraMode === 'perspective'}
+        minDistance={cameraMode === 'perspective' ? (followingAgentId ? 3 : overviewMode ? 20 : 6) : 10}
+        maxDistance={cameraMode === 'perspective' ? (overviewMode ? 80 : 25) : 200}
+        minZoom={cameraMode === 'isometric' ? 8 : undefined}
+        maxZoom={cameraMode === 'isometric' ? 80 : undefined}
         maxPolarAngle={Math.PI / 2.2}
       />
 
@@ -396,7 +481,7 @@ function SceneContent({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
   )
 }
 
-export function Scene({ activeRoom, overviewMode, onRoomClick, selectedAgentId, followingAgentId, onAgentSelect, onAgentFollow }: {
+export function Scene({ activeRoom, overviewMode, onRoomClick, selectedAgentId, followingAgentId, onAgentSelect, onAgentFollow, cameraMode }: {
   activeRoom: RoomId;
   overviewMode: boolean;
   onRoomClick: (roomId: RoomId) => void;
@@ -404,6 +489,7 @@ export function Scene({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
   followingAgentId: string | null;
   onAgentSelect: (id: string | null) => void;
   onAgentFollow: (id: string) => void;
+  cameraMode: CameraMode;
 }) {
   return (
     <Canvas
@@ -421,6 +507,7 @@ export function Scene({ activeRoom, overviewMode, onRoomClick, selectedAgentId, 
         followingAgentId={followingAgentId}
         onAgentSelect={onAgentSelect}
         onAgentFollow={onAgentFollow}
+        cameraMode={cameraMode}
       />
     </Canvas>
   )

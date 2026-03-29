@@ -35,6 +35,7 @@ interface DataState {
   userModelDimensions: UserModelDimension[];
   connected: boolean;
   connectionStatus: ConnectionStatus;
+  demoMode: boolean;
 }
 
 const defaults: DataState = {
@@ -55,15 +56,27 @@ const defaults: DataState = {
   userModelDimensions: [],
   connected: false,
   connectionStatus: 'offline',
+  demoMode: false,
 };
 
+interface DataActions {
+  enterDemoMode: () => void;
+  connectToGateway: (url: string) => void;
+}
+
 const DataContext = createContext<DataState>(defaults);
+const ActionsContext = createContext<DataActions>({
+  enterDemoMode: () => {},
+  connectToGateway: () => {},
+});
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DataState>(defaults);
   const connectedRef = useRef(false);
+  const demoModeRef = useRef(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dataTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchAll = useCallback(async (signal: AbortSignal) => {
     try {
@@ -115,6 +128,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           userModelDimensions: userModelDimensions ?? prev.userModelDimensions,
           connected: anySucceeded,
           connectionStatus: anySucceeded ? 'connected' : prev.connectionStatus,
+          demoMode: prev.demoMode,
         }));
       }
     } catch {
@@ -122,8 +136,42 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const enterDemoMode = useCallback(async () => {
+    demoModeRef.current = true;
+    const mock = await import('../../tests/__mocks__/mockData');
+    setState(prev => ({
+      ...prev,
+      skills: mock.skills,
+      dreamNodes: mock.dreamNodes,
+      projects: mock.projects,
+      redTeamData: mock.redTeamData,
+      metaLearningData: mock.metaLearningData,
+      temporalData: mock.temporalData,
+      agents: [],
+      thoughts: mock.mockThoughts,
+      activities: mock.mockActivities,
+      microLearnings: mock.mockMicroLearnings,
+      mutations: mock.mockMutations,
+      traces: mock.mockTraces,
+      breedingCandidates: mock.breedingCandidates,
+      optimizerSections: mock.optimizerData,
+      userModelDimensions: mock.userModelDimensions,
+      connected: true,
+      connectionStatus: 'offline' as ConnectionStatus,
+      demoMode: true,
+    }));
+  }, []);
+
+  const connectToGateway = useCallback(async (url: string) => {
+    const ok = await gateway.setGatewayUrl(url);
+    if (ok && abortRef.current) {
+      await fetchAll(abortRef.current.signal);
+    }
+  }, [fetchAll]);
+
   useEffect(() => {
     const ac = new AbortController();
+    abortRef.current = ac;
 
     const unsub = onConnectionStatusChange((status) => {
       connectedRef.current = status === 'connected';
@@ -144,14 +192,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Poll for data every 15s ONLY when connected
     dataTimerRef.current = setInterval(() => {
-      if (connectedRef.current) {
+      if (connectedRef.current && !demoModeRef.current) {
         fetchAll(ac.signal);
       }
     }, 15_000);
 
     // Retry gateway discovery every 120s when offline
     retryTimerRef.current = setInterval(async () => {
-      if (!connectedRef.current && !ac.signal.aborted) {
+      if (!connectedRef.current && !demoModeRef.current && !ac.signal.aborted) {
         console.debug('[PepeClaw] Retrying gateway discovery...');
         const url = await discoverGateway();
         if (url && !ac.signal.aborted) {
@@ -163,6 +211,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     return () => {
       ac.abort();
+      abortRef.current = null;
       if (dataTimerRef.current) clearInterval(dataTimerRef.current);
       if (retryTimerRef.current) clearInterval(retryTimerRef.current);
       unsub();
@@ -170,8 +219,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [fetchAll]);
 
   const value = useMemo(() => state, [state]);
+  const actions = useMemo(() => ({ enterDemoMode, connectToGateway }), [enterDemoMode, connectToGateway]);
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider value={value}>
+      <ActionsContext.Provider value={actions}>
+        {children}
+      </ActionsContext.Provider>
+    </DataContext.Provider>
+  );
 }
 
 export function useData() {
@@ -184,4 +240,12 @@ export function useAgents() {
 
 export function useConnectionStatus(): ConnectionStatus {
   return useContext(DataContext).connectionStatus;
+}
+
+export function useDemoMode(): boolean {
+  return useContext(DataContext).demoMode;
+}
+
+export function useDataActions() {
+  return useContext(ActionsContext);
 }

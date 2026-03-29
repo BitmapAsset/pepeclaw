@@ -1,9 +1,15 @@
+const STORAGE_KEY = 'pepeclaw-gateway-url';
+
 // Auto-discovery gateway candidates (tried in order)
-const GATEWAY_CANDIDATES = [
-  import.meta.env.VITE_GATEWAY_URL,
-  'http://localhost:3033',
-  'http://localhost:3000',
-].filter(Boolean) as string[];
+function getGatewayCandidates(): string[] {
+  const saved = typeof globalThis.localStorage?.getItem === 'function' ? localStorage.getItem(STORAGE_KEY) : null;
+  return [
+    saved,
+    import.meta.env.VITE_GATEWAY_URL,
+    'http://localhost:3033',
+    'http://localhost:3000',
+  ].filter(Boolean) as string[];
+}
 
 interface GatewayResponse<T> {
   data: T;
@@ -55,7 +61,7 @@ export async function discoverGateway(): Promise<string | null> {
 
   setStatus('trying');
 
-  for (const url of GATEWAY_CANDIDATES) {
+  for (const url of getGatewayCandidates()) {
     if (await probeUrl(url)) {
       _discoveredUrl = url;
       setStatus('connected');
@@ -176,4 +182,15 @@ export const gateway = {
   },
 
   getDiscoveredUrl: () => _discoveredUrl,
+
+  /** Set a specific gateway URL (from ConnectionGuide) and trigger discovery */
+  setGatewayUrl: async (url: string): Promise<boolean> => {
+    if (typeof globalThis.localStorage?.setItem === 'function') localStorage.setItem(STORAGE_KEY, url);
+    if (await probeUrl(url)) {
+      _discoveredUrl = url;
+      setStatus('connected');
+      return true;
+    }
+    return false;
+  },
 };
