@@ -182,6 +182,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     async function init() {
+      // Auto-enter demo mode if ?demo URL param is present
+      if (new URLSearchParams(window.location.search).has('demo')) {
+        enterDemoMode();
+        return;
+      }
       const url = await discoverGateway();
       if (url && !ac.signal.aborted) {
         await fetchAll(ac.signal);
@@ -216,7 +221,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (retryTimerRef.current) clearInterval(retryTimerRef.current);
       unsub();
     };
-  }, [fetchAll]);
+  }, [fetchAll, enterDemoMode]);
 
   const value = useMemo(() => state, [state]);
   const actions = useMemo(() => ({ enterDemoMode, connectToGateway }), [enterDemoMode, connectToGateway]);

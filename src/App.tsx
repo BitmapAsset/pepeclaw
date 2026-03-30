@@ -11,8 +11,8 @@ import { SkillScore } from './components/SkillScore'
 import { LearningLoop } from './components/LearningLoop'
 import { ConnectionGuide } from './components/ConnectionGuide'
 
-import { Scene } from './components/Scene'
-import type { CameraMode } from './components/Scene'
+import { PhaserScene } from './components/PhaserScene'
+import type { CameraMode } from './components/PhaserScene'
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
 const MetaLearningCenter = lazy(() => import('./rooms/MetaLearningCenter'))
 const TemporalEngine = lazy(() => import('./rooms/TemporalEngine'))
@@ -210,9 +210,9 @@ export default function App() {
   return (
     <DataProvider>
       <div className="w-full h-full relative">
-        {/* 3D Scene — always rendered unless in panel-only room */}
+        {/* Isometric Scene — always rendered unless in panel-only room */}
         {!isPanelOnly && (
-          <Scene
+          <PhaserScene
             activeRoom={activeRoom}
             overviewMode={overviewMode}
             onRoomClick={handleRoomClick}
