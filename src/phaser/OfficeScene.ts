@@ -318,43 +318,53 @@ export class OfficeScene extends Phaser.Scene {
 
     // Back-left wall
     const darkColor = Phaser.Display.Color.GetColor(
-      Math.floor(lr * 0.22) + 16, Math.floor(lg * 0.22) + 16, Math.floor(lb * 0.22) + 20
+      Math.floor(lr * 0.40) + 18, Math.floor(lg * 0.40) + 19, Math.floor(lb * 0.40) + 31
     )
     const backLeftWall = this.add.polygon(0, 0, [
       { x: cx - hw, y: cy - WALL_H },
       { x: cx, y: cy - hh - WALL_H },
       { x: cx, y: cy - hh },
       { x: cx - hw, y: cy },
-    ], darkColor, 0.95).setOrigin(0, 0)
-    backLeftWall.setStrokeStyle(2, config.color, 0.5)
+    ], darkColor, 1.0).setOrigin(0, 0)
+    backLeftWall.setStrokeStyle(2, config.color, 0.6)
     container.add(backLeftWall)
 
     // Back-right wall
     const midDarkColor = Phaser.Display.Color.GetColor(
-      Math.floor(lr * 0.25) + 18, Math.floor(lg * 0.25) + 18, Math.floor(lb * 0.25) + 22
+      Math.floor(lr * 0.45) + 24, Math.floor(lg * 0.45) + 25, Math.floor(lb * 0.45) + 40
     )
     const backRightWall = this.add.polygon(0, 0, [
       { x: cx, y: cy - hh - WALL_H },
       { x: cx + hw, y: cy - WALL_H },
       { x: cx + hw, y: cy },
       { x: cx, y: cy - hh },
-    ], midDarkColor, 0.95).setOrigin(0, 0)
-    backRightWall.setStrokeStyle(2, config.color, 0.45)
+    ], midDarkColor, 1.0).setOrigin(0, 0)
+    backRightWall.setStrokeStyle(2, config.color, 0.55)
     container.add(backRightWall)
 
-    // Front walls omitted for open cutaway view (matches reference)
+    // Front walls — solid opaque to enclose the box
+    const frontLeftColor = Phaser.Display.Color.GetColor(
+      Math.floor(lr * 0.32) + 14, Math.floor(lg * 0.32) + 14, Math.floor(lb * 0.32) + 24
+    )
     const frontLeftWall = this.add.polygon(0, 0, [
       { x: cx - hw, y: cy },
       { x: cx, y: cy + hh },
       { x: cx, y: cy + hh - WALL_H },
       { x: cx - hw, y: cy - WALL_H },
-    ], 0x0e1020, 0.0).setOrigin(0, 0).setVisible(false)
+    ], frontLeftColor, 1.0).setOrigin(0, 0)
+    frontLeftWall.setStrokeStyle(2, config.color, 0.5)
+    container.add(frontLeftWall)
+    const frontRightColor = Phaser.Display.Color.GetColor(
+      Math.floor(lr * 0.27) + 12, Math.floor(lg * 0.27) + 12, Math.floor(lb * 0.27) + 20
+    )
     const frontRightWall = this.add.polygon(0, 0, [
       { x: cx + hw, y: cy },
       { x: cx, y: cy + hh },
       { x: cx, y: cy + hh - WALL_H },
       { x: cx + hw, y: cy - WALL_H },
-    ], 0x141528, 0.0).setOrigin(0, 0).setVisible(false)
+    ], frontRightColor, 1.0).setOrigin(0, 0)
+    frontRightWall.setStrokeStyle(2, config.color, 0.45)
+    container.add(frontRightWall)
 
     // Floor diamond
     const floorPoints = [
@@ -365,9 +375,9 @@ export class OfficeScene extends Phaser.Scene {
     ]
     // Vivid dark floor with strong room color tint
     const floorDark = Phaser.Display.Color.GetColor(
-      Math.floor(lr * 0.2) + 16, Math.floor(lg * 0.2) + 16, Math.floor(lb * 0.2) + 20
+      Math.floor(lr * 0.38) + 18, Math.floor(lg * 0.38) + 18, Math.floor(lb * 0.38) + 28
     )
-    const floor = this.add.polygon(0, 0, floorPoints, floorDark, 0.95).setOrigin(0, 0)
+    const floor = this.add.polygon(0, 0, floorPoints, floorDark, 1.0).setOrigin(0, 0)
     floor.setStrokeStyle(3, config.color, 0.85)
     container.add(floor)
 
@@ -382,49 +392,62 @@ export class OfficeScene extends Phaser.Scene {
     }
     container.add(floorGrid)
 
-    // Neon top edges (very heavy glow like reference)
+    // Neon top edges (heavy glow — multiple overlapping strokes)
     const neonEdges = this.add.graphics()
-    // Back top edges — multiple glow passes
-    // Widest glow
-    neonEdges.lineStyle(20, config.color, 0.06)
+    // Back top edges — 5 glow passes for bloom effect
+    // Outermost glow
+    neonEdges.lineStyle(60, config.color, 0.15)
+    neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy - hh - WALL_H)
+    neonEdges.lineBetween(cx, cy - hh - WALL_H, cx + hw, cy - WALL_H)
+    // Wide glow
+    neonEdges.lineStyle(36, config.color, 0.25)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy - hh - WALL_H)
     neonEdges.lineBetween(cx, cy - hh - WALL_H, cx + hw, cy - WALL_H)
     // Medium glow
-    neonEdges.lineStyle(10, config.color, 0.14)
+    neonEdges.lineStyle(20, config.color, 0.45)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy - hh - WALL_H)
     neonEdges.lineBetween(cx, cy - hh - WALL_H, cx + hw, cy - WALL_H)
     // Inner glow
-    neonEdges.lineStyle(5, config.color, 0.3)
+    neonEdges.lineStyle(10, config.color, 0.75)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy - hh - WALL_H)
     neonEdges.lineBetween(cx, cy - hh - WALL_H, cx + hw, cy - WALL_H)
     // Core bright line
-    neonEdges.lineStyle(3, config.color, 1.0)
+    neonEdges.lineStyle(4, config.color, 1.0)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy - hh - WALL_H)
     neonEdges.lineBetween(cx, cy - hh - WALL_H, cx + hw, cy - WALL_H)
 
     // Vertical corner edges (bright)
-    neonEdges.lineStyle(8, config.color, 0.08)
+    neonEdges.lineStyle(28, config.color, 0.20)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx - hw, cy)
     neonEdges.lineBetween(cx + hw, cy - WALL_H, cx + hw, cy)
-    neonEdges.lineStyle(2.5, config.color, 0.7)
+    neonEdges.lineStyle(12, config.color, 0.50)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx - hw, cy)
     neonEdges.lineBetween(cx + hw, cy - WALL_H, cx + hw, cy)
-    neonEdges.lineStyle(1.5, config.color, 0.4)
+    neonEdges.lineStyle(4, config.color, 0.90)
+    neonEdges.lineBetween(cx - hw, cy - WALL_H, cx - hw, cy)
+    neonEdges.lineBetween(cx + hw, cy - WALL_H, cx + hw, cy)
+    neonEdges.lineStyle(2.5, config.color, 0.75)
     neonEdges.lineBetween(cx, cy - hh - WALL_H, cx, cy - hh)
 
     // Front top edges
-    neonEdges.lineStyle(6, config.color, 0.06)
+    neonEdges.lineStyle(24, config.color, 0.18)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy + hh - WALL_H)
     neonEdges.lineBetween(cx, cy + hh - WALL_H, cx + hw, cy - WALL_H)
-    neonEdges.lineStyle(2, config.color, 0.35)
+    neonEdges.lineStyle(10, config.color, 0.50)
+    neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy + hh - WALL_H)
+    neonEdges.lineBetween(cx, cy + hh - WALL_H, cx + hw, cy - WALL_H)
+    neonEdges.lineStyle(3, config.color, 0.85)
     neonEdges.lineBetween(cx - hw, cy - WALL_H, cx, cy + hh - WALL_H)
     neonEdges.lineBetween(cx, cy + hh - WALL_H, cx + hw, cy - WALL_H)
 
     // Bottom floor edges (bright glow)
-    neonEdges.lineStyle(12, config.color, 0.1)
+    neonEdges.lineStyle(32, config.color, 0.20)
     neonEdges.lineBetween(cx - hw, cy, cx, cy + hh)
     neonEdges.lineBetween(cx, cy + hh, cx + hw, cy)
-    neonEdges.lineStyle(3, config.color, 0.6)
+    neonEdges.lineStyle(14, config.color, 0.45)
+    neonEdges.lineBetween(cx - hw, cy, cx, cy + hh)
+    neonEdges.lineBetween(cx, cy + hh, cx + hw, cy)
+    neonEdges.lineStyle(5, config.color, 0.90)
     neonEdges.lineBetween(cx - hw, cy, cx, cy + hh)
     neonEdges.lineBetween(cx, cy + hh, cx + hw, cy)
     container.add(neonEdges)
@@ -570,8 +593,8 @@ export class OfficeScene extends Phaser.Scene {
       const bob = Math.sin(agent.bobPhase) * 2
       agent.circle.setPosition(agent.currentX, agent.currentY + bob)
       agent.glowCircle.setPosition(agent.currentX, agent.currentY + bob)
-      agent.statusDot.setPosition(agent.currentX + 8, agent.currentY - 8 + bob)
-      agent.nameText.setPosition(agent.currentX, agent.currentY - 16 + bob)
+      agent.statusDot.setPosition(agent.currentX + 14, agent.currentY - 12 + bob)
+      agent.nameText.setPosition(agent.currentX, agent.currentY - 24 + bob)
     })
 
     // Update room effects
@@ -592,15 +615,15 @@ export class OfficeScene extends Phaser.Scene {
         }
         const { r: ar, g: ag, b: ab } = hexToComponents(room.config.color)
         const activeFill = Phaser.Display.Color.GetColor(
-          Math.floor(ar * 0.2) + 16, Math.floor(ag * 0.2) + 16, Math.floor(ab * 0.2) + 20
+          Math.floor(ar * 0.42) + 20, Math.floor(ag * 0.42) + 20, Math.floor(ab * 0.42) + 30
         )
-        room.floor.setFillStyle(activeFill, 0.95)
+        room.floor.setFillStyle(activeFill, 1.0)
       } else {
         const { r: dr, g: dg, b: db } = hexToComponents(room.config.color)
         const darkFill = Phaser.Display.Color.GetColor(
-          Math.floor(dr * 0.15) + 14, Math.floor(dg * 0.15) + 14, Math.floor(db * 0.15) + 18
+          Math.floor(dr * 0.38) + 18, Math.floor(dg * 0.38) + 18, Math.floor(db * 0.38) + 28
         )
-        room.floor.setFillStyle(darkFill, 0.95)
+        room.floor.setFillStyle(darkFill, 1.0)
       }
 
       // Fog of war: dim non-active rooms when focused
@@ -641,6 +664,57 @@ export class OfficeScene extends Phaser.Scene {
 
   // ─── Room Interior Drawing (per-frame animation) ───
 
+  // Shared base layer: floor cables, wall screens, isometric desk
+  private drawRoomBase(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
+    // Floor cables — thin isometric lines tracing across the floor
+    g.lineStyle(1.5, color, 0.35)
+    g.lineBetween(cx - 90, cy + 18, cx + 90, cy + 18)
+    g.lineBetween(cx - 45, cy + 5, cx - 45, cy + 38)
+    g.lineBetween(cx + 35, cy + 5, cx + 35, cy + 38)
+    g.lineStyle(1, color, 0.20)
+    g.lineBetween(cx, cy + 2, cx, cy + 45)
+    g.lineBetween(cx - 70, cy + 28, cx + 70, cy + 28)
+
+    // Wall-mounted screens on back-right wall
+    for (let s = 0; s < 2; s++) {
+      const sx = cx + 38 + s * 40
+      const sy = cy - 38 - s * 6
+      g.fillStyle(color, 0.14)
+      g.fillRect(sx, sy, 28, 18)
+      g.lineStyle(1.5, color, 0.55)
+      g.strokeRect(sx, sy, 28, 18)
+      const scanY = sy + ((t * 9 + s * 6) % 18)
+      g.lineStyle(1, color, 0.35)
+      g.lineBetween(sx + 1, scanY, sx + 27, scanY)
+      // Active dot
+      g.fillStyle(color, 0.5 + Math.sin(t * 3 + s) * 0.25)
+      g.fillCircle(sx + 24, sy + 3, 2)
+    }
+
+    // Isometric desk (parallelogram) in front-left area
+    const deskX = cx - 50
+    const deskY = cy + 12
+    g.fillStyle(0x1a1d30, 0.88)
+    g.beginPath()
+    g.moveTo(deskX, deskY - 8)
+    g.lineTo(deskX + 44, deskY)
+    g.lineTo(deskX + 44, deskY + 10)
+    g.lineTo(deskX, deskY + 18)
+    g.closePath()
+    g.fillPath()
+    g.lineStyle(1.5, color, 0.45)
+    g.strokePath()
+    // Monitor on desk
+    g.fillStyle(color, 0.10)
+    g.fillRect(deskX + 12, deskY - 16, 18, 12)
+    g.lineStyle(1.5, color, 0.45)
+    g.strokeRect(deskX + 12, deskY - 16, 18, 12)
+    // Scan line on monitor
+    const mScan = deskY - 16 + ((t * 7) % 12)
+    g.lineStyle(0.8, color, 0.3)
+    g.lineBetween(deskX + 13, mScan, deskX + 29, mScan)
+  }
+
   private drawRoomInterior(room: RoomGraphics, t: number): void {
     const g = room.interiorGfx
     g.clear()
@@ -649,6 +723,9 @@ export class OfficeScene extends Phaser.Scene {
     if (!center) return
     const cx = center.x
     const cy = center.y
+
+    // Draw shared base elements for all rooms
+    this.drawRoomBase(g, cx, cy, room.config.color, t)
 
     switch (room.id) {
       case 'genome': this.drawGenome(g, cx, cy, room.config.color, t); break
@@ -662,51 +739,51 @@ export class OfficeScene extends Phaser.Scene {
     }
   }
 
-  // ─── Humanoid figure drawing ───
+  // ─── Humanoid figure drawing (2x scale) ───
   private drawHumanoid(g: Phaser.GameObjects.Graphics, x: number, y: number, color: number, phase: number, t: number): void {
-    const bob = Math.sin(t * 2 + phase) * 1.5
-    const walkCycle = Math.sin(t * 3 + phase) * 3
-    // Body glow (brighter)
-    g.fillStyle(color, 0.12)
-    g.fillCircle(x, y - 8 + bob, 14)
+    const bob = Math.sin(t * 2 + phase) * 2.5
+    const walkCycle = Math.sin(t * 3 + phase) * 6
+    // Body glow (brighter, larger)
+    g.fillStyle(color, 0.18)
+    g.fillCircle(x, y - 16 + bob, 28)
     // Head
-    g.fillStyle(color, 0.75)
-    g.fillCircle(x, y - 20 + bob, 5)
+    g.fillStyle(color, 0.85)
+    g.fillCircle(x, y - 40 + bob, 10)
     // Body line (thicker)
-    g.lineStyle(2.5, color, 0.65)
-    g.lineBetween(x, y - 16 + bob, x, y - 4 + bob)
+    g.lineStyle(4, color, 0.75)
+    g.lineBetween(x, y - 32 + bob, x, y - 8 + bob)
     // Arms
-    g.lineStyle(2, color, 0.55)
-    g.lineBetween(x - 7, y - 14 + bob + walkCycle * 0.3, x, y - 12 + bob)
-    g.lineBetween(x, y - 12 + bob, x + 7, y - 14 + bob - walkCycle * 0.3)
+    g.lineStyle(3.5, color, 0.65)
+    g.lineBetween(x - 14, y - 28 + bob + walkCycle * 0.3, x, y - 24 + bob)
+    g.lineBetween(x, y - 24 + bob, x + 14, y - 28 + bob - walkCycle * 0.3)
     // Legs
-    g.lineStyle(2, color, 0.55)
-    g.lineBetween(x, y - 4 + bob, x - 5, y + 5 + bob + walkCycle * 0.5)
-    g.lineBetween(x, y - 4 + bob, x + 5, y + 5 + bob - walkCycle * 0.5)
+    g.lineStyle(3.5, color, 0.65)
+    g.lineBetween(x, y - 8 + bob, x - 10, y + 10 + bob + walkCycle * 0.5)
+    g.lineBetween(x, y - 8 + bob, x + 10, y + 10 + bob - walkCycle * 0.5)
     // Visor/eye (bright)
-    g.fillStyle(color, 0.9)
-    g.fillRect(x - 3, y - 21 + bob, 6, 2)
+    g.fillStyle(color, 1.0)
+    g.fillRect(x - 6, y - 42 + bob, 12, 4)
   }
 
   // Genome Lab: LARGE double helix + circular platform + floating panels + humanoids
   private drawGenome(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
     // Circular platform (large, brighter)
-    g.lineStyle(2, color, 0.35)
-    g.strokeEllipse(cx, cy + 12, 140, 70)
-    g.fillStyle(color, 0.06)
-    g.fillEllipse(cx, cy + 12, 140, 70)
-    g.lineStyle(0.8, color, 0.12)
+    g.lineStyle(3, color, 0.5)
     g.strokeEllipse(cx, cy + 12, 180, 90)
+    g.fillStyle(color, 0.1)
+    g.fillEllipse(cx, cy + 12, 180, 90)
+    g.lineStyle(1.2, color, 0.2)
+    g.strokeEllipse(cx, cy + 12, 220, 110)
 
-    // LARGE Double helix (vertical, prominent like reference)
+    // LARGE Double helix (vertical, prominent — 2x scale)
     const pts = 32
-    const helixH = 55
+    const helixH = 80
     for (let strand = 0; strand < 2; strand++) {
-      g.lineStyle(3, color, 0.8)
+      g.lineStyle(5, color, 0.9)
       g.beginPath()
       for (let i = 0; i <= pts; i++) {
         const p = i / pts
-        const xOff = Math.sin(p * Math.PI * 4 + t * 2 + strand * Math.PI) * 25
+        const xOff = Math.sin(p * Math.PI * 4 + t * 2 + strand * Math.PI) * 45
         const x = cx + xOff
         const y = cy - helixH + p * helixH * 2
         if (i === 0) g.moveTo(x, y)
@@ -715,11 +792,11 @@ export class OfficeScene extends Phaser.Scene {
       g.strokePath()
     }
     // Connecting rungs (thicker, brighter)
-    g.lineStyle(1.5, color, 0.3)
+    g.lineStyle(2.5, color, 0.5)
     for (let i = 0; i <= pts; i += 2) {
       const p = i / pts
-      const x1 = cx + Math.sin(p * Math.PI * 4 + t * 2) * 25
-      const x2 = cx + Math.sin(p * Math.PI * 4 + t * 2 + Math.PI) * 25
+      const x1 = cx + Math.sin(p * Math.PI * 4 + t * 2) * 45
+      const x2 = cx + Math.sin(p * Math.PI * 4 + t * 2 + Math.PI) * 45
       const y = cy - helixH + p * helixH * 2
       g.lineBetween(x1, y, x2, y)
     }
@@ -745,28 +822,28 @@ export class OfficeScene extends Phaser.Scene {
 
   // Dream Chamber: LARGE swirling portal + concentric rings + humanoids
   private drawDream(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
-    // Large concentric portal rings (swirling, brighter)
-    for (let i = 8; i > 0; i--) {
-      const r = 8 + i * 10 + Math.sin(t * 1.5 + i * 0.8) * 5
-      const alpha = 0.2 + Math.sin(t * 2 + i) * 0.1
-      g.lineStyle(2 + (8 - i) * 0.4, color, alpha)
+    // Large concentric portal rings (swirling, brighter — 2x scale)
+    for (let i = 10; i > 0; i--) {
+      const r = 12 + i * 16 + Math.sin(t * 1.5 + i * 0.8) * 8
+      const alpha = 0.35 + Math.sin(t * 2 + i) * 0.15
+      g.lineStyle(3 + (10 - i) * 0.5, color, alpha)
       g.strokeEllipse(cx, cy + 5, r * 2, r)
     }
 
     // Bright glowing center
-    g.fillStyle(color, 0.5 + Math.sin(t * 3) * 0.15)
-    g.fillCircle(cx, cy + 5, 10)
-    g.fillStyle(color, 0.2)
-    g.fillCircle(cx, cy + 5, 22)
+    g.fillStyle(color, 0.7 + Math.sin(t * 3) * 0.2)
+    g.fillCircle(cx, cy + 5, 18)
+    g.fillStyle(color, 0.35)
+    g.fillCircle(cx, cy + 5, 38)
 
     // Orbiting sparkles (more, larger)
-    for (let i = 0; i < 8; i++) {
-      const a = t * 1.2 + (i / 8) * Math.PI * 2
-      const r = 45 + Math.sin(t + i) * 8
+    for (let i = 0; i < 12; i++) {
+      const a = t * 1.2 + (i / 12) * Math.PI * 2
+      const r = 70 + Math.sin(t + i) * 12
       const sx = cx + Math.cos(a) * r
       const sy = cy + 5 + Math.sin(a) * r * 0.45
-      g.fillStyle(color, 0.4)
-      g.fillCircle(sx, sy, 2.5)
+      g.fillStyle(color, 0.6)
+      g.fillCircle(sx, sy, 4)
     }
 
     // Humanoids
@@ -788,14 +865,14 @@ export class OfficeScene extends Phaser.Scene {
     g.lineStyle(1.5, color, 0.3)
     g.strokePath()
 
-    // LARGE Holographic globe wireframe
-    const gr = 32
-    const gy = cy - 30
+    // LARGE Holographic globe wireframe (2x scale)
+    const gr = 55
+    const gy = cy - 35
     // Globe glow (brighter)
-    g.fillStyle(color, 0.1)
+    g.fillStyle(color, 0.18)
     g.fillCircle(cx, gy, gr)
-    g.fillStyle(color, 0.04)
-    g.fillCircle(cx, gy, gr + 10)
+    g.fillStyle(color, 0.08)
+    g.fillCircle(cx, gy, gr + 15)
     // Horizontal rings
     for (let i = 0; i < 6; i++) {
       const lat = -0.7 + i * 0.28
@@ -862,12 +939,12 @@ export class OfficeScene extends Phaser.Scene {
       g.strokeRect(dx - 8, dy - 16, 16, 10)
     }
 
-    // Large crosshair overlay (subtle)
-    g.lineStyle(1.5, color, 0.15)
-    g.strokeCircle(cx, cy + 5, 50)
-    g.lineStyle(1, color, 0.1)
-    g.lineBetween(cx - 60, cy + 5, cx + 60, cy + 5)
-    g.lineBetween(cx, cy - 55, cx, cy + 65)
+    // Large crosshair overlay (2x)
+    g.lineStyle(2.5, color, 0.25)
+    g.strokeCircle(cx, cy + 5, 80)
+    g.lineStyle(1.5, color, 0.18)
+    g.lineBetween(cx - 90, cy + 5, cx + 90, cy + 5)
+    g.lineBetween(cx, cy - 85, cx, cy + 95)
 
     // Humanoids at desks
     this.drawHumanoid(g, cx - 55, cy + 8, color, 0, t)
@@ -878,37 +955,37 @@ export class OfficeScene extends Phaser.Scene {
 
   // Meta-Learning / Brain Room: LARGE brain + neural nodes + humanoids
   private drawMetaLearning(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
-    // Brain hemispheres (much larger)
-    g.lineStyle(2.5, color, 0.35)
+    // Brain hemispheres (2x scale)
+    g.lineStyle(4, color, 0.5)
     g.beginPath()
-    g.arc(cx - 12, cy - 5, 40, -Math.PI * 0.3, Math.PI * 0.8, false)
+    g.arc(cx - 18, cy - 5, 65, -Math.PI * 0.3, Math.PI * 0.8, false)
     g.strokePath()
     g.beginPath()
-    g.arc(cx + 12, cy - 5, 40, Math.PI * 0.2, Math.PI * 1.3, false)
+    g.arc(cx + 18, cy - 5, 65, Math.PI * 0.2, Math.PI * 1.3, false)
     g.strokePath()
     // Brain fill
-    g.fillStyle(color, 0.04)
-    g.fillCircle(cx, cy - 5, 35)
+    g.fillStyle(color, 0.08)
+    g.fillCircle(cx, cy - 5, 55)
 
-    // Neural network nodes (larger, more)
+    // Neural network nodes (2x scale)
     const nodes: Array<{ x: number; y: number }> = []
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2
-      const nx = cx + Math.cos(a) * 42
-      const ny = cy + Math.sin(a) * 22
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2
+      const nx = cx + Math.cos(a) * 70
+      const ny = cy + Math.sin(a) * 36
       nodes.push({ x: nx, y: ny })
-      const pulse = 0.35 + Math.sin(t * 3 + i * 0.9) * 0.2
+      const pulse = 0.5 + Math.sin(t * 3 + i * 0.9) * 0.3
       g.fillStyle(color, pulse)
-      g.fillCircle(nx, ny, 4)
+      g.fillCircle(nx, ny, 7)
     }
     // Center node (bright)
     nodes.push({ x: cx, y: cy })
-    g.fillStyle(color, 0.6)
-    g.fillCircle(cx, cy, 5)
+    g.fillStyle(color, 0.8)
+    g.fillCircle(cx, cy, 9)
 
     // Signal lines
-    const signalAlpha = 0.12 + Math.sin(t * 2) * 0.06
-    g.lineStyle(0.8, color, signalAlpha)
+    const signalAlpha = 0.25 + Math.sin(t * 2) * 0.1
+    g.lineStyle(1.5, color, signalAlpha)
     for (let i = 0; i < nodes.length - 1; i++) {
       const last = nodes[nodes.length - 1]
       g.lineBetween(nodes[i].x, nodes[i].y, last.x, last.y)
@@ -917,16 +994,16 @@ export class OfficeScene extends Phaser.Scene {
       }
     }
 
-    // Traveling signal pulses (more visible)
-    for (let p = 0; p < 5; p++) {
+    // Traveling signal pulses (more visible, 2x)
+    for (let p = 0; p < 8; p++) {
       const nodeIdx = Math.floor((t * 0.5 + p * 0.2) * nodes.length) % (nodes.length - 1)
       const from = nodes[nodeIdx]
       const to = nodes[nodes.length - 1]
       const prog = ((t * 2 + p) % 1)
       const px = from.x + (to.x - from.x) * prog
       const py = from.y + (to.y - from.y) * prog
-      g.fillStyle(color, 0.7 * Math.sin(prog * Math.PI))
-      g.fillCircle(px, py, 2.5)
+      g.fillStyle(color, 0.9 * Math.sin(prog * Math.PI))
+      g.fillCircle(px, py, 4.5)
     }
 
     // Humanoids
@@ -936,44 +1013,44 @@ export class OfficeScene extends Phaser.Scene {
 
   // Temporal Engine: LARGE hourglass + rotating gears + humanoids
   private drawTemporal(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
-    // LARGE Hourglass (brighter)
-    g.lineStyle(3, color, 0.6)
+    // LARGE Hourglass (2x scale, brighter)
+    g.lineStyle(4, color, 0.8)
     // Top triangle
     g.beginPath()
-    g.moveTo(cx - 28, cy - 40)
-    g.lineTo(cx + 28, cy - 40)
+    g.moveTo(cx - 50, cy - 65)
+    g.lineTo(cx + 50, cy - 65)
     g.lineTo(cx, cy)
     g.closePath()
     g.strokePath()
     // Bottom triangle
     g.beginPath()
     g.moveTo(cx, cy)
-    g.lineTo(cx - 28, cy + 40)
-    g.lineTo(cx + 28, cy + 40)
+    g.lineTo(cx - 50, cy + 65)
+    g.lineTo(cx + 50, cy + 65)
     g.closePath()
     g.strokePath()
-    // Sand fill (animated)
+    // Sand fill (animated, 2x)
     const sandLevel = 0.3 + Math.sin(t * 0.5) * 0.3
-    g.fillStyle(color, 0.15)
+    g.fillStyle(color, 0.25)
     g.fillTriangle(
-      cx - 28 * sandLevel, cy + 40 - 40 * sandLevel,
-      cx + 28 * sandLevel, cy + 40 - 40 * sandLevel,
-      cx - 26, cy + 38,
+      cx - 50 * sandLevel, cy + 65 - 65 * sandLevel,
+      cx + 50 * sandLevel, cy + 65 - 65 * sandLevel,
+      cx - 48, cy + 62,
     )
     // Top sand
-    g.fillStyle(color, 0.1)
+    g.fillStyle(color, 0.18)
     g.fillTriangle(
-      cx - 26, cy - 38,
-      cx + 26, cy - 38,
-      cx, cy - 5 + 30 * sandLevel,
+      cx - 48, cy - 62,
+      cx + 48, cy - 62,
+      cx, cy - 5 + 50 * sandLevel,
     )
     // Sand stream
     g.lineStyle(1, color, 0.3 + Math.sin(t * 5) * 0.1)
     g.lineBetween(cx, cy - 2, cx, cy + 5)
 
-    // LARGE Gears
-    this.drawGear(g, cx - 55, cy + 20, 18, 8, t * 1.5, color)
-    this.drawGear(g, cx + 55, cy + 18, 14, 6, -t * 2, color)
+    // LARGE Gears (2x)
+    this.drawGear(g, cx - 75, cy + 25, 32, 10, t * 1.5, color)
+    this.drawGear(g, cx + 75, cy + 22, 26, 8, -t * 2, color)
 
     // Clock display background (bigger)
     g.fillStyle(0x0a0b14, 0.8)
@@ -987,7 +1064,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private drawGear(g: Phaser.GameObjects.Graphics, cx: number, cy: number, r: number, teeth: number, angle: number, color: number): void {
-    g.lineStyle(1.5, color, 0.3)
+    g.lineStyle(2.5, color, 0.5)
     g.beginPath()
     for (let i = 0; i <= teeth * 2; i++) {
       const a = angle + (i / (teeth * 2)) * Math.PI * 2
@@ -999,30 +1076,30 @@ export class OfficeScene extends Phaser.Scene {
     }
     g.closePath()
     g.strokePath()
-    g.fillStyle(color, 0.25)
-    g.fillCircle(cx, cy, 3)
+    g.fillStyle(color, 0.45)
+    g.fillCircle(cx, cy, 5)
   }
 
   // Identity Vault: LARGE vault door + spinning lock wheel + humanoids
   private drawIdentity(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
-    // LARGE Vault door circle (brighter)
-    g.lineStyle(3.5, color, 0.6)
-    g.strokeCircle(cx, cy + 5, 45)
+    // LARGE Vault door circle (2x, brighter)
+    g.lineStyle(5, color, 0.8)
+    g.strokeCircle(cx, cy + 5, 75)
     // Inner ring
-    g.lineStyle(2.5, color, 0.4)
-    g.strokeCircle(cx, cy + 5, 30)
+    g.lineStyle(3.5, color, 0.6)
+    g.strokeCircle(cx, cy + 5, 50)
     // Cross on vault
-    g.lineStyle(2.5, color, 0.4)
-    g.lineBetween(cx - 30, cy + 5, cx + 30, cy + 5)
-    g.lineBetween(cx, cy - 25, cx, cy + 35)
+    g.lineStyle(3.5, color, 0.6)
+    g.lineBetween(cx - 50, cy + 5, cx + 50, cy + 5)
+    g.lineBetween(cx, cy - 45, cx, cy + 55)
 
     // Inner secure area
-    g.fillStyle(color, 0.05)
-    g.fillCircle(cx, cy + 5, 28)
+    g.fillStyle(color, 0.1)
+    g.fillCircle(cx, cy + 5, 48)
 
-    // Spinning lock wheel with notches (larger)
-    const r = 55
-    const notches = 12
+    // Spinning lock wheel with notches (2x)
+    const r = 85
+    const notches = 16
     g.lineStyle(1.5, color, 0.22)
     for (let i = 0; i < notches; i++) {
       const a = (i / notches) * Math.PI * 2 + t * 0.3
@@ -1035,9 +1112,9 @@ export class OfficeScene extends Phaser.Scene {
     g.lineStyle(0.8, color, 0.16)
     g.strokeEllipse(cx, cy + 5, r * 2, r)
 
-    // Keyhole indicator (larger, pulsing)
-    g.fillStyle(color, 0.2 + Math.sin(t * 2) * 0.1)
-    g.fillCircle(cx, cy + 5, 8)
+    // Keyhole indicator (2x, pulsing)
+    g.fillStyle(color, 0.35 + Math.sin(t * 2) * 0.15)
+    g.fillCircle(cx, cy + 5, 14)
 
     // Humanoids
     this.drawHumanoid(g, cx - 65, cy + 20, color, 0, t)
@@ -1047,36 +1124,36 @@ export class OfficeScene extends Phaser.Scene {
   // Breeding Arena: LARGE cylindrical tubes + liquid fill + rising bubbles + humanoids
   private drawBreeding(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
     for (let i = 0; i < 3; i++) {
-      const tx = cx - 60 + i * 55
+      const tx = cx - 80 + i * 75
       const ty = cy - 5
 
-      // LARGE Tube outline (brighter)
-      g.lineStyle(2, color, 0.45)
-      g.strokeRect(tx - 12, ty - 35, 24, 70)
+      // LARGE Tube outline (2x, brighter)
+      g.lineStyle(3, color, 0.6)
+      g.strokeRect(tx - 20, ty - 55, 40, 110)
       // Top ellipse
-      g.lineStyle(2, color, 0.4)
-      g.strokeEllipse(tx, ty - 35, 24, 8)
+      g.lineStyle(3, color, 0.55)
+      g.strokeEllipse(tx, ty - 55, 40, 14)
       // Bottom ellipse
-      g.strokeEllipse(tx, ty + 35, 24, 8)
+      g.strokeEllipse(tx, ty + 55, 40, 14)
 
-      // Liquid fill (animated level, bright)
-      const fillH = 32 + Math.sin(t * 1.5 + i * 1.2) * 16
-      g.fillStyle(color, 0.22)
-      g.fillRect(tx - 11, ty + 35 - fillH, 22, fillH)
+      // Liquid fill (animated level, bright, 2x)
+      const fillH = 55 + Math.sin(t * 1.5 + i * 1.2) * 25
+      g.fillStyle(color, 0.35)
+      g.fillRect(tx - 19, ty + 55 - fillH, 38, fillH)
 
       // Rising bubbles (bigger)
-      for (let b = 0; b < 6; b++) {
-        const by = ty + 28 - ((t * 18 + b * 10 + i * 8) % 55)
-        const bx = tx + Math.sin(t * 2 + b + i) * 4
-        g.fillStyle(color, 0.25 + Math.sin(t + b) * 0.12)
-        g.fillCircle(bx, by, 2)
+      for (let b = 0; b < 8; b++) {
+        const by = ty + 45 - ((t * 18 + b * 12 + i * 8) % 90)
+        const bx = tx + Math.sin(t * 2 + b + i) * 8
+        g.fillStyle(color, 0.4 + Math.sin(t + b) * 0.15)
+        g.fillCircle(bx, by, 3.5)
       }
 
       // Inner silhouette in tube
       if (i === 1) {
-        g.fillStyle(color, 0.08)
-        g.fillCircle(tx, ty - 12, 4)
-        g.fillRect(tx - 2, ty - 8, 4, 18)
+        g.fillStyle(color, 0.15)
+        g.fillCircle(tx, ty - 18, 7)
+        g.fillRect(tx - 3, ty - 12, 6, 30)
       }
     }
 
@@ -1163,7 +1240,7 @@ export class OfficeScene extends Phaser.Scene {
     for (const [, agent] of this.agentSprites) {
       const dx = wx - agent.currentX
       const dy = wy - agent.currentY
-      if (dx * dx + dy * dy < 12 * 12) {
+      if (dx * dx + dy * dy < 20 * 20) {
         this.onAgentSelect?.(agent.id)
         return
       }
@@ -1258,23 +1335,23 @@ export class OfficeScene extends Phaser.Scene {
         const statusColor = STATUS_COLORS[agent.status] || 0x64748b
         sprite.statusDot.setFillStyle(statusColor, 1)
       } else {
-        const circle = this.add.circle(tx, ty, 7, colorNum, 0.9)
-        circle.setStrokeStyle(1.5, 0xffffff, 0.3)
+        const circle = this.add.circle(tx, ty, 14, colorNum, 0.9)
+        circle.setStrokeStyle(2.5, 0xffffff, 0.4)
         circle.setDepth(10)
 
-        const glowCircle = this.add.circle(tx, ty, 14, colorNum, 0.15)
+        const glowCircle = this.add.circle(tx, ty, 28, colorNum, 0.15)
         glowCircle.setDepth(9)
 
         const statusColor = STATUS_COLORS[agent.status] || 0x64748b
-        const statusDot = this.add.circle(tx + 8, ty - 8, 3, statusColor, 1)
+        const statusDot = this.add.circle(tx + 14, ty - 12, 5, statusColor, 1)
         statusDot.setDepth(11)
 
-        const nameText = this.add.text(tx, ty - 16, agent.name.split(' ')[0], {
+        const nameText = this.add.text(tx, ty - 24, agent.name.split(' ')[0], {
           fontFamily: 'monospace',
-          fontSize: '8px',
+          fontSize: '10px',
           color: '#e2e8f0',
           align: 'center',
-        }).setOrigin(0.5, 1).setDepth(11).setAlpha(0.7)
+        }).setOrigin(0.5, 1).setDepth(11).setAlpha(0.85)
 
         this.agentSprites.set(agent.id, {
           id: agent.id,

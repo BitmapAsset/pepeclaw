@@ -67,35 +67,35 @@ export class AgentSprite {
     // Shadow
     this.shadow = scene.add.graphics()
     this.shadow.fillStyle(0x000000, 0.3)
-    this.shadow.fillEllipse(0, 22, 16, 6)
+    this.shadow.fillEllipse(0, 42, 32, 12)
     this.container.add(this.shadow)
 
     // Glow beneath
     const glow = scene.add.graphics()
-    glow.fillStyle(data.color, 0.12)
-    glow.fillCircle(0, 8, 18)
+    glow.fillStyle(data.color, 0.14)
+    glow.fillCircle(0, 16, 36)
     this.container.add(glow)
 
     // Legs
-    this.leftLeg  = this.makeRect(-3, 10, 3, 12, data.color, 0.85)
-    this.rightLeg = this.makeRect(1, 10, 3, 12, data.color, 0.85)
+    this.leftLeg  = this.makeRect(-6, 20, 6, 24, data.color, 0.85)
+    this.rightLeg = this.makeRect(2, 20, 6, 24, data.color, 0.85)
 
     // Body torso
     this.torso = scene.add.graphics()
     this.torso.fillStyle(data.color, 1)
-    this.torso.fillRoundedRect(-5, -4, 10, 14, 2)
+    this.torso.fillRoundedRect(-10, -8, 20, 28, 4)
     this.container.add(this.torso)
 
     // Arms
-    this.leftArm  = this.makeRect(-8, -2, 3, 10, data.color, 0.75)
-    this.rightArm = this.makeRect(5, -2, 3, 10, data.color, 0.75)
+    this.leftArm  = this.makeRect(-16, -4, 6, 20, data.color, 0.75)
+    this.rightArm = this.makeRect(10, -4, 6, 20, data.color, 0.75)
 
     // Head
     this.headGfx = scene.add.graphics()
     this.headGfx.fillStyle(data.color, 1)
-    this.headGfx.fillCircle(0, -9, 5)
+    this.headGfx.fillCircle(0, -18, 10)
     this.headGfx.fillStyle(0xffffff, 0.25)
-    this.headGfx.fillCircle(-1, -11, 2)
+    this.headGfx.fillCircle(-2, -22, 4)
     this.container.add(this.headGfx)
 
     // Status dot
@@ -104,12 +104,12 @@ export class AgentSprite {
     this.container.add(this.statusDot)
 
     // Name label
-    this.nameLabel = scene.add.text(0, 28, data.name, {
+    this.nameLabel = scene.add.text(0, 52, data.name, {
       fontFamily: '"Courier New", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: '#ffffff',
       backgroundColor: 'rgba(0,0,0,0.55)',
-      padding: { x: 3, y: 1 },
+      padding: { x: 4, y: 2 },
       align: 'center',
     }).setOrigin(0.5, 0)
     this.container.add(this.nameLabel)
@@ -158,9 +158,9 @@ export class AgentSprite {
     this.container.add(this.speechBubble)
 
     // Interaction
-    this.container.setSize(24, 44)
+    this.container.setSize(48, 88)
     this.container.setInteractive(
-      new Phaser.Geom.Rectangle(-12, -18, 24, 44),
+      new Phaser.Geom.Rectangle(-24, -36, 48, 88),
       Phaser.Geom.Rectangle.Contains,
     )
     this.container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -355,9 +355,9 @@ export class AgentSprite {
     this.statusDot.clear()
     const c = STATUS_COLORS[this.agentData.health] ?? 0x888888
     this.statusDot.fillStyle(c, 1)
-    this.statusDot.fillCircle(8, -14, 2.5)
-    this.statusDot.lineStyle(1, 0x000000, 0.4)
-    this.statusDot.strokeCircle(8, -14, 2.5)
+    this.statusDot.fillCircle(16, -28, 4.5)
+    this.statusDot.lineStyle(1.5, 0x000000, 0.4)
+    this.statusDot.strokeCircle(16, -28, 4.5)
   }
 
   private drawTypingDots(active: number): void {

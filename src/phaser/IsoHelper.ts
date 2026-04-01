@@ -3,8 +3,8 @@
 export const TILE_W = 300
 export const TILE_H = 150
 export const WALL_H = 70
-export const ROOM_SPACING_X = 285
-export const ROOM_SPACING_Y = 155
+export const ROOM_SPACING_X = 160
+export const ROOM_SPACING_Y = 87
 export const SCENE_W = 1500
 export const SCENE_H = 900
 
