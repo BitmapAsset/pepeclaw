@@ -11,8 +11,7 @@ import { SkillScore } from './components/SkillScore'
 import { LearningLoop } from './components/LearningLoop'
 import { ConnectionGuide } from './components/ConnectionGuide'
 
-import { PhaserScene } from './components/PhaserScene'
-import type { CameraMode } from './components/PhaserScene'
+import { ThreeScene } from './components/ThreeScene'
 const RedTeamArena = lazy(() => import('./rooms/RedTeamArena'))
 const MetaLearningCenter = lazy(() => import('./rooms/MetaLearningCenter'))
 const TemporalEngine = lazy(() => import('./rooms/TemporalEngine'))
@@ -117,26 +116,13 @@ export interface InteractiveState {
 export default function App() {
   const [activeRoom, setActiveRoom] = useState<RoomId>('overview')
   const [overviewMode, setOverviewMode] = useState(true)
-  const [cameraMode, setCameraMode] = useState<CameraMode>(() => {
-    try { return (localStorage.getItem('pepeclaw-camera-mode') as CameraMode) || 'isometric' } catch { return 'isometric' }
-  })
-  const toggleCameraMode = useCallback(() => {
-    setCameraMode(prev => {
-      const next = prev === 'isometric' ? 'perspective' : 'isometric'
-      try { localStorage.setItem('pepeclaw-camera-mode', next) } catch {}
-      return next
-    })
-  }, [])
+  // Camera mode kept for future use
+  const toggleCameraMode = useCallback(() => {}, [])
   const [interactive, setInteractive] = useState<InteractiveState>({
     selectedAgentId: null,
     followingAgentId: null,
     chatInput: '',
   })
-
-  const handleRoomClick = useCallback((roomId: RoomId) => {
-    setActiveRoom(roomId)
-    setOverviewMode(false)
-  }, [])
 
   const handleRoomChange = useCallback((roomId: RoomId) => {
     if (roomId === 'overview') {
@@ -150,13 +136,6 @@ export default function App() {
 
   const handleAgentSelect = useCallback((agentId: string | null) => {
     setInteractive(prev => ({ ...prev, selectedAgentId: agentId, chatInput: '' }))
-  }, [])
-
-  const handleAgentFollow = useCallback((agentId: string) => {
-    setInteractive(prev => ({
-      ...prev,
-      followingAgentId: prev.followingAgentId === agentId ? null : agentId,
-    }))
   }, [])
 
   // Keyboard navigation: ESC for overview, arrow keys for rooms
@@ -210,17 +189,14 @@ export default function App() {
   return (
     <DataProvider>
       <div className="w-full h-full relative">
-        {/* Isometric Scene — always rendered unless in panel-only room */}
+        {/* 3D Office Scene — always rendered unless in panel-only room */}
         {!isPanelOnly && (
-          <PhaserScene
-            activeRoom={activeRoom}
-            overviewMode={overviewMode}
-            onRoomClick={handleRoomClick}
-            selectedAgentId={interactive.selectedAgentId}
-            followingAgentId={interactive.followingAgentId}
-            onAgentSelect={handleAgentSelect}
-            onAgentFollow={handleAgentFollow}
-            cameraMode={cameraMode}
+          <ThreeScene
+            className="absolute inset-0 w-full h-full"
+            onSelectAgent={(agent) => {
+              if (agent) handleAgentSelect(agent.id)
+              else handleAgentSelect(null)
+            }}
           />
         )}
 
@@ -261,7 +237,6 @@ export default function App() {
             setOverviewMode(next)
             if (next) setActiveRoom('overview')
           }}
-          cameraMode={cameraMode}
           onCameraToggle={toggleCameraMode}
         />
         {!overviewMode && !isPanelOnly && (
@@ -416,12 +391,11 @@ const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: s
 import { rooms } from './data/types'
 import { useData } from './api/DataProvider'
 
-function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, cameraMode, onCameraToggle }: {
+function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, onCameraToggle }: {
   activeRoom: RoomId;
   onRoomChange: (r: RoomId) => void;
   overviewMode: boolean;
   onOverviewToggle: () => void;
-  cameraMode: CameraMode;
   onCameraToggle: () => void;
 }) {
   const currentRoomData = rooms.find(r => r.id === activeRoom)
@@ -547,23 +521,14 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, cameraM
                 color: '#94a3b8',
                 transition: 'all 0.2s ease',
               }}
-              title={`Switch to ${cameraMode === 'isometric' ? 'Perspective' : 'Isometric'} view`}
+              title="3D Office View — Drag to orbit, scroll to zoom"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {cameraMode === 'isometric' ? (
-                  <>
-                    <rect x="2" y="3" width="20" height="14" rx="2" />
-                    <path d="M8 21h8M12 17v4" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M2 7l10-4 10 4-10 4z" />
-                    <path d="M2 7v10l10 4V11" />
-                    <path d="M22 7v10l-10 4V11" />
-                  </>
-                )}
+                <path d="M2 7l10-4 10 4-10 4z" />
+                <path d="M2 7v10l10 4V11" />
+                <path d="M22 7v10l-10 4V11" />
               </svg>
-              <span className="hidden sm:inline">{cameraMode === 'isometric' ? 'ISO' : 'PERSP'}</span>
+              <span className="hidden sm:inline">3D</span>
             </motion.button>
 
             <motion.button
