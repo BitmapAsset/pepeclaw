@@ -2,8 +2,11 @@ import { Suspense } from 'react'
 import { OfficeWorld } from '../three/OfficeWorld'
 import type { AgentState as Agent } from '../api/gateway'
 
+import type { RoomId } from '../data/types'
+
 interface ThreeSceneProps {
   onSelectAgent?: (agent: Agent | null) => void
+  onRoomChange?: (roomId: RoomId) => void
   className?: string
 }
 
@@ -50,7 +53,7 @@ function WebGLError() {
   )
 }
 
-export function ThreeScene({ onSelectAgent, className }: ThreeSceneProps) {
+export function ThreeScene({ onSelectAgent, onRoomChange, className }: ThreeSceneProps) {
   // WebGL support check
   const hasWebGL = (() => {
     try {
@@ -65,7 +68,7 @@ export function ThreeScene({ onSelectAgent, className }: ThreeSceneProps) {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <OfficeWorld onSelectAgent={onSelectAgent} className={className} />
+      <OfficeWorld onSelectAgent={onSelectAgent} onRoomChange={onRoomChange} className={className} />
     </Suspense>
   )
 }

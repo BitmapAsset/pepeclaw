@@ -197,6 +197,7 @@ export default function App() {
               if (agent) handleAgentSelect(agent.id)
               else handleAgentSelect(null)
             }}
+            onRoomChange={handleRoomChange}
           />
         )}
 
