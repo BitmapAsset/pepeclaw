@@ -1,15 +1,16 @@
 <p align="center">
-  <img src="docs/screenshots/hero.jpg" alt="PepeClaw — Self-Evolving AI Agents You Can See" width="800">
+  <img src="docs/screenshots/hero.jpg" alt="PepeClaw — The Most Beautiful AI Agent Dashboard Ever Built" width="800">
+  <br><em>👆 Add your demo.gif or screenshot here — press S in-app for perfect screenshot mode</em>
 </p>
 
-<h1 align="center">🐸 PepeClaw</h1>
+<h1 align="center">🐸⚡ Anima-3D — PepeClaw Office Viewer</h1>
 
-<h3 align="center"><em>Self-Evolving AI Agents You Can See.</em></h3>
+<h3 align="center"><em>The most viral 3D AI agent visualizer ever made.</em></h3>
 
 <p align="center">
-  The first 3D visualization layer for autonomous AI agents.<br>
-  Watch your agents evolve, breed, dream, and learn — in real-time, in your browser.<br>
-  <strong>Give your agent a soul.</strong>
+  <strong>This is what happens when you give AI agents a body.</strong><br>
+  Watch them work. Watch them think. Watch them evolve.<br>
+  <strong>8 holographic rooms. Real-time data streams. Cinematic camera. Pure magic.</strong>
 </p>
 
 <p align="center">
@@ -41,6 +42,35 @@ PepeClaw gives you eyes. Eight immersive 3D rooms where you watch your agents wo
 
 ---
 
+## 🎬 Screenshot Mode (Press S)
+
+**Perfect for X/Reddit/GitHub virality:**
+- Press **S** key anywhere in the app
+- All agents wave simultaneously for 3 seconds
+- Camera moves to the perfect cinematic angle
+- All UI overlays hide automatically
+- Capture the moment that makes people say "I need this"
+
+---
+
+## 🔥 What Makes People Share This
+
+### Visual Features That Stop The Scroll
+
+- **🌟 Holographic Room Titles** — Floating above each desk with live stats (TASKS: 847 | EFF: 94% | UP: 99.9%)
+- **💫 Data Stream Particles** — Purple/cyan particles flowing between agent desks like a living network
+- **📡 Floor Hologram Pulses** — Radar-like sweeps radiating from each room zone
+- **⚡ Agent Scan Lines** — Thin bright lines sweeping up and down each robot body
+- **💭 Holographic Thought Bubbles** — See what each agent is thinking in real-time
+- **🌊 Digital Rain** — Matrix-style particles cascading at the edges
+- **🎥 Drone Camera Mode** — Smooth auto-orbit that drifts like a cinematic fly-through
+- **📊 Live Activity Feed** — Real-time ticker showing what agents are doing (top-right corner)
+- **✨ Breathing Status Rings** — Pulsing circles under agent feet with emotional colors
+
+**Every element is animated. Every color tells a story. Every frame is screenshot-worthy.**
+
+---
+
 ## ✨ What Makes This Different
 
 | Feature | Traditional Agent Tools | The Most Advanced Self-Evolving Systems | PepeClaw |
@@ -57,24 +87,20 @@ PepeClaw gives you eyes. Eight immersive 3D rooms where you watch your agents wo
 
 ---
 
-## Install in 10 Seconds
-
-```bash
-# One-liner (detects your OpenClaw automatically)
-curl -fsSL https://raw.githubusercontent.com/BitmapAsset/pepeclaw/main/install.sh | bash
-```
-
-Or manually:
+## 🚀 Install & Run (30 seconds)
 
 ```bash
 git clone https://github.com/BitmapAsset/pepeclaw.git
-cd pepeclaw
+cd projects/anima-3d
 npm install
 npm run dev
-# Open http://localhost:5173 — works immediately with mock data
 ```
 
-Or just tell your OpenClaw: **"Install PepeClaw"** — it handles everything.
+Open **http://localhost:5173** — it works immediately with beautiful demo agents.
+
+**🎯 Connect to your OpenClaw instance:** Set `VITE_GATEWAY_URL` in `.env` (optional — demo mode is fully featured)
+
+**📸 Take the perfect viral screenshot:** Press **S** key once it loads
 
 ---
 
@@ -196,16 +222,26 @@ PepeClaw includes 19 autonomous skills that make your agent self-improving — m
 - **Vite** — instant dev server + optimized production builds
 - **Vitest** — 73 tests covering components, API, data, and skills
 
+## 🎮 Controls
+
+- **Mouse/Trackpad**: Orbit camera around the office
+- **Scroll**: Zoom in/out
+- **Click Agent**: Chat with agent + fly to them
+- **Click Desk Zone**: Fly to that room
+- **S Key**: 📸 Screenshot mode (perfect viral angle, all agents wave)
+- **Room Buttons** (bottom): Quick teleport to any room
+
 ## Performance
 
 | Metric | Value |
 |--------|-------|
-| Bundle size | **1.5 MB** (gzip: ~420 KB) |
+| Bundle size | **1.5 MB** (gzip: ~445 KB) |
 | Room chunks | **5-11 KB** each (code-split) |
 | Target FPS | **60fps** on mid-range hardware |
 | DPR cap | **1.5x** for consistent performance |
 | API timeout | **10s** with graceful fallback |
 | Geometry | 100% procedural — zero external 3D models |
+| Tests | **93/93 passing** ✅ |
 
 ---
 

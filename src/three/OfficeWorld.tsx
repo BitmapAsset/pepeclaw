@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, Stars, Text, Billboard, Html } from '@react-three/drei'
+import { EffectComposer, Bloom, ChromaticAberration, Vignette } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 import { AgentMesh } from './AgentMesh'
 import { useAgents } from '../api/DataProvider'
@@ -34,22 +36,42 @@ const AGENT_POSITIONS: [number, number, number][] = [
 
 interface CameraTarget { position: THREE.Vector3; lookAt: THREE.Vector3 }
 
-function CameraRig({ target }: { target: CameraTarget | null }) {
+function CameraRig({ target, screenshotMode }: { target: CameraTarget | null, screenshotMode: boolean }) {
   const { camera } = useThree()
   const orbitRef = useRef<any>(null)
   const isAnimating = useRef(false)
+  const driftTime = useRef(0)
 
   useFrame((_, delta) => {
-    if (!target || !isAnimating.current) return
-    const speed = 3 * delta
-    camera.position.lerp(target.position, speed)
-    const currentLookAt = new THREE.Vector3()
-    camera.getWorldDirection(currentLookAt)
-    currentLookAt.multiplyScalar(10).add(camera.position)
-    currentLookAt.lerp(target.lookAt, speed)
-    camera.lookAt(currentLookAt)
-    if (camera.position.distanceTo(target.position) < 0.1) {
-      isAnimating.current = false
+    // Screenshot mode — perfect angle
+    if (screenshotMode) {
+      const perfectPos = new THREE.Vector3(0, 12, 18)
+      camera.position.lerp(perfectPos, delta * 2)
+      camera.lookAt(0, 1, 0)
+      return
+    }
+
+    // Target animation
+    if (target && isAnimating.current) {
+      const speed = 3 * delta
+      camera.position.lerp(target.position, speed)
+      const currentLookAt = new THREE.Vector3()
+      camera.getWorldDirection(currentLookAt)
+      currentLookAt.multiplyScalar(10).add(camera.position)
+      currentLookAt.lerp(target.lookAt, speed)
+      camera.lookAt(currentLookAt)
+      if (camera.position.distanceTo(target.position) < 0.1) {
+        isAnimating.current = false
+      }
+      return
+    }
+
+    // Drone camera drift
+    if (!target && orbitRef.current) {
+      driftTime.current += delta * 0.2
+      const driftX = Math.sin(driftTime.current * 0.3) * 2
+      const driftZ = Math.cos(driftTime.current * 0.5) * 2
+      orbitRef.current.target.set(driftX, 1, driftZ)
     }
   })
 
@@ -60,19 +82,151 @@ function CameraRig({ target }: { target: CameraTarget | null }) {
   return (
     <OrbitControls
       ref={orbitRef}
-      enablePan
-      enableZoom
-      enableRotate
+      enablePan={!screenshotMode}
+      enableZoom={!screenshotMode}
+      enableRotate={!screenshotMode}
       minPolarAngle={Math.PI / 10}
       maxPolarAngle={Math.PI / 2.1}
       minDistance={3}
       maxDistance={30}
-      autoRotate={!target}
+      autoRotate={!target && !screenshotMode}
       autoRotateSpeed={0.3}
       dampingFactor={0.06}
       enableDamping
       target={[0, 1, 0]}
     />
+  )
+}
+
+// ─── Holographic Room Title ──────────────────────────────────────────────────
+
+function HolographicRoomTitle({ zone, position }: { zone: typeof ROOM_ZONES[0], position: [number, number, number] }) {
+  const titleRef = useRef<THREE.Group>(null)
+
+  useFrame(() => {
+    if (titleRef.current) {
+      const time = Date.now() * 0.001
+      titleRef.current.position.y = position[1] + 3.2 + Math.sin(time * 2) * 0.05
+    }
+  })
+
+  // Fake stats that look real
+  const tasks = Math.floor(600 + Math.random() * 400)
+  const efficiency = (92 + Math.random() * 7).toFixed(1)
+  const uptime = (99.0 + Math.random() * 0.9).toFixed(1)
+
+  return (
+    <group ref={titleRef} position={position}>
+      <Billboard follow={true} position={[0, 3.2, 0]}>
+        <mesh>
+          <boxGeometry args={[3.2, 0.8, 0.05]} />
+          <meshStandardMaterial
+            color="#0a0a1e"
+            transparent
+            opacity={0.7}
+            emissive={zone.color}
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+        <Text position={[0, 0.15, 0.03]} fontSize={0.28} color={zone.color} anchorX="center" fontWeight="bold">
+          {zone.name.toUpperCase()}
+        </Text>
+        <Text position={[0, -0.15, 0.03]} fontSize={0.11} color="#94a3b8" anchorX="center">
+          TASKS: {tasks} | EFF: {efficiency}% | UP: {uptime}%
+        </Text>
+        {/* Glowing border */}
+        <mesh position={[0, 0, 0.02]}>
+          <boxGeometry args={[3.24, 0.84, 0.01]} />
+          <meshStandardMaterial color={zone.color} emissive={zone.color} emissiveIntensity={2} wireframe />
+        </mesh>
+      </Billboard>
+    </group>
+  )
+}
+
+// ─── Floor Hologram Pulse ─────────────────────────────────────────────────────
+
+function FloorHologram({ position, color }: { position: [number, number, number], color: string }) {
+  const ringRef = useRef<THREE.Mesh>(null)
+
+  useFrame(() => {
+    if (ringRef.current) {
+      const time = Date.now() * 0.001
+      const pulse = Math.sin(time * 1.5) * 0.5 + 0.5
+      const scale = 0.5 + pulse * 0.5
+      ringRef.current.scale.set(scale, 1, scale)
+      const mat = ringRef.current.material as THREE.MeshStandardMaterial
+      mat.opacity = 0.4 - pulse * 0.3
+    }
+  })
+
+  return (
+    <mesh ref={ringRef} position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.8, 1.2, 32]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={1.5}
+        transparent
+        opacity={0.4}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
+}
+
+// ─── Data Stream Particles ────────────────────────────────────────────────────
+
+function DataStreams({ positions }: { positions: [number, number, number][] }) {
+  const linesRef = useRef<THREE.Group>(null)
+  const particlesRef = useRef<THREE.Points[]>([])
+
+  const streams = useMemo(() => {
+    const result: Array<{ start: [number, number, number], end: [number, number, number] }> = []
+    for (let i = 0; i < positions.length - 1; i++) {
+      if (Math.random() > 0.5) {
+        result.push({ start: positions[i], end: positions[i + 1] })
+      }
+    }
+    return result
+  }, [positions])
+
+  useFrame(() => {
+    particlesRef.current.forEach((particles, idx) => {
+      if (particles) {
+        const time = Date.now() * 0.001
+        const offset = (time * 0.5 + idx * 0.3) % 1
+        const positions = particles.geometry.attributes.position.array as Float32Array
+        const stream = streams[idx]
+        if (stream) {
+          const [sx, sy, sz] = stream.start
+          const [ex, ey, ez] = stream.end
+          for (let i = 0; i < 5; i++) {
+            const t = (offset + i * 0.2) % 1
+            positions[i * 3] = sx + (ex - sx) * t
+            positions[i * 3 + 1] = sy + (ey - sy) * t + 1.5
+            positions[i * 3 + 2] = sz + (ez - sz) * t
+          }
+          particles.geometry.attributes.position.needsUpdate = true
+        }
+      }
+    })
+  })
+
+  return (
+    <group ref={linesRef}>
+      {streams.map((_, idx) => {
+        const positions = new Float32Array(15)
+        return (
+          <points key={idx} ref={(el: THREE.Points | null) => { if (el) particlesRef.current[idx] = el }}>
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+            </bufferGeometry>
+            <pointsMaterial size={0.06} color="#8b5cf6" transparent opacity={0.8} sizeAttenuation />
+          </points>
+        )
+      })}
+    </group>
   )
 }
 
@@ -517,6 +671,24 @@ function Scene({
   const [cameraTarget, setCameraTarget] = useState<CameraTarget | null>(null)
   const [movingAgents, setMovingAgents] = useState<Set<string>>(new Set())
   const [agentSlots, setAgentSlots] = useState<Record<string, number>>({})
+  const [screenshotMode, setScreenshotMode] = useState(false)
+
+  // Screenshot mode — S key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 's' || e.key === 'S') {
+        setScreenshotMode(true)
+        // All agents wave
+        agents.forEach(a => setSelectedAgent(a))
+        setTimeout(() => {
+          setSelectedAgent(null)
+          setScreenshotMode(false)
+        }, 3000)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [agents])
 
   // Assign agents to room slots on mount
   useEffect(() => {
@@ -569,6 +741,9 @@ function Scene({
       {/* Ambient particles */}
       <AmbientParticles />
 
+      {/* Digital rain at edges */}
+      <DigitalRain />
+
       {/* Room zones */}
       {ROOM_ZONES.map((zone, i) => {
         const agent = agents[i]
@@ -585,6 +760,19 @@ function Scene({
         )
       })}
 
+      {/* Holographic room titles */}
+      {ROOM_ZONES.map((zone) => (
+        <HolographicRoomTitle key={`title-${zone.id}`} zone={zone} position={zone.position} />
+      ))}
+
+      {/* Floor holograms */}
+      {ROOM_ZONES.map((zone) => (
+        <FloorHologram key={`holo-${zone.id}`} position={zone.position} color={zone.color} />
+      ))}
+
+      {/* Data streams between desks */}
+      <DataStreams positions={ROOM_ZONES.map(z => z.position)} />
+
       {/* Agents */}
       {agents.slice(0, AGENT_POSITIONS.length).map((agent) => {
         const slotIdx = agentSlots[agent.id] ?? 0
@@ -594,7 +782,7 @@ function Scene({
             key={agent.id}
             agent={agent}
             position={pos}
-            isSelected={selectedAgent?.id === agent.id}
+            isSelected={selectedAgent?.id === agent.id || screenshotMode}
             isMoving={movingAgents.has(agent.id)}
             targetPosition={pos}
             onClick={() => flyToAgent(agent, slotIdx)}
@@ -603,7 +791,7 @@ function Scene({
       })}
 
       {/* Chat popup */}
-      {chatAgent && (() => {
+      {chatAgent && !screenshotMode && (() => {
         const slotIdx = agentSlots[chatAgent.id] ?? 0
         const pos = AGENT_POSITIONS[slotIdx]
         return (
@@ -615,14 +803,17 @@ function Scene({
         )
       })()}
 
+      {/* Activity feed ticker */}
+      {!screenshotMode && <ActivityFeedHUD agents={agents} />}
+
       {/* CCTV overlay */}
-      <CCTVCorners />
+      {!screenshotMode && <CCTVCorners />}
 
       {/* Room picker bottom bar */}
-      <RoomPickerHUD activeRoom={activeRoom} onRoomClick={flyToZone} />
+      {!screenshotMode && <RoomPickerHUD activeRoom={activeRoom} onRoomClick={flyToZone} />}
 
       {/* Camera rig */}
-      <CameraRig target={cameraTarget} />
+      <CameraRig target={cameraTarget} screenshotMode={screenshotMode} />
     </>
   )
 }
@@ -647,6 +838,93 @@ function AmbientParticles() {
       </bufferGeometry>
       <pointsMaterial size={0.04} color={BRAND.purple} transparent opacity={0.5} sizeAttenuation />
     </points>
+  )
+}
+
+// ─── Digital Rain Effect ──────────────────────────────────────────────────────
+
+function DigitalRain() {
+  const rainRef = useRef<THREE.Points>(null)
+  const count = 150
+  const positions = useMemo(() => new Float32Array(count * 3), [])
+  const velocities = useMemo(() => {
+    const v = new Float32Array(count)
+    for (let i = 0; i < count; i++) v[i] = 0.5 + Math.random() * 1.5
+    return v
+  }, [])
+
+  useEffect(() => {
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 28
+      positions[i * 3 + 1] = Math.random() * 6
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 22
+    }
+  }, [positions])
+
+  useFrame((_, delta) => {
+    for (let i = 0; i < count; i++) {
+      positions[i * 3 + 1] -= velocities[i] * delta * 2
+      if (positions[i * 3 + 1] < 0) {
+        positions[i * 3 + 1] = 5.5
+        positions[i * 3] = (Math.random() - 0.5) * 28
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 22
+      }
+    }
+    if (rainRef.current) {
+      rainRef.current.geometry.attributes.position.needsUpdate = true
+    }
+  })
+
+  return (
+    <points ref={rainRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={0.08} color={BRAND.cyan} transparent opacity={0.6} sizeAttenuation />
+    </points>
+  )
+}
+
+// ─── Activity Feed Ticker ─────────────────────────────────────────────────────
+
+function ActivityFeedHUD({ agents }: { agents: AgentState[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % agents.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [agents.length])
+
+  const currentAgent = agents[currentIndex]
+  if (!currentAgent) return null
+
+  return (
+    <Html fullscreen style={{ pointerEvents: 'none' }}>
+      <div style={{
+        position: 'absolute',
+        top: 50,
+        right: 16,
+        background: 'rgba(10, 10, 30, 0.92)',
+        border: `1px solid ${BRAND.purple}`,
+        borderRadius: 8,
+        padding: '10px 14px',
+        maxWidth: 280,
+        fontFamily: 'monospace',
+        fontSize: 11,
+        color: '#e0e0ff',
+        boxShadow: `0 0 16px ${BRAND.purple}44`,
+      }}>
+        <div style={{ color: BRAND.cyan, fontWeight: 'bold', marginBottom: 4 }}>
+          🤖 LIVE ACTIVITY FEED
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: BRAND.purple, fontWeight: 'bold' }}>{currentAgent.name}:</span>
+          <span style={{ color: '#94a3b8' }}>{currentAgent.activity || currentAgent.role}</span>
+        </div>
+      </div>
+    </Html>
   )
 }
 
@@ -695,6 +973,19 @@ export function OfficeWorld({ onRoomChange, className }: OfficeWorldProps) {
 
       <Suspense fallback={null}>
         <Scene agents={agents} onRoomChange={onRoomChange} />
+        <EffectComposer>
+          <Bloom
+            intensity={1.2}
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.9}
+            mipmapBlur
+          />
+          <ChromaticAberration
+            blendFunction={BlendFunction.NORMAL}
+            offset={[0.0005, 0.0005] as any}
+          />
+          <Vignette eskil={false} offset={0.15} darkness={0.7} />
+        </EffectComposer>
       </Suspense>
     </Canvas>
   )

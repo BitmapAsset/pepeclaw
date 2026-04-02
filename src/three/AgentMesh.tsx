@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useGLTF, Billboard, Text } from '@react-three/drei'
+import { useGLTF, Billboard, Text, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import type { AgentState as Agent } from '../api/gateway'
 
@@ -31,6 +31,8 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
   const posRef = useRef(new THREE.Vector3(...position))
   const [hovered, setHovered] = useState(false)
   const glowRef = useRef<THREE.PointLight>(null)
+  const scanLineRef = useRef<THREE.Mesh>(null)
+  const statusRingRef = useRef<THREE.Mesh>(null)
 
   const { scene, animations } = useGLTF('/models/RobotExpressive.glb') as any
   const clonedScene = useRef<THREE.Group | null>(null)
@@ -100,6 +102,8 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
   useFrame((_, delta) => {
     if (!meshRef.current) return
 
+    const time = Date.now() * 0.001
+
     // Update animation mixer
     mixerRef.current?.update(delta)
 
@@ -124,13 +128,38 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
 
     // Subtle idle bob
     if (!isMoving) {
-      meshRef.current.position.y = position[1] + Math.sin(Date.now() * 0.001 + position[0]) * 0.02
+      meshRef.current.position.y = position[1] + Math.sin(time + position[0]) * 0.02
+    }
+
+    // "Working" animation — subtle head look-around
+    if (agent.status === 'working' && clonedScene.current) {
+      const head = clonedScene.current.getObjectByName('Head')
+      if (head) {
+        head.rotation.y = Math.sin(time * 0.5) * 0.3
+        head.rotation.x = Math.sin(time * 0.3) * 0.1
+      }
+    }
+
+    // Scan line effect — sweeps up and down
+    if (scanLineRef.current) {
+      const scanSpeed = 2
+      const scanY = (Math.sin(time * scanSpeed) * 0.5 + 0.5) * 2.2
+      scanLineRef.current.position.y = scanY
+    }
+
+    // Status ring breathing effect
+    if (statusRingRef.current) {
+      const mat = statusRingRef.current.material as THREE.MeshStandardMaterial
+      const breathe = Math.sin(time * 2) * 0.5 + 0.5
+      mat.emissiveIntensity = isSelected ? 3 + breathe : hovered ? 2 + breathe * 0.5 : 1 + breathe * 0.3
+      const scale = 1 + breathe * 0.1
+      statusRingRef.current.scale.set(scale, scale, scale)
     }
 
     // Glow pulse
     if (glowRef.current) {
       const base = isSelected ? 2.5 : hovered ? 1.5 : 0.8
-      glowRef.current.intensity = base + Math.sin(Date.now() * 0.003) * 0.3
+      glowRef.current.intensity = base + Math.sin(time * 3) * 0.3
     }
   })
 
@@ -145,8 +174,8 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer' }}
       onPointerOut={() => { setHovered(false); document.body.style.cursor = 'auto' }}
     >
-      {/* Status glow under feet */}
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Status glow under feet — breathing ring */}
+      <mesh ref={statusRingRef} position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.35, 32]} />
         <meshStandardMaterial
           color={statusColor}
@@ -154,6 +183,18 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
           emissiveIntensity={isSelected ? 3 : hovered ? 2 : 1}
           transparent
           opacity={0.7}
+        />
+      </mesh>
+
+      {/* Scan line effect */}
+      <mesh ref={scanLineRef} position={[0, 0, 0]}>
+        <boxGeometry args={[0.8, 0.02, 0.8]} />
+        <meshStandardMaterial
+          color={statusColor}
+          emissive={statusColor}
+          emissiveIntensity={4}
+          transparent
+          opacity={0.6}
         />
       </mesh>
 
@@ -166,6 +207,31 @@ export function AgentMesh({ agent, position, isSelected, isMoving, targetPositio
         decay={2}
         position={[0, 0.5, 0]}
       />
+
+      {/* Holographic thought bubble showing activity */}
+      {(agent.activity || agent.taskDescription) && (
+        <Billboard follow={true} lockX={false} lockY={false} lockZ={false} position={[0, 2.8, 0]}>
+          <Html center distanceFactor={4}>
+            <div style={{
+              background: 'rgba(10, 10, 30, 0.9)',
+              border: `1px solid ${statusColor}`,
+              borderRadius: 8,
+              padding: '6px 12px',
+              maxWidth: 180,
+              textAlign: 'center',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              color: statusColor,
+              boxShadow: `0 0 12px ${statusColor}44`,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {agent.activity || agent.taskDescription}
+            </div>
+          </Html>
+        </Billboard>
+      )}
 
       {/* Name tag floating above agent */}
       <Billboard follow={true} lockX={false} lockY={false} lockZ={false} position={[0, 2.4, 0]}>
