@@ -63,17 +63,18 @@ export class AgentSprite {
     this.scene = scene
     this.agentData = { ...data }
     this.container = scene.add.container(x, y)
+    this.container.setScale(1.12)
 
     // Shadow
     this.shadow = scene.add.graphics()
-    this.shadow.fillStyle(0x000000, 0.3)
-    this.shadow.fillEllipse(0, 42, 32, 12)
+    this.shadow.fillStyle(0x000000, 0.34)
+    this.shadow.fillEllipse(0, 44, 40, 14)
     this.container.add(this.shadow)
 
     // Glow beneath
     const glow = scene.add.graphics()
-    glow.fillStyle(data.color, 0.14)
-    glow.fillCircle(0, 16, 36)
+    glow.fillStyle(data.color, 0.19)
+    glow.fillCircle(0, 16, 42)
     this.container.add(glow)
 
     // Legs
@@ -83,7 +84,9 @@ export class AgentSprite {
     // Body torso
     this.torso = scene.add.graphics()
     this.torso.fillStyle(data.color, 1)
-    this.torso.fillRoundedRect(-10, -8, 20, 28, 4)
+    this.torso.fillRoundedRect(-12, -10, 24, 32, 4)
+    this.torso.lineStyle(1, 0xffffff, 0.22)
+    this.torso.strokeRoundedRect(-12, -10, 24, 32, 4)
     this.container.add(this.torso)
 
     // Arms
@@ -93,9 +96,11 @@ export class AgentSprite {
     // Head
     this.headGfx = scene.add.graphics()
     this.headGfx.fillStyle(data.color, 1)
-    this.headGfx.fillCircle(0, -18, 10)
+    this.headGfx.fillCircle(0, -21, 12)
     this.headGfx.fillStyle(0xffffff, 0.25)
-    this.headGfx.fillCircle(-2, -22, 4)
+    this.headGfx.fillCircle(-3, -25, 4)
+    this.headGfx.fillStyle(0x050814, 0.55)
+    this.headGfx.fillRect(-7, -22, 14, 3)
     this.container.add(this.headGfx)
 
     // Status dot
@@ -106,9 +111,9 @@ export class AgentSprite {
     // Name label
     this.nameLabel = scene.add.text(0, 52, data.name, {
       fontFamily: '"Courier New", monospace',
-      fontSize: '10px',
+      fontSize: '11px',
       color: '#ffffff',
-      backgroundColor: 'rgba(0,0,0,0.55)',
+      backgroundColor: 'rgba(5,8,20,0.68)',
       padding: { x: 4, y: 2 },
       align: 'center',
     }).setOrigin(0.5, 0)
@@ -158,9 +163,9 @@ export class AgentSprite {
     this.container.add(this.speechBubble)
 
     // Interaction
-    this.container.setSize(48, 88)
+    this.container.setSize(58, 96)
     this.container.setInteractive(
-      new Phaser.Geom.Rectangle(-24, -36, 48, 88),
+      new Phaser.Geom.Rectangle(-29, -42, 58, 96),
       Phaser.Geom.Rectangle.Contains,
     )
     this.container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {

@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect, useCallback, useRef, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useState, lazy, Suspense, useEffect, useCallback, useRef, Component, type ReactNode, type ErrorInfo, type CSSProperties } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { RoomId } from './data/types'
 import { DataProvider, useAgents, useConnectionStatus, useDemoMode, useDataActions } from './api/DataProvider'
@@ -116,8 +116,8 @@ export interface InteractiveState {
 export default function App() {
   const [activeRoom, setActiveRoom] = useState<RoomId>('overview')
   const [overviewMode, setOverviewMode] = useState(true)
-  // Camera mode kept for future use
-  const toggleCameraMode = useCallback(() => {}, [])
+  const [presentationMode, setPresentationMode] = useState(false)
+  const togglePresentationMode = useCallback(() => setPresentationMode(prev => !prev), [])
   const [interactive, setInteractive] = useState<InteractiveState>({
     selectedAgentId: null,
     followingAgentId: null,
@@ -147,12 +147,21 @@ export default function App() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
 
       if (e.key === 'Escape') {
+        if (presentationMode) {
+          setPresentationMode(false)
+          return
+        }
         if (interactive.selectedAgentId) {
           setInteractive({ selectedAgentId: null, followingAgentId: null, chatInput: '' })
         } else {
           setOverviewMode(true)
           setActiveRoom('overview')
         }
+        return
+      }
+
+      if (e.key === 'p' || e.key === 'P') {
+        setPresentationMode(prev => !prev)
         return
       }
 
@@ -181,14 +190,15 @@ export default function App() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [interactive.selectedAgentId, activeRoom, overviewMode])
+  }, [interactive.selectedAgentId, activeRoom, overviewMode, presentationMode])
 
   const isPanelOnly = panelOnlyRooms.has(activeRoom)
   const PanelRoom = !overviewMode ? panelRooms[activeRoom] : undefined
 
   return (
     <DataProvider>
-      <div className="w-full h-full relative">
+      <div className={`viewer-shell w-full h-full relative ${presentationMode ? 'viewer-shell--presentation' : ''}`}>
+        <div className="viewer-vignette pointer-events-none" />
         {/* 3D Office Scene — always rendered unless in panel-only room */}
         {!isPanelOnly && (
           <ThreeScene
@@ -229,29 +239,68 @@ export default function App() {
 
         <InteractiveChat interactive={interactive} setInteractive={setInteractive} />
 
-        <HUD
-          activeRoom={activeRoom}
-          onRoomChange={handleRoomChange}
-          overviewMode={overviewMode}
-          onOverviewToggle={() => {
-            const next = !overviewMode
-            setOverviewMode(next)
-            if (next) setActiveRoom('overview')
-          }}
-          onCameraToggle={toggleCameraMode}
-        />
-        {!overviewMode && !isPanelOnly && (
+        {!presentationMode && (
+          <HUD
+            activeRoom={activeRoom}
+            onRoomChange={handleRoomChange}
+            overviewMode={overviewMode}
+            onOverviewToggle={() => {
+              const next = !overviewMode
+              setOverviewMode(next)
+              if (next) setActiveRoom('overview')
+            }}
+            onCameraToggle={togglePresentationMode}
+            presentationMode={presentationMode}
+          />
+        )}
+        {!overviewMode && !isPanelOnly && !presentationMode && (
           <div className="hidden sm:block">
             <MiniMap activeRoom={activeRoom} onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
           </div>
         )}
-        <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
-        <SkillScore />
-        <LearningLoop />
-        <PWAInstall />
-        <ConnectionGuideWrapper />
+        {!presentationMode && (
+          <>
+            <ActivityFeed onRoomChange={(r) => { setActiveRoom(r); setOverviewMode(false); }} />
+            <SkillScore />
+            <LearningLoop />
+            <PWAInstall />
+            <ConnectionGuideWrapper />
+          </>
+        )}
+        {presentationMode && (
+          <PresentationBadge activeRoom={activeRoom} overviewMode={overviewMode} onExit={togglePresentationMode} />
+        )}
       </div>
     </DataProvider>
+  )
+}
+
+function PresentationBadge({ activeRoom, overviewMode, onExit }: {
+  activeRoom: RoomId;
+  overviewMode: boolean;
+  onExit: () => void;
+}) {
+  const agents = useAgents()
+  const currentRoom = rooms.find(r => r.id === activeRoom)
+  const roomColor = roomColors[activeRoom] || '#8b5cf6'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="presentation-badge fixed left-4 bottom-4 z-50"
+      style={{ '--room-color': roomColor } as CSSProperties}
+    >
+      <div className="presentation-badge__eyebrow">Clean Shot</div>
+      <div className="presentation-badge__title">
+        {overviewMode ? 'Office Overview' : currentRoom?.name ?? activeRoom}
+      </div>
+      <div className="presentation-badge__meta">
+        <span>{agents.length} agents online</span>
+        <span>Press S for scene pose</span>
+        <button onClick={onExit} type="button">Exit</button>
+      </div>
+    </motion.div>
   )
 }
 
@@ -392,12 +441,13 @@ const connectionStatusConfig: Record<ConnectionStatus, { color: string; label: s
 import { rooms } from './data/types'
 import { useData } from './api/DataProvider'
 
-function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, onCameraToggle }: {
+function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, onCameraToggle, presentationMode }: {
   activeRoom: RoomId;
   onRoomChange: (r: RoomId) => void;
   overviewMode: boolean;
   onOverviewToggle: () => void;
   onCameraToggle: () => void;
+  presentationMode: boolean;
 }) {
   const currentRoomData = rooms.find(r => r.id === activeRoom)
   const agents = useAgents()
@@ -522,14 +572,14 @@ function HUD({ activeRoom, onRoomChange, overviewMode, onOverviewToggle, onCamer
                 color: '#94a3b8',
                 transition: 'all 0.2s ease',
               }}
-              title="3D Office View — Drag to orbit, scroll to zoom"
+              title="Toggle clean screenshot mode"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 7l10-4 10 4-10 4z" />
                 <path d="M2 7v10l10 4V11" />
                 <path d="M22 7v10l-10 4V11" />
               </svg>
-              <span className="hidden sm:inline">3D</span>
+              <span className="hidden sm:inline">{presentationMode ? 'Live UI' : 'Shot'}</span>
             </motion.button>
 
             <motion.button

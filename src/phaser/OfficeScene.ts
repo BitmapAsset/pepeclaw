@@ -47,6 +47,7 @@ interface RoomGraphics {
 interface DataPacket {
   progress: number
   fromX: number; fromY: number
+  midX: number; midY: number
   toX: number; toY: number
   dot: Phaser.GameObjects.Arc
 }
@@ -213,7 +214,15 @@ export class OfficeScene extends Phaser.Scene {
       const midY = a.y
 
       // Wide glow
-      g.lineStyle(12, walkColor, 0.04)
+      g.lineStyle(20, walkColor, 0.035)
+      g.beginPath()
+      g.moveTo(a.x, a.y)
+      g.lineTo(midX, midY)
+      g.lineTo(b.x, b.y)
+      g.strokePath()
+
+      // Wide glow
+      g.lineStyle(12, walkColor, 0.07)
       g.beginPath()
       g.moveTo(a.x, a.y)
       g.lineTo(midX, midY)
@@ -275,6 +284,7 @@ export class OfficeScene extends Phaser.Scene {
     this.dataPackets.push({
       progress: 0,
       fromX: from.x, fromY: from.y,
+      midX: to.x, midY: from.y,
       toX: to.x, toY: to.y,
       dot,
     })
@@ -289,9 +299,16 @@ export class OfficeScene extends Phaser.Scene {
         this.dataPackets.splice(i, 1)
         continue
       }
-      p.dot.x = p.fromX + (p.toX - p.fromX) * p.progress
-      p.dot.y = p.fromY + (p.toY - p.fromY) * p.progress
-      p.dot.setAlpha(Math.sin(p.progress * Math.PI) * 0.8)
+      const legProgress = p.progress < 0.5 ? p.progress * 2 : (p.progress - 0.5) * 2
+      if (p.progress < 0.5) {
+        p.dot.x = Phaser.Math.Linear(p.fromX, p.midX, legProgress)
+        p.dot.y = Phaser.Math.Linear(p.fromY, p.midY, legProgress)
+      } else {
+        p.dot.x = Phaser.Math.Linear(p.midX, p.toX, legProgress)
+        p.dot.y = Phaser.Math.Linear(p.midY, p.toY, legProgress)
+      }
+      p.dot.setAlpha(Math.sin(p.progress * Math.PI) * 0.95)
+      p.dot.setScale(0.8 + Math.sin(p.progress * Math.PI) * 0.7)
     }
   }
 
@@ -315,6 +332,14 @@ export class OfficeScene extends Phaser.Scene {
 
     // Back walls (drawn behind floor)
     const { r: lr, g: lg, b: lb } = hexToComponents(config.color)
+
+    // Heavy under-glow and shadow make each room read as a solid object.
+    const plinth = this.add.graphics()
+    plinth.fillStyle(0x000000, 0.28)
+    plinth.fillEllipse(cx, cy + hh * 0.68, TILE_W * 1.05, TILE_H * 0.72)
+    plinth.fillStyle(config.color, 0.07)
+    plinth.fillEllipse(cx, cy + hh * 0.42, TILE_W * 0.92, TILE_H * 0.56)
+    container.add(plinth)
 
     // Back-left wall
     const darkColor = Phaser.Display.Color.GetColor(
@@ -390,6 +415,11 @@ export class OfficeScene extends Phaser.Scene {
       floorGrid.lineBetween(cx - hw + hw * t, cy - hh * (1 - t), cx + hw * t, cy + hh * t)
       floorGrid.lineBetween(cx - hw * t, cy + hh * (1 - t), cx + hw - hw * t, cy - hh + hh * t)
     }
+    floorGrid.lineStyle(2, config.color, 0.12)
+    floorGrid.strokeEllipse(cx, cy + 12, TILE_W * 0.54, TILE_H * 0.34)
+    floorGrid.lineStyle(1.2, 0xffffff, 0.09)
+    floorGrid.lineBetween(cx - hw + 18, cy, cx, cy + hh - 9)
+    floorGrid.lineBetween(cx + hw - 18, cy, cx, cy + hh - 9)
     container.add(floorGrid)
 
     // Neon top edges (heavy glow — multiple overlapping strokes)
@@ -470,6 +500,22 @@ export class OfficeScene extends Phaser.Scene {
 
     // Wall panel details (equipment on back walls)
     const wallPanels = this.add.graphics()
+    wallPanels.lineStyle(1, config.color, 0.18)
+    for (let rib = 0; rib < 7; rib++) {
+      const t = rib / 6
+      wallPanels.lineBetween(
+        cx - hw + hw * t,
+        cy - WALL_H + hh * t * 0.08,
+        cx - hw + hw * t,
+        cy - 8 + hh * t * 0.08,
+      )
+      wallPanels.lineBetween(
+        cx + hw * t,
+        cy - hh - WALL_H + hh * t,
+        cx + hw * t,
+        cy - hh + hh * t,
+      )
+    }
     // Back-left wall panels (larger screens)
     for (let eq = 0; eq < 3; eq++) {
       const t = (eq + 1) / 4
@@ -503,6 +549,17 @@ export class OfficeScene extends Phaser.Scene {
         wallPanels.fillStyle(config.color, 0.3)
         wallPanels.fillCircle(eqx + 5 + led * 6, eqy + 10, 1.5)
       }
+    }
+    // Low cabinets and uplights along the front wall add interior density.
+    for (let bay = 0; bay < 5; bay++) {
+      const bx = cx - 88 + bay * 44
+      const by = cy + 30 - Math.abs(bay - 2) * 8
+      wallPanels.fillStyle(0x050814, 0.58)
+      wallPanels.fillRect(bx - 14, by - 8, 28, 13)
+      wallPanels.lineStyle(1, config.color, 0.22)
+      wallPanels.strokeRect(bx - 14, by - 8, 28, 13)
+      wallPanels.fillStyle(config.color, 0.25)
+      wallPanels.fillRect(bx - 10, by - 5, 20, 2)
     }
     container.add(wallPanels)
 
@@ -593,8 +650,10 @@ export class OfficeScene extends Phaser.Scene {
       const bob = Math.sin(agent.bobPhase) * 2
       agent.circle.setPosition(agent.currentX, agent.currentY + bob)
       agent.glowCircle.setPosition(agent.currentX, agent.currentY + bob)
-      agent.statusDot.setPosition(agent.currentX + 14, agent.currentY - 12 + bob)
-      agent.nameText.setPosition(agent.currentX, agent.currentY - 24 + bob)
+      agent.glowCircle.setScale(1 + Math.sin(t * 2.4 + agent.bobPhase) * 0.12)
+      agent.circle.setScale(1 + Math.sin(t * 3 + agent.bobPhase) * 0.04)
+      agent.statusDot.setPosition(agent.currentX + 18, agent.currentY - 15 + bob)
+      agent.nameText.setPosition(agent.currentX, agent.currentY - 30 + bob)
     })
 
     // Update room effects
@@ -666,6 +725,18 @@ export class OfficeScene extends Phaser.Scene {
 
   // Shared base layer: floor cables, wall screens, isometric desk
   private drawRoomBase(g: Phaser.GameObjects.Graphics, cx: number, cy: number, color: number, t: number): void {
+    // Active holographic floor, rails, and service lanes.
+    g.fillStyle(color, 0.045)
+    g.fillEllipse(cx, cy + 10, 238, 104)
+    g.lineStyle(2.4, color, 0.26)
+    g.strokeEllipse(cx, cy + 10, 228, 102)
+    g.lineStyle(1.2, color, 0.18)
+    g.strokeEllipse(cx, cy + 10, 188, 78)
+    g.lineStyle(1, 0xffffff, 0.08)
+    g.lineBetween(cx - 118, cy - 4, cx, cy + 58)
+    g.lineBetween(cx + 118, cy - 4, cx, cy + 58)
+    g.lineBetween(cx - 108, cy + 32, cx + 108, cy + 32)
+
     // Floor cables — thin isometric lines tracing across the floor
     g.lineStyle(1.5, color, 0.35)
     g.lineBetween(cx - 90, cy + 18, cx + 90, cy + 18)
@@ -674,6 +745,12 @@ export class OfficeScene extends Phaser.Scene {
     g.lineStyle(1, color, 0.20)
     g.lineBetween(cx, cy + 2, cx, cy + 45)
     g.lineBetween(cx - 70, cy + 28, cx + 70, cy + 28)
+    for (let c = 0; c < 5; c++) {
+      const x = cx - 80 + c * 40
+      const pulse = 0.18 + Math.sin(t * 4 + c) * 0.08
+      g.fillStyle(color, pulse)
+      g.fillCircle(x, cy + 18, 2.5)
+    }
 
     // Wall-mounted screens on back-right wall
     for (let s = 0; s < 2; s++) {
@@ -713,6 +790,43 @@ export class OfficeScene extends Phaser.Scene {
     const mScan = deskY - 16 + ((t * 7) % 12)
     g.lineStyle(0.8, color, 0.3)
     g.lineBetween(deskX + 13, mScan, deskX + 29, mScan)
+
+    // Compact side consoles keep every room feeling occupied even before agents arrive.
+    const consolePositions = [
+      { x: cx - 104, y: cy - 8, flip: 1 },
+      { x: cx + 96, y: cy - 10, flip: -1 },
+      { x: cx + 70, y: cy + 34, flip: -1 },
+    ]
+    consolePositions.forEach((panel, i) => {
+      g.fillStyle(0x060a16, 0.72)
+      g.beginPath()
+      g.moveTo(panel.x, panel.y - 7)
+      g.lineTo(panel.x + panel.flip * 30, panel.y)
+      g.lineTo(panel.x + panel.flip * 30, panel.y + 13)
+      g.lineTo(panel.x, panel.y + 19)
+      g.closePath()
+      g.fillPath()
+      g.lineStyle(1, color, 0.32)
+      g.strokePath()
+      g.fillStyle(color, 0.09)
+      g.fillRect(panel.x + panel.flip * 7 - (panel.flip < 0 ? 20 : 0), panel.y - 18, 20, 13)
+      g.lineStyle(1, color, 0.34)
+      g.strokeRect(panel.x + panel.flip * 7 - (panel.flip < 0 ? 20 : 0), panel.y - 18, 20, 13)
+      g.fillStyle(color, 0.4 + Math.sin(t * 3 + i) * 0.18)
+      g.fillCircle(panel.x + panel.flip * 23, panel.y + 4, 2)
+    })
+
+    // Two vertical light pillars give the rooms a stronger holographic volume.
+    for (let p = 0; p < 2; p++) {
+      const px = cx - 74 + p * 148
+      const alpha = 0.12 + Math.sin(t * 2 + p) * 0.04
+      g.lineStyle(9, color, alpha)
+      g.lineBetween(px, cy - 62, px, cy + 26)
+      g.lineStyle(2, color, 0.42)
+      g.lineBetween(px, cy - 62, px, cy + 26)
+      g.fillStyle(color, 0.2)
+      g.fillEllipse(px, cy + 27, 24, 9)
+    }
   }
 
   private drawRoomInterior(room: RoomGraphics, t: number): void {
@@ -743,26 +857,34 @@ export class OfficeScene extends Phaser.Scene {
   private drawHumanoid(g: Phaser.GameObjects.Graphics, x: number, y: number, color: number, phase: number, t: number): void {
     const bob = Math.sin(t * 2 + phase) * 2.5
     const walkCycle = Math.sin(t * 3 + phase) * 6
-    // Body glow (brighter, larger)
-    g.fillStyle(color, 0.18)
-    g.fillCircle(x, y - 16 + bob, 28)
+    // Ground shadow plus glow keeps the agents legible over busy interiors.
+    g.fillStyle(0x000000, 0.26)
+    g.fillEllipse(x, y + 12, 34, 12)
+    g.fillStyle(color, 0.22)
+    g.fillCircle(x, y - 15 + bob, 32)
+    g.lineStyle(1.5, color, 0.32)
+    g.strokeCircle(x, y - 15 + bob, 24 + Math.sin(t * 2 + phase) * 3)
     // Head
-    g.fillStyle(color, 0.85)
-    g.fillCircle(x, y - 40 + bob, 10)
+    g.fillStyle(color, 0.92)
+    g.fillCircle(x, y - 42 + bob, 12)
+    g.fillStyle(0xffffff, 0.28)
+    g.fillCircle(x - 3, y - 46 + bob, 4)
     // Body line (thicker)
-    g.lineStyle(4, color, 0.75)
-    g.lineBetween(x, y - 32 + bob, x, y - 8 + bob)
+    g.lineStyle(6, color, 0.82)
+    g.lineBetween(x, y - 32 + bob, x, y - 6 + bob)
+    g.lineStyle(2, 0xffffff, 0.22)
+    g.lineBetween(x - 2, y - 30 + bob, x - 2, y - 10 + bob)
     // Arms
-    g.lineStyle(3.5, color, 0.65)
+    g.lineStyle(4.5, color, 0.7)
     g.lineBetween(x - 14, y - 28 + bob + walkCycle * 0.3, x, y - 24 + bob)
     g.lineBetween(x, y - 24 + bob, x + 14, y - 28 + bob - walkCycle * 0.3)
     // Legs
-    g.lineStyle(3.5, color, 0.65)
-    g.lineBetween(x, y - 8 + bob, x - 10, y + 10 + bob + walkCycle * 0.5)
-    g.lineBetween(x, y - 8 + bob, x + 10, y + 10 + bob - walkCycle * 0.5)
+    g.lineStyle(4.5, color, 0.7)
+    g.lineBetween(x, y - 6 + bob, x - 12, y + 12 + bob + walkCycle * 0.5)
+    g.lineBetween(x, y - 6 + bob, x + 12, y + 12 + bob - walkCycle * 0.5)
     // Visor/eye (bright)
     g.fillStyle(color, 1.0)
-    g.fillRect(x - 6, y - 42 + bob, 12, 4)
+    g.fillRect(x - 7, y - 44 + bob, 14, 4)
   }
 
   // Genome Lab: LARGE double helix + circular platform + floating panels + humanoids
@@ -1182,6 +1304,8 @@ export class OfficeScene extends Phaser.Scene {
       { roomId: 'genome', dx: 120, dy: -40 },
       { roomId: 'war', dx: -120, dy: -35 },
       { roomId: 'metalearning', dx: 120, dy: -30 },
+      { roomId: 'dream', dx: -118, dy: -28 },
+      { roomId: 'redteam', dx: 118, dy: -22 },
       { roomId: 'temporal', dx: -120, dy: -25 },
       { roomId: 'breeding', dx: 110, dy: -30 },
       { roomId: 'identity', dx: -110, dy: -30 },
@@ -1212,21 +1336,28 @@ export class OfficeScene extends Phaser.Scene {
       g.clear()
 
       const y = panel.baseY + Math.sin(t * 1.2 + panel.phase) * 5
-      const w = 50
-      const h = 32
+      const w = 66
+      const h = 40
 
       // Panel background
+      g.fillStyle(panel.color, 0.035)
+      g.fillRect(panel.x - w / 2 - 8, y - h / 2 - 6, w + 16, h + 12)
       g.fillStyle(panel.color, 0.06)
       g.fillRect(panel.x - w / 2, y - h / 2, w, h)
       // Border
-      g.lineStyle(1, panel.color, 0.3)
+      g.lineStyle(5, panel.color, 0.08)
+      g.strokeRect(panel.x - w / 2, y - h / 2, w, h)
+      g.lineStyle(1.4, panel.color, 0.42)
       g.strokeRect(panel.x - w / 2, y - h / 2, w, h)
       // Fake data lines
-      for (let l = 0; l < 4; l++) {
-        const lw = 15 + Math.sin(t * 2 + l + panel.phase) * 10
-        g.fillStyle(panel.color, 0.15 + Math.sin(t * 3 + l) * 0.05)
-        g.fillRect(panel.x - w / 2 + 4, y - h / 2 + 5 + l * 6, lw, 2)
+      for (let l = 0; l < 5; l++) {
+        const lw = 20 + Math.sin(t * 2 + l + panel.phase) * 14
+        g.fillStyle(panel.color, 0.16 + Math.sin(t * 3 + l) * 0.06)
+        g.fillRect(panel.x - w / 2 + 6, y - h / 2 + 6 + l * 6, lw, 2)
       }
+      const scanY = y - h / 2 + ((t * 14 + panel.phase * 3) % h)
+      g.lineStyle(1, panel.color, 0.28)
+      g.lineBetween(panel.x - w / 2 + 2, scanY, panel.x + w / 2 - 2, scanY)
       // Small blinking dot
       g.fillStyle(panel.color, 0.4 + Math.sin(t * 4 + panel.phase) * 0.3)
       g.fillCircle(panel.x + w / 2 - 6, y - h / 2 + 5, 2)
@@ -1240,7 +1371,7 @@ export class OfficeScene extends Phaser.Scene {
     for (const [, agent] of this.agentSprites) {
       const dx = wx - agent.currentX
       const dy = wy - agent.currentY
-      if (dx * dx + dy * dy < 20 * 20) {
+      if (dx * dx + dy * dy < 28 * 28) {
         this.onAgentSelect?.(agent.id)
         return
       }
@@ -1331,27 +1462,30 @@ export class OfficeScene extends Phaser.Scene {
         sprite.status = agent.status
         sprite.color = colorNum
         sprite.circle.setFillStyle(colorNum, 0.9)
-        sprite.glowCircle.setFillStyle(colorNum, 0.15)
+        sprite.glowCircle.setFillStyle(colorNum, 0.2)
         const statusColor = STATUS_COLORS[agent.status] || 0x64748b
         sprite.statusDot.setFillStyle(statusColor, 1)
       } else {
-        const circle = this.add.circle(tx, ty, 14, colorNum, 0.9)
-        circle.setStrokeStyle(2.5, 0xffffff, 0.4)
+        const circle = this.add.circle(tx, ty, 18, colorNum, 0.94)
+        circle.setStrokeStyle(3, 0xffffff, 0.52)
         circle.setDepth(10)
 
-        const glowCircle = this.add.circle(tx, ty, 28, colorNum, 0.15)
+        const glowCircle = this.add.circle(tx, ty, 42, colorNum, 0.2)
         glowCircle.setDepth(9)
 
         const statusColor = STATUS_COLORS[agent.status] || 0x64748b
-        const statusDot = this.add.circle(tx + 14, ty - 12, 5, statusColor, 1)
+        const statusDot = this.add.circle(tx + 18, ty - 15, 6, statusColor, 1)
+        statusDot.setStrokeStyle(1.5, 0x050814, 0.8)
         statusDot.setDepth(11)
 
-        const nameText = this.add.text(tx, ty - 24, agent.name.split(' ')[0], {
+        const nameText = this.add.text(tx, ty - 30, agent.name.split(' ')[0], {
           fontFamily: 'monospace',
-          fontSize: '10px',
-          color: '#e2e8f0',
+          fontSize: '11px',
+          color: '#f8fafc',
+          backgroundColor: 'rgba(5,8,20,0.64)',
+          padding: { x: 4, y: 2 },
           align: 'center',
-        }).setOrigin(0.5, 1).setDepth(11).setAlpha(0.85)
+        }).setOrigin(0.5, 1).setDepth(11).setAlpha(0.95)
 
         this.agentSprites.set(agent.id, {
           id: agent.id,

@@ -2,9 +2,9 @@
 
 export const TILE_W = 300
 export const TILE_H = 150
-export const WALL_H = 70
-export const ROOM_SPACING_X = 160
-export const ROOM_SPACING_Y = 87
+export const WALL_H = 84
+export const ROOM_SPACING_X = 172
+export const ROOM_SPACING_Y = 98
 export const SCENE_W = 1500
 export const SCENE_H = 900
 
@@ -46,14 +46,14 @@ ROOMS.forEach(r => {
 
 // Agent slot offsets within rooms
 export const agentSlots: Record<string, { dx: number; dy: number }[]> = {
-  genome:       [{ dx: -30, dy: 10 }, { dx: 20, dy: 20 }, { dx: 35, dy: 0 }],
-  dream:        [{ dx: -15, dy: 15 }, { dx: 25, dy: 10 }, { dx: 0, dy: 25 }],
-  war:          [{ dx: -25, dy: 10 }, { dx: 0, dy: 25 }, { dx: 25, dy: 10 }],
-  redteam:      [{ dx: -40, dy: 10 }, { dx: -10, dy: 22 }, { dx: 22, dy: 18 }, { dx: 45, dy: 5 }],
-  metalearning: [{ dx: -18, dy: 12 }, { dx: 18, dy: 20 }],
-  temporal:     [{ dx: -12, dy: 18 }, { dx: 18, dy: 10 }],
-  identity:     [{ dx: -25, dy: 12 }, { dx: 0, dy: 25 }, { dx: 25, dy: 12 }],
-  breeding:     [{ dx: -25, dy: 12 }, { dx: 0, dy: 25 }, { dx: 25, dy: 12 }],
+  genome:       [{ dx: -52, dy: 12 }, { dx: -6, dy: 30 }, { dx: 48, dy: 8 }, { dx: 18, dy: -10 }],
+  dream:        [{ dx: -56, dy: 18 }, { dx: 42, dy: 14 }, { dx: -6, dy: 36 }, { dx: 18, dy: -8 }],
+  war:          [{ dx: -54, dy: 12 }, { dx: -6, dy: 34 }, { dx: 50, dy: 13 }, { dx: 12, dy: -10 }],
+  redteam:      [{ dx: -68, dy: 8 }, { dx: -32, dy: 30 }, { dx: 18, dy: 34 }, { dx: 62, dy: 10 }, { dx: 4, dy: -12 }],
+  metalearning: [{ dx: -48, dy: 14 }, { dx: 46, dy: 18 }, { dx: 0, dy: 36 }],
+  temporal:     [{ dx: -52, dy: 18 }, { dx: 50, dy: 12 }, { dx: -2, dy: 36 }],
+  identity:     [{ dx: -56, dy: 16 }, { dx: -4, dy: 36 }, { dx: 52, dy: 16 }],
+  breeding:     [{ dx: -62, dy: 16 }, { dx: 0, dy: 36 }, { dx: 58, dy: 14 }],
 }
 
 // Check if a point is inside an isometric diamond

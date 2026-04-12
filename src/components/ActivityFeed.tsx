@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { rooms, type ActivityEntry, type RoomId } from '../data/types'
 import { useData } from '../api/DataProvider'
@@ -15,6 +16,8 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
   const { activities } = useData()
   const [open, setOpen] = useState(false)
   const [entries, setEntries] = useState<ActivityEntry[]>([])
+  const latestEntry = entries[0]
+  const latestRoom = latestEntry ? rooms.find(r => r.id === latestEntry.room) : null
 
   // Seed entries when data arrives
   useEffect(() => {
@@ -60,29 +63,33 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
     <>
       {/* Toggle button */}
       <motion.button
-        whileHover={{ scale: 1.08, boxShadow: '0 0 16px rgba(139,92,246,0.3)' }}
+        whileHover={{ scale: 1.04, boxShadow: '0 12px 32px rgba(0,0,0,0.35), 0 0 18px rgba(6,182,212,0.18)' }}
         whileTap={{ scale: 0.93 }}
         onClick={() => setOpen(o => !o)}
-        className="fixed right-2 sm:right-4 top-14 sm:top-16 z-50 px-3 py-2 rounded-xl text-[10px] font-mono tracking-wider uppercase cursor-pointer glass-strong"
+        className="activity-toggle fixed right-2 sm:right-4 top-14 sm:top-16 z-50 cursor-pointer"
         style={{
-          color: open ? '#c4b5fd' : '#94a3b8',
+          color: open ? '#e2e8f0' : '#94a3b8',
           borderColor: open ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)',
-          minHeight: 44,
-          minWidth: 44,
         }}
       >
-        <span className="flex items-center gap-1.5">
-          Activity
-          {entries.length > 0 && (
+        <span className="activity-toggle__label">
+          <span>Activity</span>
+          {latestEntry && (
             <motion.span
               animate={{ scale: [1, 1.3, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
-              style={{ color: '#22c55e', fontSize: 8 }}
+              className="activity-toggle__live"
             >
               ●
             </motion.span>
           )}
         </span>
+        {latestEntry && (
+          <span className="activity-toggle__preview">
+            <span style={{ color: latestEntry.agentColor }}>{latestEntry.agentName}</span>
+            <span>{latestRoom?.name ?? latestEntry.room}</span>
+          </span>
+        )}
       </motion.button>
 
       {/* Feed panel */}
@@ -93,24 +100,18 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed right-2 sm:right-4 top-24 sm:top-28 z-50 w-[calc(100vw-1rem)] sm:w-72 max-h-[60vh] flex flex-col rounded-2xl overflow-hidden"
-            style={{
-              background: 'rgba(10,11,20,0.82)',
-              backdropFilter: 'blur(24px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
+            className="activity-panel fixed right-2 sm:right-4 top-[6.7rem] sm:top-28 z-50 w-[calc(100vw-1rem)] sm:w-[22rem] max-h-[64vh] flex flex-col overflow-hidden"
           >
-            <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="activity-panel__header">
               <div className="flex items-center justify-between">
-                <div className="text-[10px] font-mono tracking-widest uppercase" style={{ color: '#94a3b8' }}>
+                <div className="activity-panel__eyebrow">
                   Live Activity
                 </div>
-                <div className="text-[9px] font-mono" style={{ color: '#475569' }}>
+                <div className="activity-panel__count">
                   {entries.length} events
                 </div>
               </div>
+              <div className="activity-panel__subhead">Agent movement, mutations, and room-level decisions.</div>
             </div>
             <div className="flex-1 overflow-y-auto scroll-fade" style={{ scrollbarWidth: 'thin' }}>
               <div className="flex flex-col">
@@ -125,36 +126,24 @@ export function ActivityFeed({ onRoomChange }: { onRoomChange: (r: RoomId) => vo
                         exit={{ opacity: 0, x: -30, height: 0 }}
                         transition={{ duration: 0.3, delay: i < 3 ? i * 0.05 : 0 }}
                         onClick={() => { onRoomChange(entry.room); setOpen(false) }}
-                        className="flex items-start gap-2.5 px-4 py-2.5 text-left cursor-pointer border-b transition-colors duration-200"
-                        style={{ borderColor: 'rgba(255,255,255,0.03)' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent'
-                        }}
+                        className="activity-entry"
+                        style={{ '--agent-color': entry.agentColor, '--room-color': roomData?.color ?? '#64748b' } as CSSProperties}
                       >
                         {/* Agent dot with glow */}
-                        <div className="relative mt-1 shrink-0">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{
-                              background: entry.agentColor,
-                              boxShadow: `0 0 8px ${entry.agentColor}66`,
-                            }}
-                          />
+                        <div className="activity-entry__dot-wrap">
+                          <div className="activity-entry__dot" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[11px]" style={{ color: '#e2e8f0' }}>
-                            <span className="font-semibold" style={{ color: entry.agentColor }}>{entry.agentName}</span>
-                            {' '}<span style={{ color: '#94a3b8' }}>{entry.action}</span>
+                        <div className="activity-entry__body">
+                          <div className="activity-entry__agent-row">
+                            <span className="activity-entry__agent">{entry.agentName}</span>
+                            <span className="activity-entry__time">{timeAgo(entry.timestamp)}</span>
                           </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-mono" style={{ color: roomData?.color ?? '#64748b' }}>
+                          <div className="activity-entry__action">
+                            {entry.action}
+                          </div>
+                          <div className="activity-entry__meta">
+                            <span className="activity-entry__room">
                               {roomData?.name ?? entry.room}
-                            </span>
-                            <span className="text-[9px] font-mono tabular-nums" style={{ color: '#475569' }}>
-                              {timeAgo(entry.timestamp)}
                             </span>
                           </div>
                         </div>

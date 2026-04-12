@@ -13,7 +13,7 @@ interface ConnectionGuideProps {
 
 export function ConnectionGuide({ onConnect, onDemoMode, connectionStatus }: ConnectionGuideProps) {
   const [step, setStep] = useState<Step>(1)
-  const [url, setUrl] = useState(() => localStorage.getItem(STORAGE_KEY) || 'http://localhost:3000')
+  const [url, setUrl] = useState(() => localStorage.getItem(STORAGE_KEY) || 'http://localhost:3033')
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<'success' | 'fail' | null>(null)
   const [visible, setVisible] = useState(true)
@@ -206,7 +206,7 @@ export function ConnectionGuide({ onConnect, onDemoMode, connectionStatus }: Con
                         value={url}
                         onChange={e => { setUrl(e.target.value); setTestResult(null) }}
                         onKeyDown={e => { if (e.key === 'Enter') setStep(3) }}
-                        placeholder="http://localhost:3000"
+                        placeholder="http://localhost:3033"
                         className="w-full px-4 py-3 rounded-xl text-[13px] font-mono border-0 outline-none"
                         style={{
                           background: 'rgba(10,11,20,0.8)',

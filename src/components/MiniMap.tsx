@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import type { RoomId } from '../data/types';
+import type { CSSProperties } from 'react';
+import { rooms, type RoomId } from '../data/types';
 import { useData } from '../api/DataProvider';
 
 const roomLayout: { id: RoomId; label: string; emoji: string; x: number; y: number; color: string }[] = [
@@ -15,67 +16,58 @@ const roomLayout: { id: RoomId; label: string; emoji: string; x: number; y: numb
 
 export function MiniMap({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRoomChange: (r: RoomId) => void }) {
   const { agents } = useData();
+  const activeAgents = agents.filter(a => a.currentRoom === activeRoom).length;
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.3, duration: 0.4 }}
-      className="fixed bottom-20 right-2 sm:right-4 z-40 rounded-2xl p-2 sm:p-2.5"
-      style={{
-        background: 'rgba(10,11,20,0.8)',
-        backdropFilter: 'blur(24px) saturate(1.3)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 60px rgba(139,92,246,0.05), inset 0 1px 0 rgba(255,255,255,0.06)',
-      }}
+      className="mini-map fixed bottom-20 right-2 sm:right-4 z-40"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-1.5 px-0.5">
-        <span className="text-[7px] font-mono tracking-widest uppercase" style={{ color: '#64748b' }}>MAP</span>
-        <div className="flex gap-1">
-          <div className="w-1 h-1 rounded-full" style={{ background: '#22c55e' }} />
-          <div className="w-1 h-1 rounded-full" style={{ background: '#f59e0b' }} />
-          <div className="w-1 h-1 rounded-full" style={{ background: '#ef4444' }} />
+      <div className="mini-map__header">
+        <div>
+          <div className="mini-map__eyebrow">Office Map</div>
+          <div className="mini-map__meta">{activeAgents} agents in focus</div>
+        </div>
+        <div className="mini-map__status">
+          <span />
+          <span />
+          <span />
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 34px)', gridTemplateRows: 'repeat(2, 34px)', gap: 3 }}>
+      <div className="mini-map__grid">
         {roomLayout.map(room => {
           const isActive = activeRoom === room.id;
           const agentsHere = agents.filter(a => a.currentRoom === room.id);
+          const roomData = rooms.find(r => r.id === room.id);
           return (
             <motion.button
               key={room.id}
               onClick={() => onRoomChange(room.id)}
-              whileHover={{ scale: 1.15, y: -1 }}
+              whileHover={{ scale: 1.06, y: -1 }}
               whileTap={{ scale: 0.9 }}
-              title={`${room.id} (${agentsHere.length} agents)`}
+              title={`${roomData?.name ?? room.id} (${agentsHere.length} agents)`}
+              className="mini-map__room"
               style={{
+                '--room-color': room.color,
                 gridColumn: room.x + 1,
                 gridRow: room.y + 1,
-                width: 34,
-                height: 34,
-                borderRadius: 8,
                 border: `1px solid ${isActive ? room.color + '80' : 'rgba(255,255,255,0.06)'}`,
                 background: isActive
                   ? `linear-gradient(135deg, ${room.color}25, ${room.color}10)`
                   : 'rgba(255,255,255,0.02)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
                 boxShadow: isActive
                   ? `0 0 12px ${room.color}40, inset 0 0 8px ${room.color}10, 0 0 20px ${room.color}15`
                   : 'none',
-                transition: 'all 0.2s ease',
-              }}
+              } as CSSProperties}
             >
-              <span style={{ fontSize: 11 }}>{room.emoji}</span>
+              <span className="mini-map__emoji">{room.emoji}</span>
+              <span className="mini-map__label">{room.label}</span>
               {agentsHere.length > 0 && (
-                <div style={{ display: 'flex', gap: 2, marginTop: 1 }}>
+                <div className="mini-map__agents">
                   {agentsHere.slice(0, 3).map(a => (
                     <div
                       key={a.id}
@@ -89,7 +81,7 @@ export function MiniMap({ activeRoom, onRoomChange }: { activeRoom: RoomId; onRo
                     />
                   ))}
                   {agentsHere.length > 3 && (
-                    <span style={{ fontSize: 6, color: '#64748b', lineHeight: '5px' }}>+{agentsHere.length - 3}</span>
+                    <span className="mini-map__agent-more">+{agentsHere.length - 3}</span>
                   )}
                 </div>
               )}

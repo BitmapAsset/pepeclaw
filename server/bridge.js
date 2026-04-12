@@ -93,6 +93,229 @@ function uid(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function runOpenClawJson(command) {
+  try {
+    const raw = execSync(`openclaw ${command}`, {
+      encoding: 'utf-8',
+      timeout: 5000,
+      maxBuffer: 2_000_000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function parseSessionKey(key) {
+  const parts = String(key || '').split(':');
+  if (parts.length < 3 || parts[0] !== 'agent') {
+    return { agentId: 'main', scope: 'main', subScope: '', key: String(key || '') };
+  }
+  return {
+    agentId: parts[1] || 'main',
+    scope: parts[2] || 'main',
+    subScope: parts.slice(3).join(':'),
+    key: String(key || ''),
+  };
+}
+
+function stripSessionLabel(value) {
+  return String(value || '')
+    .replace(/\s+id:[^ ]+$/i, '')
+    .replace(/^telegram:/i, '')
+    .replace(/^agent:/i, '')
+    .trim();
+}
+
+function titleCase(value) {
+  return String(value || '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, ch => ch.toUpperCase());
+}
+
+function prettyAgentId(agentId) {
+  if (!agentId || agentId === 'main') return 'Pepe';
+  if (agentId === 'gemma4-worker') return 'Gemma4 Worker';
+  return titleCase(agentId);
+}
+
+function sessionText(session, parsed) {
+  return [
+    session.subject,
+    session.displayName,
+    session.origin?.label,
+    session.origin?.provider,
+    session.lastChannel,
+    session.chatType,
+    parsed.scope,
+    parsed.subScope,
+    parsed.agentId,
+  ].filter(Boolean).map(stripSessionLabel).join(' ');
+}
+
+function sessionLabel(session, parsed) {
+  if (parsed.agentId === 'main' && parsed.scope === 'main') return 'Pepe';
+
+  const candidates = [
+    session.subject,
+    session.origin?.label,
+    session.displayName,
+    session.lastChannel ? `${session.lastChannel}${session.chatType ? ` ${session.chatType}` : ''}` : null,
+    parsed.subScope ? `${parsed.scope} ${parsed.subScope}` : parsed.scope,
+    parsed.agentId,
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    const cleaned = stripSessionLabel(candidate);
+    if (!cleaned) continue;
+    if (cleaned.toLowerCase() === parsed.agentId.toLowerCase()) return prettyAgentId(parsed.agentId);
+    if (/^heartbeat$/i.test(cleaned) && parsed.agentId === 'main') return 'Pepe';
+    if (/^telegram:g-/i.test(cleaned) && session.subject) return stripSessionLabel(session.subject);
+    return cleaned;
+  }
+
+  return prettyAgentId(parsed.agentId);
+}
+
+function sessionRoom(session, parsed) {
+  const text = sessionText(session, parsed).toLowerCase();
+
+  if (/dream/.test(text)) return 'dream';
+  if (/breeding/.test(text)) return 'breeding';
+  if (/genome|skill|mutation|evolve/.test(text)) return 'genome';
+  if (/red\s?team|bias|assumption|debate|review/.test(text)) return 'redteam';
+  if (/meta|learn|learning|reflect/.test(text)) return 'metalearning';
+  if (/temporal|cron|schedule|heartbeat|watchdog/.test(text) || parsed.scope === 'cron') return 'temporal';
+  if (/identity|vault|token|verify/.test(text)) return 'identity';
+  if (/replay/.test(text)) return 'replay';
+  if (/setting/.test(text)) return 'settings';
+  if (/activity/.test(text)) return 'activitylog';
+  if (/telegram/.test(text) && /group/.test(text)) return 'breeding';
+  if (/telegram/.test(text) && /direct/.test(text)) return 'war';
+  return 'overview';
+}
+
+function sessionStatus(session, ageMs) {
+  if (session.abortedLastRun) return 'break';
+  if (ageMs <= 15 * 60 * 1000) return 'working';
+  if (ageMs <= 2 * 60 * 60 * 1000) return 'idle';
+  return 'break';
+}
+
+function sessionColor(session, parsed) {
+  if (parsed.agentId === 'main') return '#00ff88';
+  return colorFor(session.subject || session.displayName || parsed.agentId || parsed.key);
+}
+
+function sessionActivity(session, parsed) {
+  const bits = [];
+  const heading = stripSessionLabel(session.subject || session.origin?.label || session.displayName || '');
+  if (heading) bits.push(heading);
+  if (session.lastChannel) bits.push(session.lastChannel);
+  if (session.chatType) bits.push(session.chatType);
+  if (session.modelOverride) bits.push(session.modelOverride);
+  if (session.providerOverride) bits.push(session.providerOverride);
+  if (bits.length === 0) bits.push(`${prettyAgentId(parsed.agentId)} live`);
+  return bits.join(' • ');
+}
+
+function sessionDescription(session, parsed, ageMs) {
+  const minutes = Math.max(1, Math.round(ageMs / 60000));
+  const source = session.lastChannel || session.origin?.provider || parsed.scope;
+  return `${sessionActivity(session, parsed)} • updated ${minutes}m ago via ${source}`;
+}
+
+async function loadSessionIndex(paths) {
+  const index = new Map();
+  await Promise.all((paths || []).map(async (path) => {
+    const data = await safeReadJson(path);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+    for (const [key, value] of Object.entries(data)) {
+      if (!value || typeof value !== 'object') continue;
+      index.set(key, { key, ...value });
+    }
+  }));
+  return index;
+}
+
+async function getOpenClawLiveSessions() {
+  return cached('openclaw-live-sessions', CACHE_TTL, async () => {
+    const snapshot = runOpenClawJson('sessions --json --all-agents --active 240');
+    const recent = Array.isArray(snapshot?.sessions?.recent)
+      ? snapshot.sessions.recent
+      : Array.isArray(snapshot?.sessions)
+        ? snapshot.sessions
+        : [];
+
+    let paths = Array.isArray(snapshot?.sessions?.paths)
+      ? snapshot.sessions.paths
+      : Array.isArray(snapshot?.paths)
+        ? snapshot.paths
+        : [snapshot?.path].filter(Boolean);
+
+    if (paths.length === 0) {
+      const stateDir = join(homedir(), '.openclaw', 'agents');
+      const agentDirs = await safeDirs(stateDir);
+      paths = agentDirs.map((agentId) => join(stateDir, agentId, 'sessions', 'sessions.json'));
+    }
+
+    const index = await loadSessionIndex(paths);
+    const cutoff = Date.now() - 6 * 60 * 60 * 1000;
+
+    const live = new Map();
+
+    const addSession = (entry) => {
+      if (!entry || typeof entry !== 'object') return;
+      const key = entry.key || (entry.sessionId ? `agent:${entry.agentId || 'main'}:${entry.kind || 'direct'}:${entry.sessionId}` : null);
+      if (!key) return;
+      const parsed = parseSessionKey(key);
+      const session = { ...index.get(key), ...entry };
+      const updatedAt = Number(session.updatedAt || 0);
+      if (!updatedAt || updatedAt < cutoff) return;
+
+      const ageMs = Math.max(0, Date.now() - updatedAt);
+      live.set(key, {
+        id: session.sessionId || key,
+        key,
+        agentId: parsed.agentId,
+        name: sessionLabel(session, parsed),
+        role: parsed.agentId === 'main' ? 'orchestrator' : parsed.scope === 'cron' ? 'scheduler' : 'worker',
+        status: sessionStatus(session, ageMs),
+        currentRoom: sessionRoom(session, parsed),
+        color: sessionColor(session, parsed),
+        activity: sessionActivity(session, parsed),
+        taskDescription: sessionDescription(session, parsed, ageMs),
+        hasSubAgents: parsed.scope === 'cron' || parsed.subScope.includes('group') || parsed.subScope.includes('telegram') || !!session.groupId,
+        isSearching: /search|research|probe|discover/i.test(sessionActivity(session, parsed)),
+        hasError: !!session.abortedLastRun,
+        updatedAt,
+      });
+    };
+
+    for (const entry of recent) addSession(entry);
+    for (const entry of index.values()) addSession(entry);
+
+    return [...live.values()].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 16);
+  });
+}
+
+async function getOpenClawActivities() {
+  const liveSessions = await getOpenClawLiveSessions();
+  if (liveSessions.length === 0) return null;
+
+  return liveSessions.slice(0, 20).map((session) => ({
+    id: session.id,
+    agentName: session.name,
+    agentColor: session.color,
+    action: session.activity,
+    room: session.currentRoom,
+    timestamp: session.updatedAt,
+  }));
+}
+
 // ─── Workspace Paths ───────────────────────────────────────────────────
 const P = {
   skills: join(WORKSPACE, 'skills'),
@@ -158,6 +381,23 @@ async function getSkills() {
 
 async function getAgents() {
   return cached('agents', CACHE_TTL, async () => {
+    const liveSessions = await getOpenClawLiveSessions();
+    if (liveSessions.length > 0) {
+      return liveSessions.map(({ id, name, role, status, currentRoom, color, activity, taskDescription, hasSubAgents, isSearching, hasError }) => ({
+        id,
+        name,
+        role,
+        status,
+        currentRoom,
+        color,
+        activity,
+        taskDescription,
+        hasSubAgents,
+        isSearching,
+        hasError,
+      }));
+    }
+
     const heartbeat = await safeReadJson(P.heartbeat);
     const rooms = ['genome', 'dream', 'war', 'metalearning', 'temporal', 'identity'];
     const activities = ['examining', 'strategizing', 'monitoring', 'processing', 'studying'];
@@ -445,6 +685,9 @@ async function getThoughts() {
 
 async function getActivities() {
   return cached('activities', CACHE_TTL, async () => {
+    const liveActivities = await getOpenClawActivities();
+    if (liveActivities) return liveActivities;
+
     // Parse recent memory for activity entries
     const memFiles = await safeFiles(P.memory);
     const dated = memFiles.filter(f => /^\d{4}-\d{2}-\d{2}.*\.md$/.test(f)).sort().slice(-5);

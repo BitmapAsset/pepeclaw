@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently --kill-others --names bridge,vite --prefix-colors cyan,magenta \"node server/bridge.js\" \"vite\"",
+    "live": "npm run dev",
     "dev:vite": "vite",
     "bridge": "node server/bridge.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "preview:live": "concurrently --kill-others --names bridge,preview --prefix-colors cyan,magenta \"node server/bridge.js\" \"vite preview --host 127.0.0.1 --port 4173\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "bash scripts/post-install.sh"
